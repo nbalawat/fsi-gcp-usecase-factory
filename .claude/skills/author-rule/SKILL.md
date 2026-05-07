@@ -1,281 +1,90 @@
 ---
 name: author-rule
-description: Author a new GoRules Zen JDM rule → JDM artifact + golden test set + threshold metadata. The deterministic decision layer (step 3) of the 5-step paradigm.
+description: Author a JDM rule from scratch → Zen JSON + golden tests + regulatory citation + docs. Output to rules/<name>/v<ver>.json (shared) or usecases/<uc>/rules/ (use-case-specific).
 disable-model-invocation: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git:*, ls:*, cat:*, jsonschema:*, python:*)
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(ls:*, cat:*, mkdir:*, python3:*)
 ---
 
-<!-- EXCEPTION: oversize body tracked in KNOWN_ISSUES.md; v0.1.2 split planned per Sprint-0 audit -->
-
-
-You are authoring a new JDM rule for the bank's rules service.
+You are authoring a JDM rule for the bank's GoRules Zen rules-service.
 
 ## Why this matters
 
-Rules in this platform are NOT Python `if`/`else`. They are JDM artifacts evaluated by GoRules Zen. This is non-negotiable. Reasons:
-
-- Compliance can read JDM without reading Python
-- Threshold values are versioned by `effective_date` separately from logic
-- Auditors get a structured decision trace per evaluation
-- Rules can be hot-reloaded without redeploying services
-
-If the user wants to put rules logic in Python, refuse and explain.
+Rules are the deterministic policy layer. They run before agents and gate every agent invocation. Each rule has a regulatory or business-policy citation, golden tests, and an effective_date. Rules are versioned; a new version coexists with old versions until cut over.
 
 ## Step 1 — Gather context
 
-Ask, one at a time:
+Ask the user:
 
-1. **What is the rule deciding?** Should be one decision: pass/fail, action category, eligibility classification.
-2. **What use case will use it?** Multiple use cases can share rules; this is fine.
-3. **What inputs does the rule evaluate?** (e.g., transaction amount, count_1h, merchant_risk, applicant_dti)
-4. **What output does it return?** (action, reason codes, optional sub-classifications)
-5. **What thresholds are involved?** List each threshold with proposed value and source (regulation citation, internal policy, etc.).
-6. **Should thresholds be parameterized?** If they vary by account type / customer segment / region, they should be in BigQuery threshold tables, not hardcoded in JDM.
+1. **Rule purpose** — one sentence
+2. **Owner team** — credit, BSA, payments, KYC, etc.
+3. **Regulatory citation** — specific (`12 CFR 32.3`, `ASC 326-20-30`, `BSA Final Rule 2022-04`); never vague
+4. **Inputs** — what the rule reads from `service_results`
+5. **Outputs** — `decision` (APPROVE/DECLINE/REFER) plus any structured fields
+6. **Hit policy** — `first` or `collect` (reject anything else)
+7. **Shared or UC-specific?** — shared rules go in `rules/`, UC-specific in `usecases/<uc>/rules/`
 
 ## Step 2 — Verify reuse
 
-Run `ls rules/`. Read existing JDM files. If a similar rule exists, ask if the user wants to:
-(a) Reuse — point them to it
-(b) Extend — add a new decision node
-(c) Create a separate rule — explain why
-
-Avoid rule sprawl.
+`ls rules/` and `ls usecases/*/rules/`. If a similar rule exists, ask whether to (a) reuse, (b) version-bump, or (c) create new with explanation.
 
 ## Step 3 — Decide on rule structure
 
-The JDM patterns supported:
-
-- **Decision table** — most common. Conditions × outcomes table.
-- **Function expression** — for computational decisions (e.g., DSCR = NOI / debt_service)
-- **Decision graph** — chained decision tables for multi-stage logic
-
-Pick based on the rule's nature:
-- "If X and Y, then Z" → decision table
-- "Compute X = f(inputs)" → function expression  
-- "First check A, then if A passes check B, else check C" → decision graph
+| Pattern | When |
+|---|---|
+| Single decision table | One set of conditions → one decision |
+| Decision tree | Branching: filter first, then sub-table |
+| Function node | Logic too procedural for a table (rare; flag for review) |
 
 ## Step 4 — Author the JDM
 
-Generate `rules/{rule_name}/v{version}.json`. Example structure:
-
-```json
-{
-  "name": "{rule_name}",
-  "version": "1.0",
-  "effective_from": "2026-01-01",
-  "effective_to": null,
-  "description": "{one-sentence description}",
-  "owner": "compliance-team",
-  "regulatory_citation": "{e.g. BSA 31 CFR 1010.310}",
-  "nodes": [
-    {
-      "id": "input",
-      "type": "inputNode",
-      "name": "Input"
-    },
-    {
-      "id": "main_check",
-      "type": "decisionTableNode",
-      "name": "{descriptive name}",
-      "content": {
-        "rules": [
-          {
-            "input_field_1": "> 10000",
-            "input_field_2": "in [\"high\", \"blocked\"]",
-            "action": "decline",
-            "reasons": ["VELOCITY_HIGH", "MERCHANT_RISK"]
-          },
-          {
-            "input_field_1": "> 5000",
-            "action": "gray_zone",
-            "reasons": ["VELOCITY_ELEVATED"]
-          },
-          {
-            "default": true,
-            "action": "clear",
-            "reasons": []
-          }
-        ]
-      }
-    },
-    {
-      "id": "output",
-      "type": "outputNode",
-      "name": "Output"
-    }
-  ],
-  "edges": [
-    {"source": "input", "target": "main_check"},
-    {"source": "main_check", "target": "output"}
-  ]
-}
-```
-
-Key fields:
-- `effective_from` / `effective_to` — when this version is active
-- `regulatory_citation` — auditors will look for this
-- `owner` — who can approve changes
+Read `references/template_jdm.md` for the Zen JSON skeleton. Fill in `inputs`, `outputs`, `rules` rows from Step 1. Set `hitPolicy` to `first` or `collect`.
 
 ## Step 5 — Threshold table strategy
 
-If thresholds should vary by segment, generate a BigQuery threshold table migration:
+If the rule references threshold values, those values come from the Cloud SQL `thresholds` table — not hardcoded in the JDM. The rule's input field is the threshold *name*; the rules-service resolves the value at evaluation time.
 
-```sql
-CREATE TABLE IF NOT EXISTS rules_thresholds.{rule_name}_thresholds (
-  segment STRING NOT NULL,        -- e.g., "personal", "business", "wealth"
-  threshold_name STRING NOT NULL, -- e.g., "max_single_amount"
-  threshold_value FLOAT64 NOT NULL,
-  effective_from TIMESTAMP NOT NULL,
-  effective_to TIMESTAMP,
-  version STRING NOT NULL,
-  approved_by STRING NOT NULL,
-  PRIMARY KEY (segment, threshold_name, effective_from) NOT ENFORCED
-)
-PARTITION BY DATE(effective_from);
-```
-
-The JDM rule then reads thresholds at evaluation time via the rules service's BigQuery loader. (The mechanism is built into the bank's rules service; the rule just references threshold names.)
+Pattern: `if dscr_base < threshold('dscr_pass_min')` — never `if dscr_base < 1.25`.
 
 ## Step 6 — Generate golden test set
 
-Create `tests/golden/{rule_name}/test_cases.json`:
+Read `references/template_golden_tests.md`. Produce at least 5 cases under `<rule_path>/tests/golden/`:
+- one per output decision (APPROVE / DECLINE / REFER)
+- two boundary cases (just above + just below the cutoff)
+- one missing-input case (asserts the rule fails closed)
 
-```json
-{
-  "rule": "{rule_name}",
-  "version": "1.0",
-  "cases": [
-    {
-      "name": "happy_path_clear",
-      "input": { "input_field_1": 100, "input_field_2": "low" },
-      "expected_action": "clear",
-      "expected_reasons": []
-    },
-    {
-      "name": "boundary_threshold",
-      "input": { "input_field_1": 5000, "input_field_2": "low" },
-      "expected_action": "gray_zone",
-      "expected_reasons": ["VELOCITY_ELEVATED"]
-    },
-    {
-      "name": "decline_path",
-      "input": { "input_field_1": 12000, "input_field_2": "high" },
-      "expected_action": "decline",
-      "expected_reasons": ["VELOCITY_HIGH", "MERCHANT_RISK"]
-    }
-  ]
-}
-```
-
-Required minimum:
-- 1 case per row in the decision table
-- 1 case per boundary value (just above and just below thresholds)
-- 1 default-rule case
-- 3-5 real-world examples drawn from the user's domain knowledge
-
-Ask the user for real-world examples; they're the most valuable test cases.
+Run `scripts/run_golden_tests.py <rule_path>` and confirm all pass.
 
 ## Step 7 — Validate the JDM
 
-```bash
-# Validate JSON structure
-python -m jsonschema -i rules/{rule_name}/v1.json \
-  ${CLAUDE_PLUGIN_DIR}/policies/jdm_schema.json
+Run:
+- `scripts/jdm_lint.sh <rule_path>` — schema validity
+- `scripts/run_golden_tests.py <rule_path>` — golden tests pass
+- `rule-validator` subagent — full validation including hit policy check
 
-# Run golden tests against the JDM
-python ${CLAUDE_PLUGIN_DIR}/scripts/run_golden_tests.py \
-  --rule rules/{rule_name}/v1.json \
-  --tests tests/golden/{rule_name}/test_cases.json
-
-# Output should be: "All N cases passed."
-```
-
-If golden tests fail, debug with the user. Either the rule has a bug or the test expectations are wrong. Both are valid outcomes; surface the discrepancy clearly.
+Fix any failures before reporting done.
 
 ## Step 8 — Generate documentation
 
-Write `docs/rules/{rule_name}.md`:
+Read `references/template_docs.md` for the rule's documentation structure. Write to `<rule_path>/README.md` covering: purpose, regulatory citation, owner, effective date, decision logic, inputs/outputs schema, change-log.
 
-```markdown
-# Rule: {rule_name}
-
-## Purpose
-{description}
-
-## Regulatory citation
-{citation}
-
-## Owner
-{owner team}
-
-## Effective
-{effective_from} → {effective_to or "current"}
-
-## Decision logic
-{narrative explanation of what the rule does, in plain English for compliance reviewers}
-
-## Inputs
-| Field | Type | Description |
-|-------|------|-------------|
-| ... | ... | ... |
-
-## Outputs
-| Field | Type | Description |
-|-------|------|-------------|
-| action | enum | clear / decline / gray_zone |
-| reasons | list[string] | reason codes |
-
-## Thresholds (if applicable)
-{table of thresholds, source, last update, approver}
-
-## Test coverage
-- Total cases: {N}
-- Happy paths: {M}
-- Boundary cases: {K}
-- Real-world examples: {L}
-
-## Change history
-| Version | Date | Change | Approver |
-|---------|------|--------|----------|
-| 1.0 | {today} | Initial | {user} |
-```
-
-## Step 9 — Compliance review checklist
-
-Before user submits this rule for production:
-
-- [ ] Rule has a regulatory citation (or business policy citation)
-- [ ] Owner team is identified
-- [ ] Effective dates are set
-- [ ] Threshold values are sourced (regulation, policy, board approval)
-- [ ] Golden test set covers all decision paths
-- [ ] Golden test set includes 3+ real-world examples
-- [ ] Documentation is complete
-- [ ] The rule has been reviewed by the owner team
-
-Surface this checklist to the user. Don't try to satisfy it for them — they need human judgment.
-
-## Step 10 — Report
+## Step 9 — Report
 
 ```
-✓ Rule authored: rules/{rule_name}/v1.json
-  Version: 1.0, effective from {date}
-  Decision logic: {summary}
-  Threshold table: {created/not needed}
-  Golden tests: {N} cases, all passing
-  Documentation: docs/rules/{rule_name}.md
-
-Next:
-  1. Have the owner team ({owner}) review the rule
-  2. Add additional real-world test cases as you encounter edge cases
-  3. The rule is loaded into the rules service via GCS deploy on next pipeline run
-  4. Deploy with `gcloud storage cp rules/{rule_name}/v1.json gs://bank-rules-{env}/{rule_name}/`
+DONE rules/<name>/v<ver>.json (or usecases/<uc>/rules/<name>.json)
+  Hit policy:  {first | collect}
+  Inputs:      {N}
+  Outputs:     {N}
+  Golden:      {N} cases pass
+  Validation:  PASS
+  Citation:    {regulation}
+  Owner:       {team}
 ```
 
 ## Anti-patterns to refuse
 
-- Putting rule logic in Python `if`/`else` outside the rules service
-- Hardcoding thresholds in JDM that should be in BigQuery (when they vary by segment)
-- Rules without regulatory citations or business policy references
-- Rules without golden test coverage
-- Rules with decisions like "ask the agent" — rules return deterministic actions; agents reason about gray zones
+- Rules without a `regulatory_citation` — every rule must cite a regulation, board policy, or internal policy doc.
+- Hardcoded threshold numbers — values come from Cloud SQL `thresholds`.
+- Hit policies other than `first` or `collect`.
+- Rules without golden tests.
+- "Function nodes" for what should be a decision table — flag for architecture review.
+- Mixing shared and UC-specific rules in the same file.

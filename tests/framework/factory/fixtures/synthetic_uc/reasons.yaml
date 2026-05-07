@@ -1,0 +1,77 @@
+# Synthetic REASONS canvas for the end-to-end factory test.
+# Drives one full builder DAG through the framework end-to-end.
+
+requirements:
+  use_case_id: synthetic-uc
+  description: "Synthetic test use case — one rule + one atomic service + one agent."
+  trigger: synthetic.events.test
+  outcome: A boolean decision recorded to the audit log.
+  primary_user: framework-tests
+  regulatory_regime: [synthetic]
+  latency_budget: hours
+  console_pattern: pipeline-console
+
+entities:
+  - name: TestEntity
+    fields: [entity_id, score]
+
+approach:
+  archetype: pipeline-originator@1.0
+  rationale: "Matches the test fixture's pipeline-style flow."
+
+structure:
+  use_case_archetype: pipeline-originator@1.0
+  console_pattern: pipeline-console
+  atomic_services_new:
+    - name: synthetic-scorer
+      description: "Compute synthetic-uc score from entity_id."
+      inputs: [entity_id]
+      outputs: [score, band]
+  rules_new:
+    - name: synthetic-eligibility
+      description: "Approve if score ≥ 0.5."
+      inputs: [score]
+      outputs: [decision, reason]
+      hit_policy: first
+  agents_new:
+    - role: rater
+      archetype: risk-rater@1.0
+      params:
+        memory_scope: entity_id
+        model: claude-opus-4-7
+
+operations:
+  - id: build-rule-synthetic-eligibility
+    kind: jdm-rule
+    layer: 1
+    path: rules/synthetic-eligibility/v1.json
+    spec:
+      inputs: [score]
+      outputs: [decision, reason]
+      hit_policy: first
+
+  - id: build-service-synthetic-scorer
+    kind: atomic-service
+    layer: 1
+    path: services/atomic/synthetic-scorer
+    spec:
+      description: "Compute synthetic-uc score from entity_id."
+      inputs: [entity_id]
+      outputs: [score, band]
+
+  - id: build-handler
+    kind: handler
+    layer: 1
+    path: services/atomic/synthetic-uc-handler
+    spec:
+      description: "Pub/Sub push handler for synthetic.events.test."
+      inputs: [entity_id]
+      outputs: [context_id, status]
+
+norms:
+  models: [claude-opus-4-7, gemini-3-1-flash]
+  data_classification: confidential
+
+safeguards:
+  - "No PII in agent prompts"
+  - "Score computed deterministically"

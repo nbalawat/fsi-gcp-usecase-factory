@@ -102,18 +102,7 @@ def test_skill_description_concise(skill: Path) -> None:
 # Skills that exceeded the 200-line cap when this test was written. They are
 # tracked for refactor; new skills MUST NOT be added to this set. The
 # test_no_new_overlong_skills test below enforces that.
-KNOWN_OVERLONG_SKILLS = {
-    "author-rule",
-    "compliance-pack",
-    "fsi-deploy",
-    "fsi-reasons-canvas",
-    "new-agent",
-    "new-atomic-service",
-    "new-use-case",
-    "promote",
-    "workflow-design",
-    "review-uc",
-}
+KNOWN_OVERLONG_SKILLS: set[str] = set()  # all skills compliant — keep empty
 
 
 @pytest.mark.parametrize("skill", _skill_files(), ids=lambda p: p.parent.name)
