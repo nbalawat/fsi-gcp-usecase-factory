@@ -1,0 +1,8 @@
+gatekeeper: security-reviewer
+description: "agent_runtime_sa has roles/pubsub.publisher on approval_events — self-approval risk."
+expects:
+  verdict: FAIL
+  severity: CRITICAL
+  rule: self_approval_iam
+  cite_file: usecases/uc-x/infra/uc-x.tf
+  message_contains: "self-approval"

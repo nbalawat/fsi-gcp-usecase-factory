@@ -1,0 +1,5 @@
+gatekeeper: compliance-reviewer
+description: "Use case with all 6 required compliance artifacts present and correct Reg O citations."
+expects:
+  verdict: PASS
+  findings_count_max: 0

@@ -1,0 +1,8 @@
+gatekeeper: security-reviewer
+description: "Deploy script sets DB_PASS as plaintext env var instead of --set-secrets."
+expects:
+  verdict: FAIL
+  severity: CRITICAL
+  rule: db_credentials_via_env_var
+  cite_file: scripts/deploy.sh
+  message_contains: "plaintext"

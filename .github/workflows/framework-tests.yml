@@ -1,0 +1,67 @@
+name: Framework tests
+
+on:
+  pull_request:
+    paths:
+      - '.claude/**'
+      - 'tests/framework/**'
+      - 'libraries/**'
+      - 'policies/**'
+      - 'scripts/**'
+      - 'services/**'
+      - 'usecases/**'
+      - 'pytest.ini'
+  push:
+    branches: [master, main]
+
+jobs:
+  framework-deterministic:
+    name: Framework — deterministic tier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml sqlalchemy pg8000
+
+      - name: Run framework tests (deterministic)
+        run: pytest tests/framework -q -v
+
+      - name: Run atomic-service tests (per-service)
+        run: |
+          for svc in services/atomic/*/; do
+            if [ -f "$svc/tests/test_main.py" ]; then
+              echo "── $(basename $svc) ──"
+              (cd "$svc" && python -m pytest tests/ -q) || exit 1
+            fi
+          done
+
+      - name: Run rules-service tests
+        run: |
+          if [ -f services/rules-service/tests/test_main.py ]; then
+            (cd services/rules-service && python -m pytest tests/ -q)
+          fi
+
+  framework-llm:
+    name: Framework — LLM tier (nightly)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[run-llm]')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml anthropic
+
+      - name: Run framework LLM tests
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RUN_LLM_TESTS: '1'
+        run: pytest tests/framework -q -m llm

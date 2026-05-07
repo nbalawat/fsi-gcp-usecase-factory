@@ -1,0 +1,8 @@
+gatekeeper: security-reviewer
+description: "Cloud Run deploy missing --ingress flag — defaults to all (publicly reachable)."
+expects:
+  verdict: FAIL
+  severity: HIGH
+  rule: cloud_run_no_ingress_set
+  cite_file: scripts/deploy.sh
+  message_contains: "--ingress"

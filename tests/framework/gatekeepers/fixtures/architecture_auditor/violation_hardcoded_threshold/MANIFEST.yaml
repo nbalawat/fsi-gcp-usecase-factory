@@ -1,0 +1,9 @@
+gatekeeper: architecture-auditor
+description: "Module-level hardcoded threshold constant in atomic service — must read from Cloud SQL."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: no_hardcoded_thresholds
+  cite_file: services/atomic/exposure-checker/main.py
+  cite_line: 11
+  message_contains: "OCC_SINGLE_BORROWER_LIMIT"

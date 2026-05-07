@@ -1,0 +1,9 @@
+gatekeeper: architecture-auditor
+description: "Atomic service uses print() instead of redacting_logger — VIOLATION."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: no_print_in_production
+  cite_file: services/atomic/noisy-service/main.py
+  cite_line: 12
+  message_contains: "print"

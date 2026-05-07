@@ -1,0 +1,5 @@
+gatekeeper: architecture-auditor
+description: "Minimal clean atomic service — proper Cloud SQL pattern, no violations."
+expects:
+  verdict: PASS
+  findings_count_max: 0

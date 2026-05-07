@@ -1,0 +1,8 @@
+gatekeeper: compliance-reviewer
+description: "regulatory_citations.md says 'Reg O' but cites 12 CFR Part 32 (LLL) — wrong CFR Part for insider lending."
+expects:
+  verdict: FAIL
+  severity: HIGH
+  rule: reg_o_citation_imprecise
+  cite_file: usecases/uc-x/compliance/regulatory_citations.md
+  message_contains: "215"

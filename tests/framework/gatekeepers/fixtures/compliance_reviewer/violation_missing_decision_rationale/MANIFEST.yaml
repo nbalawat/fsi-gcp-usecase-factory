@@ -1,0 +1,8 @@
+gatekeeper: compliance-reviewer
+description: "Compliance pack missing decision_rationale.md — required by SR 11-7 §III for any agent-decisioned UC."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: missing_decision_rationale
+  cite_file: usecases/uc-x/compliance/decision_rationale.md
+  message_contains: "decision_rationale"

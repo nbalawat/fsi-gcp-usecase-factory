@@ -1,0 +1,8 @@
+gatekeeper: architecture-auditor
+description: "Atomic service A imports from atomic service B — forbidden cross-service call."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: no_atomic_to_atomic_calls
+  cite_file: services/atomic/risk-aggregator/main.py
+  message_contains: "atomic"

@@ -1,0 +1,5 @@
+gatekeeper: security-reviewer
+description: "Clean handler + deploy script — uses redacting_logger, --set-secrets, --ingress=internal."
+expects:
+  verdict: PASS
+  findings_count_max: 0

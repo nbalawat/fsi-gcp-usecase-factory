@@ -1,0 +1,8 @@
+gatekeeper: architecture-auditor
+description: "Handler contains an `if loan_amount > 1_000_000` business comparison — must move to rules-service."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: no_business_logic_in_handler
+  cite_file: usecases/example-uc/handler/main.py
+  message_contains: "loan_amount"

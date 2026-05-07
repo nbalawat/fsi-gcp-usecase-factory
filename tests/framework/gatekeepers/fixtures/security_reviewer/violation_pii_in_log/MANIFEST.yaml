@@ -1,0 +1,8 @@
+gatekeeper: security-reviewer
+description: "Handler imports stdlib logging instead of redacting_logger — PII may leak."
+expects:
+  verdict: FAIL
+  severity: CRITICAL
+  rule: pii_via_stdlib_logging
+  cite_file: usecases/uc-x/handler/main.py
+  message_contains: "stdlib"

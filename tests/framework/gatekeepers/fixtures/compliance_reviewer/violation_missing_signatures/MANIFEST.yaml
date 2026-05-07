@@ -1,0 +1,8 @@
+gatekeeper: compliance-reviewer
+description: "Compliance pack missing signatures_required.md — required by SR 11-7 §III.B effective challenge."
+expects:
+  verdict: FAIL
+  severity: BLOCKER
+  rule: missing_signatures_required
+  cite_file: usecases/uc-x/compliance/signatures_required.md
+  message_contains: "signatures_required"
