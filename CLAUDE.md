@@ -121,6 +121,27 @@ The plugin includes auto-invoked skills that will guide you. If you're building 
 
 ## Reference documents
 
+- `docs/methodology/README.md` — entry point, "trying to X → run Y" table
 - `docs/methodology/architecture.md` — the 5-step paradigm and platform architecture
 - `docs/methodology/console_reference.md` — the six console patterns in detail
 - `docs/methodology/methodology.md` — how the plugin executes the methodology
+- `AUTHORING.md` — skill / agent authoring conventions
+
+## What the factory ships
+
+- **24 skills** at `.claude/skills/` (slash commands + auto-invoked design knowledge)
+- **22 specialised subagents** at `.claude/agents/` (builders, validators, gatekeepers, authors)
+- **8 atomic services** at `services/atomic/` (financial-spreader, dscr-calculator, covenant-analyzer, peer-benchmarker, industry-risk-scorer, collateral-valuator, exposure-aggregator, insider-screening)
+- **11 Terraform modules** at `infra/modules/` (atomic_service, handler_service, rules_service, agent_runtime_deployment, cloud_workflow, sink_adapter, pubsub_topic, cloud_sql_instance, bigtable_memory_cluster, secret, otel_collector, use_case_template)
+- **6-layer reuse library** at `libraries/` (10 agent archetypes, 5 multi-agent patterns, 8 workflow fragments, 6 use-case archetypes)
+- **3 environment roots** at `infra/{dev,staging,prod}/`
+- **`make test-all`** runs the full deterministic test pyramid in <30s; `make test-llm` opts in to live Claude calls
+
+## Two-path correction protocol (hard rule)
+
+| Change type | Path | Skill |
+|---|---|---|
+| **Behavior change** (threshold, model, prompt, tool, sink) | REASONS-first | `/fsi-prompt-update <uc>` |
+| **Pure refactor** (rename, extract, restructure — no behavior change) | Code-first | `/fsi-sync <uc>` |
+
+Any commit that changes runtime behavior MUST update REASONS in the same PR. The architecture-auditor blocks the commit on REASONS↔code drift.

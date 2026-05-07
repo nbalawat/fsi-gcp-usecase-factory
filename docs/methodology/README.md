@@ -1,126 +1,126 @@
-# agentic-banking-platform
+# Agentic Banking Factory — methodology + complete reference
 
-Claude Code plugin that encodes the bank's methodology for building agentic banking use cases.
-
-## What this plugin does
-
-Installs into Claude Code and makes the bank's standards executable:
-
-- **Slash commands** for the work — `/new-use-case`, `/new-atomic-service`, `/author-rule`, `/new-agent`, `/review-uc`, `/compliance-pack`, `/promote`
-- **Skills** that auto-invoke when Claude needs to know how to build something — handler design, ADK agent design, the six console patterns, observability patterns
-- **Subagents** for specialized roles — architecture-auditor, compliance-reviewer, security-reviewer, test-author, terraform-author, prompt-author
-- **Hooks** for floor-level enforcement — pre-commit architecture audit, post-write test runner, session-start context
-
-## Installation
-
-### Option A — direct git install (start here)
-
-```bash
-git clone git@internal-git.bank.example.com:platform/agentic-banking-platform.git \
-  ~/.claude/plugins/agentic-banking-platform
-```
-
-Restart Claude Code. The plugin's slash commands appear in `/` autocomplete.
-
-### Option B — bank's internal marketplace
-
-```bash
-claude marketplace add bank-internal git@internal-git.bank.example.com:platform/marketplace.git
-claude plugins install agentic-banking-platform
-```
-
-## Project setup
-
-For each use case repo, create a `.claude/settings.json`:
-
-```json
-{
-  "extends": "agentic-banking-platform"
-}
-```
-
-And copy the platform `CLAUDE.md` to your repo root (or use `/init-use-case` which does this for you).
-
-## First use
-
-```bash
-$ mkdir my-new-use-case && cd my-new-use-case
-$ git init
-$ claude
-> /init-use-case "complaint triage"
-> /new-use-case
-```
-
-## Repo layout
-
-```
-.claude-plugin/plugin.json           # plugin manifest
-skills/                              # slash commands and auto-invoked knowledge
-  new-use-case/                      # /new-use-case
-  new-atomic-service/                # /new-atomic-service
-  author-rule/                       # /author-rule
-  new-agent/                         # /new-agent
-  review-uc/                         # /review-uc
-  compliance-pack/                   # /compliance-pack
-  promote/                           # /promote
-  init-use-case/                     # /init-use-case
-  handler-design/                    # auto-invoked
-  adk-agent-design/                  # auto-invoked
-  workflow-design/                   # auto-invoked
-  model-selection/                   # auto-invoked
-  observability-patterns/            # auto-invoked
-  console-pipeline/                  # auto-invoked when archetype is pipeline
-  console-investigations/            # auto-invoked when archetype is investigations
-  console-realtime/                  # auto-invoked when archetype is real-time
-  console-surveillance/              # auto-invoked when archetype is surveillance
-  console-run/                       # auto-invoked when archetype is run
-  console-recommendations/           # auto-invoked when archetype is recommendations
-agents/                              # subagent definitions
-  architecture-auditor.md
-  compliance-reviewer.md
-  security-reviewer.md
-  test-author.md
-  terraform-author.md
-  prompt-author.md
-  cross-impact-analyzer.md
-hooks/                               # event-driven enforcement
-  pre-commit-arch-audit.sh
-  session-start-context.sh
-scripts/                             # helper scripts skills invoke
-policies/                            # OPA / Conftest policies
-reference/                           # canonical architecture docs
-  architecture.md
-  console_reference.md
-  methodology.md
-CLAUDE.md                            # always-loaded conventions for projects
-```
-
-## What's included in this initial release
-
-This is v0.1.0 — the bootstrap MVP. Includes:
-
-- All 7 primary slash commands
-- 12 supporting skills
-- 4 subagents (architecture-auditor, compliance-reviewer, test-author, terraform-author)
-- 2 hooks (pre-commit-arch-audit, session-start-context)
-- Canonical reference documents
-
-Coming in subsequent releases:
-
-- Full template directories for each scaffold (Cloud Run, ADK, JDM, etc.)
-- The remaining 4 subagents (security-reviewer, prompt-author, cross-impact-analyzer, runbook-author)
-- Synthetic load harness, eval set runner
-- OPA policy bundle for GCP
-
-## Maintenance
-
-The platform team owns this plugin. Use case teams contribute via PR. Each PR runs the plugin's own architecture audit before merge. Versions follow semver; breaking changes get major version bumps with migration guides.
-
-## Documentation
+This is the canonical entry point for the FSI agentic banking factory. The factory is a Claude Code-native toolkit that lets a small platform team produce a full banking use case — handler, atomic services, rules, agent, sinks, infra, compliance pack — by composing reusable shapes from a versioned library, then validating every output through a layered test pyramid.
 
 Read in this order:
 
-1. `reference/architecture.md` — the 5-step paradigm and platform architecture
-2. `reference/console_reference.md` — the six console patterns
-3. `reference/methodology.md` — how the plugin executes the methodology
-4. Then explore individual skills and subagents
+1. `architecture.md` — the 5-step paradigm and platform architecture
+2. `console_reference.md` — the six console patterns
+3. `methodology.md` — how the factory executes the methodology
+4. This file (when you're trying to do X → run Y)
+
+---
+
+## When you're trying to X → run Y
+
+| When you want to … | Run / read |
+|---|---|
+| Start a brand-new use case | `/init-use-case "<name>"` then `/new-use-case` |
+| Author the REASONS canvas | `/fsi-reasons-canvas` (auto-loads when editing reasons.yaml) |
+| Search the libraries before building | `/fsi-search-library "<intent>"` |
+| Add a new atomic service | `/new-atomic-service` |
+| Add a new JDM rule | `/author-rule` |
+| Add a new agent (single or supervisor) | `/new-agent` |
+| Author the workflow YAML | the `workflow-design` skill auto-loads |
+| Configure the use case's UI | `console-config-builder` (driven by REASONS) |
+| Generate the SR 11-7 compliance pack | `/compliance-pack` |
+| Build the entire use case in parallel | `/fsi-build-parallel` |
+| Change a threshold / model / prompt | `/fsi-prompt-update <uc>` (REASONS-first; never edit code directly) |
+| Sync REASONS after a refactor | `/fsi-sync <uc>` (code-first; no behavior change) |
+| Review a use case before commit | `/review-uc <uc>` |
+| Review just the intent (R/E/A/S) | `/fsi-reasons-review <uc>` |
+| Promote a shape to the shared library | `/fsi-promote-to-library` (rule of three) |
+| See reuse % across the portfolio | `/fsi-reuse-report` |
+| Promote a use case to staging/prod | `/promote <uc>` |
+| Deploy a use case to GCP | `/fsi-deploy <uc> [--env=...]` |
+| See portfolio status | `/fsi-portfolio` |
+| Check ADK SDK conventions | the `fsi-adk-patterns` skill auto-loads |
+| Pick the right model | the `model-selection` skill auto-loads |
+| Pick the right console | `console_reference.md` then the matching `console-<pattern>` skill |
+
+## When the factory should refuse you
+
+| Trying to … | Why it's blocked |
+|---|---|
+| Edit generated code directly to change behavior | Use `/fsi-prompt-update`. The architecture-auditor blocks the commit if REASONS and code drift. |
+| Use a model not in `{claude-opus-4-7, gemini-3-1-flash}` | Bank policy. Add an `EXCEPTION:` comment with arch-review approval if truly needed. |
+| Have an atomic service call another atomic service | Composition belongs in the workflow. Refactor. |
+| Write a Cloud Workflow YAML > 500 lines | Decompose into named sub-workflows. |
+| Hardcode a threshold value | Read from the Cloud SQL `thresholds` table; versioned by `effective_date`. |
+| Grant `agent_runtime_sa` publisher rights on `approval_events` | Self-approval risk. The Terraform `check` block fails the apply. |
+| Build custom React for a use case | Configure one of the six consoles via `usecases/<uc>/ui/console.yaml`. |
+| Promote without compliance signatures | The `/promote` skill refuses. Sign each row in `signatures_required.md` first. |
+
+---
+
+## Repo layout (cheat sheet)
+
+```
+.claude/                              # the factory (skills + agents + hooks + settings)
+├── skills/                           # 24 slash commands and auto-invoked knowledge
+├── agents/                           # 22 specialised subagents
+└── hooks/                            # pre-commit, session-start, status-line wiring
+
+CLAUDE.md                             # always-loaded conventions
+AUTHORING.md                          # SKILL.md / agent-md authoring rules
+
+services/
+├── atomic/<name>/                    # 8 reusable atomic services (compute layer)
+└── rules-service/                    # the bank's single Zen JDM engine
+
+libraries/                            # six-layer reuse catalog
+├── agents/<archetype>/               # 10 agent archetypes (L3)
+├── patterns/<pattern>/               # 5 multi-agent patterns (L4)
+├── workflows/<fragment>/             # 8 workflow fragments (L5)
+└── use-cases/<archetype>/            # 6 use-case archetypes (L6)
+
+infra/
+├── shared/                           # one-time per env: Cloud SQL, VPC, secrets
+├── modules/<module>/                 # 11 reusable Terraform modules
+├── dev/, staging/, prod/             # env-level shared infra (OTel, Memory Bank)
+
+policies/                             # OPA + Conftest + JDM + REASONS schemas
+scripts/                              # ~20 helper scripts (deploy / lint / validate)
+docs/methodology/                     # this directory
+rules/                                # framework-shared JDM rules
+
+usecases/<use_case>/                  # everything for one use case in one tree
+├── reasons.yaml                      # the REASONS canvas — the contract
+├── handler/, agents/, sinks/         # 5-step paradigm components
+├── workflow.yaml                     # Cloud Workflows orchestration
+├── infra/<uc>.tf                     # ~150-line module composition
+├── tests/, ui/, docs/, compliance/, demo-data/
+```
+
+## Test pyramid (what catches what)
+
+| Layer | What it asserts | When it runs |
+|---|---|---|
+| **L0 Lint** | Skill / agent frontmatter shape; bash syntax; rego validity; HCL fmt; required label inputs | every PR |
+| **L0 OPA** | CMEK / IAM / networking / observability / tagging policy compliance | every PR (when conftest installed) |
+| **L0 Hooks** | pre-commit + session-start work; right exit codes | every PR |
+| **L0 Scripts** | shellcheck + smoke tests on `scripts/*.sh` | every PR |
+| **L1 Skills + agents** | 269 lint checks across 24 skills + 22 agents | every PR |
+| **L2 Builders** | Each builder's golden output passes its gating validator | every PR (deterministic); LLM tier nightly |
+| **L3 Validators** | service / rule / agent validators catch what they claim (12 negative fixtures) | every PR |
+| **L4 Gatekeepers** | architecture / security / compliance auditors catch real violations (14 negative fixtures) | every PR |
+| **Library lint** | Every archetype / pattern / fragment / UC archetype has required files + valid metadata | every PR |
+| **Atomic service unit** | 264 tests across 8 services; real SQLite, zero mocks | every PR |
+| **Factory e2e** | Synthetic REASONS canvas → every operation kind has a working builder + validator pipeline | every PR |
+| **Determinism** | `scripts/test_parallel_build_equivalence.sh` — sequential vs parallel build = byte-identical | nightly |
+
+`make test-all` runs the deterministic tier (~30s, fully offline). `make test-llm` opts in to the LLM tier.
+
+## What's intentionally out of scope
+
+- **Per-tenant data isolation.** Each customer of the bank's pipeline has their own row-level access via Cloud SQL RLS, not a separate environment.
+- **Cross-region failover.** Each environment is single-region in dev/staging; prod is regional + multi-zone but not multi-region.
+- **AI-judging-AI for narrative quality.** Citation density + adversarial test set is the floor; deeper eval is per-UC, owned by the model owner.
+
+## Maintenance
+
+The platform team owns the factory. Use case teams contribute via PR. Every PR runs the framework test pyramid; deploy and promotion go through `/promote` which gates on signatures + cross-impact analysis. Versions follow semver; breaking changes get major version bumps with migration guides.
+
+## Authoring conventions
+
+See `AUTHORING.md` for skill / agent / hook authoring rules. Hard rules are linted by `tests/framework/skills/`; new entries that violate them fail the build.

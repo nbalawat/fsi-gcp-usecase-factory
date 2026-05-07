@@ -126,6 +126,35 @@ def _load_thresholds() -> dict[str, Any]:
     }
 
 
+
+# ── PII redaction for audit rows ──────────────────────────────────────────
+import re as _re
+_PII_KEYS = {"borrower_id", "applicant_id", "ein", "ssn", "tax_id", "name", "legal_name", "guarantor_id"}
+_EIN_RE = _re.compile(r"\b\d{2}-\d{7}\b")
+_SSN_RE = _re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+_AMOUNT_KEYS = {"loan_amount", "outstanding_amount", "committed_amount", "exposure"}
+
+
+def _redact(d: dict) -> dict:
+    """Redact PII before audit-row persistence (last-4 for IDs; mask EIN/SSN; quantize amounts)."""
+    out: dict = {}
+    for k, v in d.items():
+        if k in _PII_KEYS and isinstance(v, str):
+            out[k] = f"...{v[-4:]}" if len(v) >= 4 else "***"
+        elif k in {"ein", "ssn", "tax_id"}:
+            out[k] = "***-redacted***"
+        elif k in _AMOUNT_KEYS and isinstance(v, (int, float)):
+            out[k] = round(float(v) / 100_000.0) * 100_000
+        elif isinstance(v, str):
+            out[k] = _EIN_RE.sub("***-EIN-***", _SSN_RE.sub("***-SSN-***", v))[:200]
+        elif isinstance(v, (list, dict)):
+            import json as _json
+            out[k] = _json.dumps(v)[:200]
+        else:
+            out[k] = v
+    return out
+
+
 def _write_audit(
     context_id: str,
     inputs: dict[str, Any],
@@ -145,9 +174,8 @@ def _write_audit(
                 """),
                 {
                     "svc": SERVICE_NAME,
-                    "ctx": context_id,
-                    "inp": json.dumps({k: str(v)[:200] for k, v in inputs.items()}),
-                    "out": json.dumps({k: str(v)[:200] for k, v in (result or {}).items()}),
+                    "ctx": context_id,                    "inp": json.dumps(_redact(inputs)),
+                    "out": json.dumps(_redact(result or {})),
                     "err": error,
                 },
             )

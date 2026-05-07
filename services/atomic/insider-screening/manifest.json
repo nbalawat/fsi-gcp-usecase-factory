@@ -1,0 +1,27 @@
+{
+  "name": "insider-screening",
+  "version": "0.1.0",
+  "description": "Detect Reg O insider relationships (12 CFR 215 / OCC 12 CFR 31). Direct + related-interest traversal of insider registry tables.",
+  "inputs": ["borrower_id", "as_of_date", "applicant_id", "max_depth"],
+  "outputs": [
+    "insider_status",
+    "insider_type",
+    "related_to",
+    "evidence",
+    "confidence",
+    "requires_board_approval",
+    "applicable_lending_limit"
+  ],
+  "endpoint": "https://insider-screening-PLACEHOLDER.run.app/",
+  "auth": "google-id-token",
+  "data_classification": "confidential",
+  "pii_fields": ["borrower_id", "applicant_id", "related_to"],
+  "regulatory_citations": [
+    "12 CFR Part 215 (Federal Reserve Reg O)",
+    "12 CFR Part 31 (OCC equivalent for national banks)"
+  ],
+  "slo": {
+    "latency_p99_ms": 2000,
+    "error_rate_max": 0.001
+  }
+}

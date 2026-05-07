@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars and edit. ALL fields are required in prod.
+project      = "agentic-experiments-prod"
+region       = "us-central1"
+kms_key_name = "projects/<project>/locations/us-central1/keyRings/<keyring>/cryptoKeys/<key>"

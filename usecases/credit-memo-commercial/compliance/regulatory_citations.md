@@ -87,13 +87,20 @@ This document maps specific regulatory requirements to the controls and design d
 
 ---
 
-## 3. Reg O — Loans to Insiders (12 CFR Part 215)
+## 3. Two distinct regulations — DO NOT CONFLATE
 
-**Source:** Federal Reserve Regulation O (12 CFR Part 215); OCC equivalent at 12 CFR Part 31
+This use case touches **two separate regulatory regimes** that are commonly confused:
 
-### 3.1 Single-Borrower Exposure Limits
+| Regulation | Citation | What it governs |
+|---|---|---|
+| Legal Lending Limit (LLL) | **12 CFR Part 32** | The maximum amount any one borrower (insider or not) can have outstanding. Default 15% of unimpaired capital + surplus on unsecured; 25% if fully secured. |
+| Reg O — Insider Lending | **12 CFR Part 215** (Fed) / **12 CFR Part 31** (OCC for national banks) | Additional restrictions specifically when the borrower is a bank insider (executive officer, director, principal shareholder, or related interest). Requires board approval, additional disclosure, and tighter aggregate limits across all insiders. |
 
-**Requirement:** National banks are subject to legal lending limits; no bank may make loans to a single borrower (or group of related borrowers) in excess of defined percentages of unimpaired capital and surplus. Insider lending is subject to additional restrictions and board approval requirements.
+**Common error:** citing 12 CFR Part 32 as the insider-lending rule. Part 32 is the LLL; Reg O lives at Part 215 / Part 31. Both apply simultaneously to insider loans (the Reg O limit is tighter and additive).
+
+## 3.1 Single-Borrower Legal Lending Limit (12 CFR Part 32)
+
+**Requirement (12 CFR 32.3):** National banks may not make loans to one borrower in excess of 15% of unimpaired capital + surplus (unsecured) or 25% (fully secured by readily marketable collateral).
 
 **How this use case addresses it:**
 - `exposure-aggregator` atomic service computes the borrower's existing committed and outstanding exposure across the entire bank as of the application date, producing `existing_exposure_committed`, `existing_exposure_outstanding`, and `single_borrower_pct` of Tier 1 capital.
@@ -102,14 +109,26 @@ This document maps specific regulatory requirements to the controls and design d
 - `regulatory_thresholds@2026-q2` rule additionally evaluates OCC-specific threshold conditions based on borrower type and loan amount.
 - All rule evaluations are logged in `audit.rules_service_events` with full input and output values, providing an examiner-accessible record of every exposure limit check.
 
-### 3.2 Board Approval for Insider Loans
+## 3.2 Insider Lending — Reg O (12 CFR Part 215 / OCC Part 31)
 
-**Requirement:** Certain insider loans require advance approval of a majority of the board of directors, documented in board minutes.
+**Requirement (12 CFR 215.4):** Reg O imposes ADDITIONAL restrictions on credit extended to bank insiders:
+- Individual insider limit: lesser of $25k or 5% of unimpaired capital (unsecured), 15% of unimpaired capital (secured) — TIGHTER than the general LLL.
+- Aggregate insider limit: 100% of unimpaired capital across all insiders.
+- Loans to insiders > $500k or > 5% of unimpaired capital require **prior approval by a majority of the board of directors** (recorded in minutes).
+- "Insider" is defined in 12 CFR 215.2: executive officer, director, principal shareholder (≥10% beneficial ownership), or **related interest** of any of the above.
 
-**How this use case addresses it:**
-- The `approval_matrix_commercial@1.0` rule outputs `approval_authority_required` and `additional_reviewers`; for insider-flagged borrowers, the matrix requires board-level review before approval.
-- Board minutes are an accepted input document type for the `credit_memo_extractor` agent (`board-minutes` in `document_types`), enabling extraction of insider relationship disclosures.
-- The memo template (`credit-memo-occ-v1`) includes a required section for insider relationship disclosure.
+**How this use case addresses it (affirmative detection — not passive routing):**
+
+- **`insider-screening@0.1.0` atomic service** affirmatively detects insider status by querying the bank's insider registry tables (`officers_directors`, `principal_shareholders`, `related_interests`). It traverses related-interest relationships up to depth=2 to catch indirect insiders (controlled entities, family members of executives, etc.). Below the policy `confidence_floor` it returns `indeterminate` rather than risk a false-negative — false-negatives on Reg O are regulatory citations.
+- The screening service emits `insider_status`, `insider_type`, `applicable_lending_limit` (`reg-O-15%` for officer/director, `reg-O-15-aggregate` for principal shareholder, `LLL-25%` for non-insider), and `requires_board_approval` (true when status is "insider").
+- The `approval_matrix_commercial@1.0` JDM rule consumes `insider_flag` and `insider_type` and routes the loan to the board-approval path when required.
+- Board minutes are an accepted input document type for the `credit_memo_extractor` agent (`board_minutes` in the document classifier vocabulary), enabling extraction of insider relationship disclosures from uploaded board minutes.
+- The memo template includes a required "Insider Relationship Disclosure" section that cites the specific 12 CFR 215 provision applied.
+
+**Citation precision:**
+- For LLL gate: cite `12 CFR 32.3`.
+- For insider-lending gate: cite `12 CFR 215.4` (Federal Reserve) AND `12 CFR 31.X` (OCC equivalent for national banks).
+- For the insider-detection mechanism: reference the `insider-screening` service + the `policies/reg-o-insider-definition-2024-q4.md` policy doc.
 
 ---
 
