@@ -725,6 +725,9 @@ _BUILDER_TO_VALIDATOR = {
     "jdm-rule-builder": "rule-validator",
     "agent-specialist-builder": "agent-validator",
     "agent-supervisor-builder": "agent-validator",
+    "archetype-builder": "agent-validator",
+    # console-config-builder is structural-YAML; no validator agent. Tests
+    # lint the YAML directly in tests/framework/builders/test_console_config_builder.py.
 }
 
 

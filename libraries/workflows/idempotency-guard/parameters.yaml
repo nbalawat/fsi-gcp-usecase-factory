@@ -1,0 +1,35 @@
+name: idempotency-guard
+version: "1.0"
+description: >-
+  Dedupe replays via a Firestore-backed atomic CAS keyed on context_id.
+  First writer wins; later replays short-circuit to the already-recorded result.
+
+parameters:
+  - name: context_id_expr
+    type: string
+    required: true
+    description: >-
+      Cloud Workflows expression that evaluates to the dedup key. Example:
+      `event.body.context_id` or `payload.context_id`.
+  - name: firestore_collection
+    type: string
+    required: true
+    description: >-
+      Firestore collection holding idempotency records. One per use case
+      (e.g. credit_memo_idempotency).
+  - name: ttl_hours
+    type: int
+    required: false
+    default: 168
+    description: >-
+      How long to retain dedup records (Firestore TTL). 7 days default.
+  - name: step_name
+    type: string
+    required: false
+    default: idempotency_guard
+    description: >-
+      Step prefix in the rendered workflow YAML. Override if multiple guards
+      coexist in the same workflow.
+
+last_verified: 2026-05-04
+used_by: []

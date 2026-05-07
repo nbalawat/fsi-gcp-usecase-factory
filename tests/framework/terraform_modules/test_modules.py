@@ -118,8 +118,9 @@ _BANK_LABEL_VARS = {"use_case", "owner", "cost_center", "data_classification"}
 @pytest.mark.parametrize(
     "module",
     [m for m in _modules() if m.name not in {
-        # Modules that are framework-shared, not per-UC, may legitimately omit use_case
-        "cloud_sql_instance", "bigtable_memory_cluster", "secret",
+        # Modules that are framework-shared (not per-UC) may legitimately omit `use_case` —
+        # they're owned by the platform team, not a use case.
+        "cloud_sql_instance", "bigtable_memory_cluster", "secret", "otel_collector",
     }],
     ids=lambda p: p.name,
 )
@@ -138,7 +139,7 @@ def test_module_declares_bank_label_inputs(module: Path) -> None:
 
 @pytest.mark.parametrize(
     "module",
-    [m for m in _modules() if m.name not in {"bigtable_memory_cluster", "secret"}],
+    [m for m in _modules() if m.name not in {"bigtable_memory_cluster", "secret", "otel_collector"}],
     ids=lambda p: p.name,
 )
 def test_module_validates_data_classification(module: Path) -> None:

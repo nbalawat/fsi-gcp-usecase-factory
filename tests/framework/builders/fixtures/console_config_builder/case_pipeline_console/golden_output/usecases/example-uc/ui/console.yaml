@@ -1,0 +1,47 @@
+console_pattern: pipeline-console
+use_case_id: example-uc
+title: Example pipeline UC for testing
+push_protocol: sse
+data_sources:
+  cases:
+    type: rest
+    endpoint: /api/cases
+  metrics:
+    type: rest
+    endpoint: /api/metrics
+  approvals:
+    type: cloud_workflows_callback
+    workflow_id: example-uc-workflow
+
+layout:
+  components:
+    - component: BreadcrumbNav
+      props:
+        usecase: example-uc
+    - component: MetricStrip
+      data_binding: metrics
+      props:
+        kpis: [in_pipeline, awaiting_approval, breached_clock]
+    - component: WorkflowStageRail
+      data_binding: cases
+      props:
+        stages:
+          - { id: intake, name: Intake, type: auto }
+          - { id: processing, name: Processing, type: agent }
+          - { id: approval, name: Officer Review, type: human }
+          - { id: posted, name: Posted, type: auto }
+    - component: CaseCard
+      data_binding: cases
+    - component: RegulatoryClock
+      props:
+        regulatoryRegime: OCC
+        deadlineHours: 120
+    - component: ApprovalGate
+      data_binding: approvals
+      props:
+        irrevocable_actions_require_two_step: true
+    - component: AgentReasoningPanel
+
+theme:
+  brand_tokens: bank-default
+  data_classification: confidential

@@ -1,0 +1,13 @@
+agents:
+  - name: example_uc_rater
+    role: rater
+    archetype_ref: risk-rater@1.0
+    model: claude-opus-4-7
+    memory_scope: borrower_id
+    data_classification: confidential
+    tool_pattern: pre-computed
+    output_key: risk_rating
+    governance:
+      model_armor:
+        enabled: true
+        policy: bank-default-prompt-injection-v1

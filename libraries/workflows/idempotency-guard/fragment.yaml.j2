@@ -1,0 +1,46 @@
+# idempotency-guard fragment
+#
+# Use at the top of a handler / workflow to dedupe replays. Backed by Firestore
+# (single-doc atomic CAS) — first writer wins; replays short-circuit to the
+# already-recorded result.
+#
+# Required params: context_id, ttl_hours, firestore_collection
+- {{step_name|default("idempotency_guard")}}:
+    call: googleapis.firestore.v1.projects.databases.documents.beginTransaction
+    args:
+      database: ${"projects/" + sys.get_env("GCP_PROJECT") + "/databases/(default)"}
+    result: txn
+
+- {{step_name|default("idempotency_guard")}}_lookup:
+    call: googleapis.firestore.v1.projects.databases.documents.get
+    args:
+      name: ${"projects/" + sys.get_env("GCP_PROJECT") + "/databases/(default)/documents/{{firestore_collection}}/" + {{context_id_expr}}}
+      transaction: ${txn.transaction}
+    result: existing
+    next: {{step_name|default("idempotency_guard")}}_decide
+
+- {{step_name|default("idempotency_guard")}}_decide:
+    switch:
+      - condition: ${existing.fields != null}
+        next: {{step_name|default("idempotency_guard")}}_replay_short_circuit
+    next: {{step_name|default("idempotency_guard")}}_record
+
+- {{step_name|default("idempotency_guard")}}_record:
+    call: googleapis.firestore.v1.projects.databases.documents.commit
+    args:
+      database: ${"projects/" + sys.get_env("GCP_PROJECT") + "/databases/(default)"}
+      body:
+        transaction: ${txn.transaction}
+        writes:
+          - update:
+              name: ${"projects/" + sys.get_env("GCP_PROJECT") + "/databases/(default)/documents/{{firestore_collection}}/" + {{context_id_expr}}}
+              fields:
+                created_at:
+                  timestampValue: ${time.format(sys.now())}
+                ttl_at:
+                  timestampValue: ${time.format(sys.now() + {{ttl_hours}} * 3600)}
+
+- {{step_name|default("idempotency_guard")}}_replay_short_circuit:
+    return:
+      idempotent_replay: true
+      original_run_at: ${existing.fields.created_at.timestampValue}

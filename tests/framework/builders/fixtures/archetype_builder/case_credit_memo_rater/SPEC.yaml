@@ -1,0 +1,16 @@
+operation_id: rater
+operation_path: usecases/example-uc/agents/rater.py
+use_case_id: example-uc
+spec:
+  archetype_ref: risk-rater@1.0
+  role: rater
+  tool_pattern: pre-computed
+  model: claude-opus-4-7
+  data_classification: confidential
+  params:
+    rubric: example-credit-rubric-v1
+    bands: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+    input_schema: usecases/example-uc/schemas/case_bundle.py
+    tools: [dscr-calculator, peer-benchmarker, exposure-aggregator]
+    confidence_floor: 0.7
+    memory_scope: borrower_id

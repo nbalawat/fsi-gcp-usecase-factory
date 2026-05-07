@@ -1,0 +1,45 @@
+# retry-with-backoff fragment
+#
+# Wraps a single HTTP call with exponential backoff + DLQ on terminal failure.
+# Use for atomic-service calls; agent calls; sink publishes — any fallible step.
+#
+# Required params: step_name, target_url, body, dlq_topic
+- {{step_name}}:
+    try:
+      call: http.post
+      args:
+        url: {{target_url}}
+        headers:
+          X-Cloud-Trace-Context: ${context_id}
+          Content-Type: "application/json"
+        body: {{body}}
+        timeout: {{timeout_seconds|default(30)}}
+        auth:
+          type: OIDC
+          audience: {{target_url}}
+      result: {{step_name}}_result
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: {{max_attempts|default(3)}}
+      backoff:
+        initial_delay: {{initial_delay_seconds|default(1)}}
+        max_delay: {{max_delay_seconds|default(60)}}
+        multiplier: {{backoff_multiplier|default(2)}}
+    except:
+      as: {{step_name}}_err
+      steps:
+        - {{step_name}}_send_dlq:
+            call: googleapis.pubsub.v1.projects.topics.publish
+            args:
+              topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/{{dlq_topic}}"}
+              body:
+                messages:
+                  - data: ${base64.encode(json.encode({
+                      "context_id": context_id,
+                      "step": "{{step_name}}",
+                      "error": {{step_name}}_err.message,
+                      "attempts": {{max_attempts|default(3)}} + 1,
+                      "ts": time.format(sys.now())
+                    }))}
+        - {{step_name}}_terminal:
+            raise: ${{{step_name}}_err}

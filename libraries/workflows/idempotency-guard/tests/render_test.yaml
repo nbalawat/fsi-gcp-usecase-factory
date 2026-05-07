@@ -1,0 +1,6 @@
+# Sample render parameters — used by the workflow-fragment lint test.
+# Renders the fragment with these params; output must be valid Cloud Workflows YAML.
+context_id_expr: "event.body.context_id"
+firestore_collection: "test_uc_idempotency"
+ttl_hours: 168
+step_name: "idempotency_guard"

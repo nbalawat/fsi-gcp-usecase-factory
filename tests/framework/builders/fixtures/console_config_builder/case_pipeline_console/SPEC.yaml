@@ -1,0 +1,12 @@
+operation_id: console-config
+operation_path: usecases/example-uc/ui/console.yaml
+use_case_id: example-uc
+spec:
+  console_pattern: pipeline-console
+  reasons:
+    requirements:
+      description: "Example pipeline UC for testing"
+      regulatory_regime: [OCC]
+    safeguards:
+      - "approval gate required"
+      - "regulatory clock 5 business days"

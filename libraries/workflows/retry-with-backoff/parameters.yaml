@@ -1,0 +1,55 @@
+name: retry-with-backoff
+version: "1.0"
+description: >-
+  Wraps an HTTP call with exponential backoff + DLQ on terminal failure.
+  Use for atomic-service calls, agent calls, sink publishes.
+
+parameters:
+  - name: step_name
+    type: string
+    required: true
+    description: Cloud Workflows step name (kebab-case via underscores; this step is unique per call).
+
+  - name: target_url
+    type: string
+    required: true
+    description: Cloud Workflows expression that evaluates to the target URL.
+
+  - name: body
+    type: string
+    required: true
+    description: Cloud Workflows expression for the request body.
+
+  - name: dlq_topic
+    type: string
+    required: true
+    description: DLQ Pub/Sub topic short ID (without project prefix). Terminal failures publish here.
+
+  - name: timeout_seconds
+    type: int
+    required: false
+    default: 30
+
+  - name: max_attempts
+    type: int
+    required: false
+    default: 3
+    description: Total = 1 initial + max_retries; this is the retry count, not total attempts.
+
+  - name: initial_delay_seconds
+    type: int
+    required: false
+    default: 1
+
+  - name: max_delay_seconds
+    type: int
+    required: false
+    default: 60
+
+  - name: backoff_multiplier
+    type: int
+    required: false
+    default: 2
+
+last_verified: 2026-05-04
+used_by: []

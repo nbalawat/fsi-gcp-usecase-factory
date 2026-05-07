@@ -1,0 +1,9 @@
+step_name: "call_dscr_calculator"
+target_url: "${env.DSCR_CALCULATOR_URL + '/process'}"
+body: "${ {context_id: context_id, borrower_id: borrower_id} }"
+dlq_topic: "credit-memo-commercial.dlq"
+timeout_seconds: 10
+max_attempts: 3
+initial_delay_seconds: 1
+max_delay_seconds: 30
+backoff_multiplier: 2
