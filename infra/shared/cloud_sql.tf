@@ -3,12 +3,28 @@
 # Portable: same schema runs on AWS RDS, Azure PostgreSQL, on-prem
 # This is FRAMEWORK infrastructure — every use case uses this one DB.
 
-variable "db_tier"      { default = "db-g1-small" }
-variable "db_disk_size" { default = 20 }
-variable "vpc_id"       { type = string }
+variable "db_tier" {
+  type        = string
+  description = "Cloud SQL machine tier."
+  default     = "db-g1-small"
+}
+
+variable "db_disk_size" {
+  type        = number
+  description = "Cloud SQL disk size in GB."
+  default     = 20
+}
+
 variable "kms_key_name" {
-  type    = string
-  default = ""
+  type        = string
+  description = "CMEK key resource name; empty string disables CMEK (Google-managed key only)."
+  default     = ""
+}
+
+variable "atomic_service_sa_emails" {
+  type        = list(string)
+  description = "Service account emails that need cloudsql.client and secretmanager.secretAccessor."
+  default     = []
 }
 
 resource "google_sql_database_instance" "fsi_banking" {
@@ -24,7 +40,7 @@ resource "google_sql_database_instance" "fsi_banking" {
 
     ip_configuration {
       ipv4_enabled    = false
-      private_network = var.vpc_id
+      private_network = google_compute_network.fsi.id
     }
 
     disk_autoresize = true
@@ -36,6 +52,10 @@ resource "google_sql_database_instance" "fsi_banking" {
       value = "1000"
     }
   }
+
+  encryption_key_name = var.kms_key_name != "" ? var.kms_key_name : null
+
+  depends_on = [google_service_networking_connection.fsi]
 }
 
 resource "google_sql_database" "fsi_banking" {
@@ -44,19 +64,34 @@ resource "google_sql_database" "fsi_banking" {
   project  = var.project
 }
 
-# DB password in Secret Manager (never in Terraform state)
+# Application user — password is stored in Secret Manager.
+resource "random_password" "db_pass" {
+  length  = 32
+  special = true
+}
+
+resource "google_sql_user" "app" {
+  name     = "fsi_app"
+  instance = google_sql_database_instance.fsi_banking.name
+  project  = var.project
+  password = random_password.db_pass.result
+}
+
+# DB password in Secret Manager (never in Terraform state output).
 resource "google_secret_manager_secret" "db_pass" {
   secret_id = "fsi-banking-db-pass-${var.environment}"
   project   = var.project
-  replication { auto {} }
+  replication {
+    auto {}
+  }
 }
 
-# Cloud SQL client access for all atomic service SAs
-variable "atomic_service_sa_emails" {
-  type    = list(string)
-  default = []
+resource "google_secret_manager_secret_version" "db_pass" {
+  secret      = google_secret_manager_secret.db_pass.id
+  secret_data = random_password.db_pass.result
 }
 
+# Cloud SQL client access for all atomic service SAs.
 resource "google_project_iam_member" "sql_client" {
   for_each = toset(var.atomic_service_sa_emails)
   project  = var.project
@@ -66,15 +101,8 @@ resource "google_project_iam_member" "sql_client" {
 
 resource "google_secret_manager_secret_iam_member" "db_pass_accessor" {
   for_each  = toset(var.atomic_service_sa_emails)
-  secret_id = google_secret_manager_secret.db_pass.id
+  project   = var.project
+  secret_id = google_secret_manager_secret.db_pass.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${each.value}"
-}
-
-output "instance_connection_name" {
-  value = google_sql_database_instance.fsi_banking.connection_name
-}
-
-output "db_pass_secret_id" {
-  value = google_secret_manager_secret.db_pass.id
 }

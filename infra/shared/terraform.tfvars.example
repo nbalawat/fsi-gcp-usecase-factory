@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars and edit for your environment.
+project     = "agentic-experiments"
+region      = "us-central1"
+environment = "dev"
