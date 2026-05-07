@@ -1,6 +1,6 @@
 ---
 name: fsi-deploy
-description: Deploy a use case's atomic services, handler, and wiring to a GCP environment. Reads REASONS canvas → fans out service deploys in parallel → smoke tests each → deploys handler → updates Pub/Sub subscription → patches manifest.json endpoints with real Cloud Run URLs. Reusable for any use case and any target environment (dev/staging/prod).
+description: Deploy a use case to GCP. Reads REASONS canvas → parallel atomic-service deploys → smoke tests → handler → Pub/Sub wiring → patches manifest endpoints with Cloud Run URLs. Reusable across use cases and dev/staging/prod.
 allowed-tools: Read, Glob, Grep, Bash(gcloud:*, bash:*, ls:*, cat:*, python3:*, jq:*)
 ---
 
