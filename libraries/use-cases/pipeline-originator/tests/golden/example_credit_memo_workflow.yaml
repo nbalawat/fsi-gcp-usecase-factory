@@ -1,6 +1,6 @@
 # Golden render: workflow-skeleton.yaml.j2 spliced with the six fragments,
 # parameterized from usecases/credit-memo-commercial/reasons.yaml.
-# Expected output of /fsi-build-parallel → workflows/credit-memo-commercial.yaml
+# Expected output of /fsi-build-parallel → usecases/credit-memo-commercial/workflow.yaml
 
 main:
   params: [event]

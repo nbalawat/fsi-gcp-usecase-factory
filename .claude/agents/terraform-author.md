@@ -36,7 +36,7 @@ Always use these modules. Never declare raw `google_cloud_run_v2_service` etc. u
 
 ### For an atomic service
 
-`infra/atomic_services/{service_name}.tf`:
+`services/atomic/{service_name}/service.tf` (per the atomic-service template — TF lives next to the service code):
 
 ```hcl
 module "{service_name}" {
@@ -94,7 +94,7 @@ resource "google_cloud_run_v2_service_iam_member" "agent_runtime_invoker" {
 
 ### For a handler
 
-`infra/handlers/{use_case}.tf`:
+`usecases/{use_case}/infra/handler.tf`:
 
 ```hcl
 module "{use_case}_handler" {
@@ -129,7 +129,7 @@ module "{use_case}_handler" {
 
 ### For an agent
 
-`infra/agents/{use_case}.tf`:
+`usecases/{use_case}/infra/agent.tf`:
 
 ```hcl
 module "{use_case}_agent" {

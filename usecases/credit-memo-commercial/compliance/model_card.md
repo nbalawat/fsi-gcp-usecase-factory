@@ -1,9 +1,9 @@
 # Model Card — credit-memo-commercial
 
-**Generated from:** usecases/credit-memo-commercial/reasons.yaml
-**Framework:** SR 11-7
-**Generated:** 2026-05-06
-**Status:** Draft — pending architecture and compliance review
+**Generated from:** usecases/credit-memo-commercial/reasons.yaml  
+**Framework:** SR 11-7  
+**Last generated:** 2026-05-07  
+**Status:** Draft (pending architecture + compliance review)
 
 ---
 
@@ -11,131 +11,143 @@
 
 Generate a commercial credit memo for a new or renewing C&I loan, including financial spreading, peer benchmarking, covenant analysis, and a recommended decision with a narrative justification cited back to source documents.
 
-**Trigger:** loans.application.submitted
-**Outcome:** Approved memo + GL posting + document store record, within 48 hours of application. Credit officer sees the memo with a regulatory clock and citation density inline; approves, declines with reason, or returns for revision.
-**Primary user:** Credit officer reviewing memo in approval queue (Gemini Enterprise)
+**Trigger event:** `loans.application.submitted` (Pub/Sub)  
+**Desired outcome:** Approved memo + GL posting + document store record, within 48 hours of application. Credit officer sees the memo with a regulatory clock and citation density inline; approves, declines with reason, or returns for revision.  
+**Primary user:** Credit officer reviewing memo in approval queue (Gemini Enterprise)  
 **Regulatory regime:** OCC, Reg O, CECL
 
 ---
 
-## 2. Conceptual Soundness (SR 11-7 §II.B)
+## 2. Methodology (SR 11-7 §II.B — Conceptual Soundness)
 
-**Approach:** pipeline-originator@1.0 with extractor-spreader-rater-drafter@1.0
+**Approach:** `pipeline-originator@1.0` archetype with `extractor-spreader-rater-drafter@1.0` multi-agent pattern.
 
-The pipeline-originator pattern ingests a loan application event, fans out to eight atomic services running in parallel, aggregates their outputs through a rules engine, and orchestrates a four-agent sequence (extractor → spreader → rater → drafter) to produce a structured credit memo. No agent can approve or decline a loan; all decisions remain with a human credit officer who acts on the memo through the approval queue.
+The pipeline decomposes credit memo assembly into four sequenced concerns: document extraction, financial spreading, risk rating, and narrative drafting. Each concern is handled by a specialist agent operating on structured outputs from the prior step. No agent performs raw financial computation — all quantitative analysis is delegated to purpose-built atomic services, ensuring model outputs are always grounded in deterministic calculation results. The rules engine enforces regulatory thresholds and approval authority requirements as hard gates, not as model judgments.
 
 **Design trade-offs:**
 
 - Verbosity over speed for memo prose — credit officers value depth
 - Citations over inferred narratives — every claim links back to an atomic-service output
 - Approval-gate latency over auto-approval — regulatory expectation
-- Memory Bank scope is borrower_id, not loan_id — memo benefits from prior covenant and peer-set decisions on the same borrower
+- Memory Bank scope is `borrower_id`, not `loan_id` — memo benefits from prior covenant and peer-set decisions on the same borrower
+
+**Why this is conceptually sound under SR 11-7:**  
+LLM-based decisioning risk is mitigated by strict separation of concerns: the model generates prose and makes categorical judgments (pass/special-mention/substandard/doubtful/loss) against a defined rubric, but never computes DSCR, covenant headroom, or exposure percentages. All numeric inputs to the model come from verifiable, deterministic atomic services. The human-in-the-loop approval gate ensures no irrevocable financial action (GL posting) occurs without a credentialed credit officer's explicit action.
 
 ---
 
-## 3. Implementation (SR 11-7 §II.B)
+## 3. Model Components (SR 11-7 §II.B — Implementation)
 
 ### Agents
 
-| Role | Archetype | Memory Scope | Output Schema |
-|---|---|---|---|
-| extractor | document-extractor@1.0 | borrower | ExtractedFinancials |
-| rater | risk-rater@1.0 | borrower | RiskRating |
-| drafter | narrative-drafter@1.0 | borrower | CreditMemo |
-| supervisor | extractor-spreader-rater-drafter@1.0 | borrower | CreditMemoBundle |
-
-**Model:** claude-opus-4-7 for all agents (long-form reasoning, narrative generation, multi-step decisioning). No other models used in production without explicit architecture exception.
-
-### Atomic Services (8)
-
-| Service | Purpose | Key Outputs |
+| Role | Archetype | Key Parameters |
 |---|---|---|
-| financial-spreader | Parses extracted financials into standardized spread | spread_balance_sheet, spread_income_statement, ratios |
-| dscr-calculator | Debt-service coverage ratio under base and stress scenarios | dscr_base, dscr_stressed, min_dscr_breach |
-| covenant-analyzer | Tests proposed covenants against borrower run-rate financials | covenant_test_results, headroom_pct, violations_projected |
-| peer-benchmarker | Selects peer set; computes percentile ratios | peer_set, ratio_percentiles |
-| industry-risk-scorer | NAICS-based industry risk band | industry_risk_band, rationale_factors |
-| collateral-valuator | Marks collateral to current market with haircuts | valuation_per_item, haircut_per_item, lendable_value |
-| exposure-aggregator | Rolls up existing borrower exposure across the bank | existing_exposure_committed, single_borrower_pct |
-| ofac-screen | OFAC screening (to be promoted to library after pilot) | ofac_match, match_detail |
+| **extractor** | `document-extractor@1.0` | document_types: [10-K, 10-Q, audited-financials, board-minutes]; target_schema: commercial-financial-statement-v1 |
+| **rater** | `risk-rater@1.0` | rubric: commercial-credit-rubric-v1; bands: [1-pass, 2-special-mention, 3-substandard, 4-doubtful, 5-loss] |
+| **drafter** | `narrative-drafter@1.0` | output_format: credit-memo-occ-v1; max_words: 1500; citation_density_min: 0.8 |
+| **supervisor** | `extractor-spreader-rater-drafter@1.0` | sub_agents: [extractor, rater, drafter]; memory_scope: borrower; output_schema: CreditMemoBundle |
 
-### Rules Engine (3 JDM Rules)
+**Underlying model:** `claude-opus-4-7` for all agents (long-form reasoning, document IQ, narratives, multi-step decisioning). Approved per CLAUDE.md model list.
 
-| Rule | Version | Key Inputs | Key Outputs |
-|---|---|---|---|
-| regulatory_thresholds | 2026-q2 | loan_amount, borrower_type, single_borrower_pct | threshold_breaches |
-| single_borrower_exposure | 1.0 | proposed_amount, existing_exposure_committed, tier1_capital | limit_status, headroom_dollars |
-| approval_matrix_commercial | 1.0 | loan_amount, risk_band, industry_risk_band, single_borrower_pct | approval_authority_required, additional_reviewers |
+### Atomic Services
 
-All rules live in the GoRules Zen rules-service. Thresholds are read from BigQuery threshold tables versioned by effective_date. No hardcoded thresholds exist in code.
+All services below are deterministic, stateless computation units. They do not call other atomic services. Agents call them through the workflow; no agent calls an external API directly.
 
----
+| Service | Inputs | Outputs |
+|---|---|---|
+| `financial-spreader` | extracted_financials | spread_balance_sheet, spread_income_statement, spread_cash_flow, ratios |
+| `dscr-calculator` | spread_income_statement, loan_terms, scenarios | dscr_base, dscr_stressed, min_dscr_breach |
+| `covenant-analyzer` | proposed_covenants, spread_financials, trailing_quarters | covenant_test_results, headroom_pct, violations_projected |
+| `peer-benchmarker` | borrower_naics, borrower_size_band, borrower_ratios | peer_set, ratio_percentiles |
+| `industry-risk-scorer` | naics_code, vintage, geography | industry_risk_band, rationale_factors |
+| `collateral-valuator` | collateral_descriptions, valuation_date | valuation_per_item, haircut_per_item, lendable_value |
+| `exposure-aggregator` | borrower_id, as_of_date | existing_exposure_committed, existing_exposure_outstanding, single_borrower_pct |
+| `ofac-screen` | borrower_id | screen_result (to be promoted to shared library post-pilot) |
 
-## 4. Boundary Conditions (SR 11-7 §II.B)
+### Rules Engine
 
-**Cost ceiling:** $3.00 per invocation
-**Monthly cost cap:** $9,000.00
-**Latency SLO:** p99 ≤ 5 hours from submission to memo ready (18,000,000 ms)
-**Error rate max:** 0.5%
-**Regulatory clock:** Initial credit decision within 5 business days (OCC expectation, communicated to borrower)
+Rules are evaluated by the shared `rules-service` (GoRules Zen wrapper). No business logic lives in Python `if/else` blocks or agent prompts.
 
-**Prohibited actions:**
+| Rule Reference | Version | What It Enforces |
+|---|---|---|
+| `regulatory_thresholds` | 2026-Q2 | OCC threshold compliance on loan amount, borrower type, and single-borrower percentage; blocks pipeline on breach |
+| `single_borrower_exposure` | v1.0 | Computes headroom against Tier 1 capital; satisfies Reg O insider/concentration limits; blocks on limit breach |
+| `approval_matrix_commercial` | v1.0 | Determines required approval authority level and additional reviewers based on loan amount, risk band, and industry risk band |
 
-- No auto-approval of any loan — all decisions go through credit officer
-- No PII in agent prompts — redacting-logger enforced before every model call
-- No cross-borrower memory access — Memory Bank scoped strictly to borrower_id
-- No direct external API calls from agents — all integrations go through atomic services or MCP tools
-- No hardcoded thresholds in code — all thresholds in BigQuery, versioned by effective_date
-- GL posting never fires without credit officer approval — approval-gate@1.0 fragment required
+### Workflow Fragments
 
-**In-scope document types:** 10-K, 10-Q, audited-financials, board-minutes
-
-**Out-of-scope:** Consumer lending, mortgage origination, trade finance letters of credit, loan modifications or restructurings after origination.
-
----
-
-## 5. Governance (SR 11-7 §II.C)
-
-**Inherited controls (from CLAUDE.md platform norms):**
-
-- The 5-step paradigm: handler → atomic services → rules → agent → sinks — no step may be bypassed
-- Approved models only: claude-opus-4-7 and gemini-3-1-flash; all others require explicit architecture exception
-- Forbidden patterns enforced by pre-commit architecture-auditor: no business rules in Python if/else, no atomic service calling another, no YAML workflow over 500 lines, no PII in logs
-- Every irrevocable action goes through the approval queue — never auto-executed
-
-**Use-case-specific controls:**
-
-- Memo prose limited to 1500 words; structure prescribed by credit-memo-occ-v1 template
-- Citation density minimum 0.8 — every claim must link to at least one atomic-service output
-- Borrower financials treated as PII-adjacent; redacted in agent prompts via redacting-logger
-- Memory Bank scope is borrower_id; cross-borrower memory forbidden without architecture review
-- Borrower financials encrypted at rest with CMEK
-- Approval queue access restricted to credit-officer role; auditable via Cloud Logging
-
-**Ongoing monitoring:**
-
-- Quarterly MRM review against SR 11-7 model risk standards
-- Pre-commit architecture audit via /review-uc on every change
-- Pre-promote compliance review before staging or production deployment
-- Regulatory clock monitoring: automated P1 alarm if initial decision not communicated within 5 business days
-- Citation density monitored per invocation; alerts if < 0.8
-
-**Change management:**
-
-- Behavior changes go through /fsi-prompt-update (not direct code edits)
-- Refactors go through /fsi-sync
-- Rule changes require golden test set validation before deployment
+| Fragment | Purpose |
+|---|---|
+| `fan-out-join@1.0` | Parallel atomic service invocation with barrier join |
+| `agent-call-with-retry@1.0` | Resilient agent invocation with exponential back-off |
+| `approval-gate@1.0` | Cloud Workflows callback; blocks GL posting pending credit officer action |
+| `regulatory-clock@1.0` | Publishes to regclock topic; fires alarm at 5-business-day boundary |
+| `sink-fanout@1.0` | Parallel writes to all downstream sinks |
+| `dlq-on-failure@1.0` | DLQ routing on unrecoverable failures |
 
 ---
 
-## 6. Limitations (SR 11-7 §II.A)
+## 4. Limitations and Boundary Conditions (SR 11-7 §II.B)
 
-- Model generates a recommended decision; a human credit officer makes the final credit determination. The model is not the credit decision-maker.
-- Financial spreading quality depends on document quality supplied by the RM. Compiled or unreviewed financials reduce reliability of spread outputs; the memo must flag the financial statement quality.
-- Peer benchmarking uses a synthetic peer set in demo and a configurable industry data feed in production; peer set composition is not audited in real time.
-- Memo output is capped at 1,500 words; complex credits may require supplemental analysis outside this pipeline.
-- Memory Bank retains borrower-level context from prior runs; stale data from a prior period could influence a current memo if the borrower's situation has changed materially. RMs must verify that prior-period context is still applicable.
+**Cost ceiling:** $3.00 per invocation enforced via GCP budget alert. Invocations projected to exceed this limit are throttled before agent calls are made. Monthly ceiling: $9,000.
+
+**Latency budget:** Agent pipeline p99 ≤ 120,000 ms (2 minutes) for memo production. The regulatory clock permits up to 5 business days for the full cycle including human approval. The pipeline targets p95 ≤ 3 business days, p99 ≤ 5 business days end-to-end.
+
+**Regulatory clock:** Initial credit decision must be communicated within 5 business days of complete application receipt (OCC expectation). The `regulatory-clock@1.0` workflow fragment enforces this by publishing countdown events and triggering alarms.
+
+**PII handling:** Borrower financial data is PII-adjacent. The redacting-logger strips or masks sensitive fields before any data is passed to a model call. No PII appears in agent prompts or logs.
+
+**Scope boundary — Memory Bank:** The Memory Bank scope is `borrower_id`. Cross-borrower memory retrieval is architecturally forbidden without explicit architecture review sign-off. This prevents inadvertent borrower data leakage across credit analyses.
+
+**Model non-determinism:** LLM outputs (memo prose, risk band assignments) are non-deterministic. Mitigations: (a) all quantitative claims are sourced from deterministic atomic services; (b) citation density enforcement (≥ 0.8) ensures every claim is traceable; (c) human approval gate intercepts the output before any irrevocable financial action.
+
+**Out-of-scope document types:** The extractor is configured for 10-K, 10-Q, audited-financials, and board-minutes. Unrecognized document types are flagged and returned to the submitter; the pipeline does not attempt extraction on unsupported formats.
+
+**Single-borrower exposure limit breach:** If `single_borrower_exposure` rule evaluates to a limit breach, the pipeline halts and routes to the DLQ with a `LIMIT_BREACH` status. No memo is drafted and no approval queue entry is created.
 
 ---
 
-*Do not edit directly — regenerate from reasons.yaml via /fsi-build-parallel*
+## 5. Governance and Monitoring (SR 11-7 §II.C)
+
+**SLO:** p99 latency ≤ 300s (agent pipeline) with end-to-end regulatory target of 5 business days; agent error rate ≤ 0.5%.
+
+**Regulatory clock:** Initial credit decision communicated within 5 business days of complete application (OCC expectation).
+
+**Model owner:** Commercial Lending Platform — platform-team@bank.example.com
+
+**Approval authority for model changes:**
+- Prompt changes: architecture review via `/fsi-prompt-update`
+- Rule threshold changes: compliance review + versioned JDM artifact update
+- Archetype changes: full `/review-uc` cycle required
+
+**Inherited norms:**
+- The 5-step paradigm (handler → atomic services → rules → agent → sinks); no step may be bypassed
+- Approved models only: `claude-opus-4-7` for reasoning/narrative; `gemini-3-1-flash` for real-time scoring
+- Forbidden patterns enforced by architecture-auditor pre-commit hook
+- Required documentation artifacts for every use case
+
+**Use-case-specific norms:**
+- Memo prose ≤ 1,500 words; section structure prescribed by credit-memo-occ-v1 template
+- Every claim in the memo MUST cite at least one atomic-service output (citation_density_min: 0.8)
+- Borrower financials are PII-adjacent; redact in agent prompts via the redacting-logger
+- Memory Bank scope is `borrower_id`; cross-borrower memory is forbidden without architecture review
+
+---
+
+## 6. Ongoing Monitoring
+
+| Activity | Frequency | Method |
+|---|---|---|
+| Architecture audit | Pre-commit | Automated (architecture-auditor hook) |
+| Compliance review | Pre-promote | Automated (compliance-reviewer) |
+| Security review | Pre-promote | Automated (security-reviewer) |
+| Citation density check | Per memo | Automated (supervisor agent validation) |
+| Risk band distribution check | Weekly | Automated (Cloud Monitoring; alert on drift from 65/25/10 approve/decline/refer targets) |
+| Model performance review | Quarterly | Manual — Commercial Lending Platform + Model Risk Management |
+| REASONS drift check | Every PR touching `agents/` or `workflow/` | Automated pre-commit hook |
+| Regulatory clock breach review | On every breach event | Manual — compliance officer notified via Cloud Alerting |
+| CECL feed validation | Monthly | Manual — Finance confirmed DSCR and risk rating outputs match CECL model inputs |
+
+---
+
+*This document is generated from `usecases/credit-memo-commercial/reasons.yaml`. Do not edit directly — update reasons.yaml and regenerate via `/fsi-build-parallel`.*

@@ -60,7 +60,7 @@ Credit officer reviewing memo in the approval queue (pipeline console, Gemini En
 ### Handler (Step 1)
 | Component | Path |
 |---|---|
-| `credit-memo-commercial` handler | `services/handlers/credit-memo-commercial/main.py` |
+| `credit-memo-commercial` handler | `usecases/credit-memo-commercial/handler/main.py` |
 
 Triggered by `loans.application.submitted`. Enriches the event with borrower master data and financial-statement blob references, then publishes to the workflow.
 

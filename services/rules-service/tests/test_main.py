@@ -53,9 +53,18 @@ if not hasattr(_trace_mod, "get_tracer"):
     _mock_tracer2.start_as_current_span = MagicMock(return_value=_mock_span2)
     _trace_mod.get_tracer = MagicMock(return_value=_mock_tracer2)  # type: ignore[attr-defined]
 
-# Point RULES_DIR at the repo-level rules/ directory so tests resolve real rule files.
+# Point RULES_DIRS at both the framework rules/ and the use-case rules/ so tests
+# can find both shared (regulatory_thresholds) and use-case-specific
+# (credit-memo-eligibility) rule files.
 _REPO_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-os.environ.setdefault("RULES_DIR", os.path.join(_REPO_ROOT, "rules"))
+os.environ["RULES_DIRS"] = ",".join([
+    os.path.join(_REPO_ROOT, "rules"),
+    os.path.join(_REPO_ROOT, "usecases", "credit-memo-commercial", "rules"),
+])
+os.environ.pop("RULES_DIR", None)
+
+# Required env vars (production fails closed if these are unset).
+os.environ.setdefault("GCP_PROJECT", "test-project")
 
 # ---------------------------------------------------------------------------
 # Now it is safe to import the service module.

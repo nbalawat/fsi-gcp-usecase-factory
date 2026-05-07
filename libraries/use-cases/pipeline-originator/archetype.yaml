@@ -13,7 +13,7 @@ description: >-
 # Wires — the canonical 5-step decomposition this archetype produces.
 wires:
   - stage: handler
-    component: "services/handlers/{use_case_id}/main.py"
+    component: "usecases/{use_case_id}/handler/main.py"
   - stage: atomic-services
     component: "fan-out-join@1.0"
   - stage: rules

@@ -308,7 +308,7 @@ operations:
   - id: "console-config"
     kind: "console-config"
     layer: 3
-    path: "ui/usecases/credit-memo-commercial/console.yaml"
+    path: "usecases/credit-memo-commercial/ui/console.yaml"
     spec:
       console_pattern: "pipeline-console"
       stages: ["intake", "spreading", "rating", "drafting", "approval", "posted"]

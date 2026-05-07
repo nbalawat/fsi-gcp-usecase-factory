@@ -59,12 +59,18 @@ deploy_one() {
     echo "    Region: $REGION"
     start_time=$SECONDS
 
-    # Env vars for this service
+    # Non-sensitive env vars
     ENV_VARS="GCP_PROJECT=${PROJECT}"
-    ENV_VARS+=",BQ_DATASET=${BQ_DATASET:-fsi_banking}"
+    ENV_VARS+=",DB_USER=${DB_USER:-fsi_app}"
+    ENV_VARS+=",DB_NAME=${DB_NAME:-fsi_banking}"
+    ENV_VARS+=",INSTANCE_CONNECTION_NAME=${INSTANCE_CONNECTION_NAME:-${PROJECT}:${REGION}:fsi-banking-dev}"
     ENV_VARS+=",GCS_MEMO_BUCKET=${GCS_MEMO_BUCKET:-${PROJECT}-credit-memo-docs}"
     ENV_VARS+=",PUBSUB_TOPIC_CREDIT_MEMO_ENRICHED=${PUBSUB_TOPIC_CREDIT_MEMO_ENRICHED:-projects/${PROJECT}/topics/credit-memo-commercial.enriched}"
     ENV_VARS+=",PUBSUB_TOPIC_CREDIT_MEMO_DLQ=${PUBSUB_TOPIC_CREDIT_MEMO_DLQ:-projects/${PROJECT}/topics/credit-memo-commercial.dlq}"
+
+    # Database password is mounted from Secret Manager — never as a plaintext env var.
+    # The secret 'fsi-banking-db-pass-dev' must exist (created by the shared Cloud SQL TF).
+    DB_PASS_SECRET="${DB_PASS_SECRET:-fsi-banking-db-pass-dev}"
 
     gcloud run deploy "$cloud_run_name" \
         --source="$svc_dir" \
@@ -72,7 +78,9 @@ deploy_one() {
         --project="$PROJECT" \
         --service-account="$SA_EMAIL" \
         --set-env-vars="$ENV_VARS" \
+        --set-secrets="DB_PASS=${DB_PASS_SECRET}:latest" \
         --no-allow-unauthenticated \
+        --ingress=internal \
         --memory=512Mi \
         --cpu=1 \
         --min-instances=0 \

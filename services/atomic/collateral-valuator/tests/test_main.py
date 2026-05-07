@@ -124,10 +124,19 @@ def test_adjusted_value_poor_condition():
     assert result == 700_000.0
 
 
-def test_adjusted_value_unknown_condition_defaults_to_fair():
-    # Unknown condition falls back to 0.85 (same as "fair")
-    result = adjusted_value(1_000_000, "unknown_condition", CONDITION_MULTIPLIERS)
+def test_adjusted_value_unknown_condition_uses_policy_unknown_row():
+    """Unknown condition falls back to policy-defined 'unknown' multiplier (Cloud SQL)."""
+    multipliers = {**CONDITION_MULTIPLIERS, "unknown": 0.85}
+    result = adjusted_value(1_000_000, "weird_condition", multipliers)
     assert result == 850_000.0
+
+
+def test_adjusted_value_unknown_condition_no_fallback_raises():
+    """If neither the named condition nor 'unknown' has a row, refuse to guess."""
+    multipliers = {"new": 1.0, "good": 0.95}  # no 'unknown' row
+    import pytest
+    with pytest.raises(ValueError, match="no condition multiplier"):
+        adjusted_value(1_000_000, "weird_condition", multipliers)
 
 
 # ── compute_haircut tests ───────────────────────────────────────────────────────

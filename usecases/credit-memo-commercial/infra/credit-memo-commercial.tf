@@ -96,6 +96,18 @@ variable "agent_runtime_sa" {
   description = "Service account email for the Agent Runtime (Vertex AI) that invokes atomic services."
 }
 
+# Separate SA for the credit-officer console (pipeline-console UI). Must NOT be
+# the same as agent_runtime_sa — the agent SA must never be able to publish
+# approval events, since that would let the agent self-approve its own decisions.
+variable "credit_officer_app_sa" {
+  type        = string
+  description = "Service account email for the credit-officer console app — the only identity allowed to publish to approval_events."
+  validation {
+    condition     = var.credit_officer_app_sa != var.agent_runtime_sa
+    error_message = "credit_officer_app_sa must be distinct from agent_runtime_sa to prevent self-approval by the agent."
+  }
+}
+
 variable "vpc_connector" {
   type        = string
   description = "VPC Serverless Access Connector self-link for Cloud Run internal ingress."
@@ -751,16 +763,19 @@ resource "google_cloud_tasks_queue" "approval" {
   }
 }
 
-# Approval events are published back to the approval_events topic by the
-# credit officer app (pipeline-console).  The workflow callback handler
-# receives the event and resumes execution.
+# Approval events are published back to the approval_events topic ONLY by the
+# credit-officer console app — never by the agent runtime SA. The workflow
+# callback handler receives the event and resumes execution.
+#
+# CRITICAL: do NOT grant pubsub.publisher on this topic to agent_runtime_sa.
+# That would let the agent fabricate an approval and bypass dual-control on
+# irrevocable GL postings. The validation block on var.credit_officer_app_sa
+# fails the apply if these two SAs are the same.
 resource "google_pubsub_topic_iam_member" "credit_officer_app_publish_approval" {
   project = local.project
   topic   = google_pubsub_topic.approval_events.name
   role    = "roles/pubsub.publisher"
-  # The credit-officer console app's service account; injected at deploy time.
-  # Kept as a variable so each environment (dev/staging/prod) uses its own SA.
-  member = "serviceAccount:${var.agent_runtime_sa}"
+  member  = "serviceAccount:${var.credit_officer_app_sa}"
 }
 
 ###############################################################################

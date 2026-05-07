@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 from typing import Any
 
 import functions_framework
@@ -27,9 +28,34 @@ SERVICE_NAME = "rules-service"
 
 VALID_DECISIONS = {"APPROVE", "DECLINE", "REFER"}
 
-GCP_PROJECT = os.environ.get("GCP_PROJECT", "agentic-experiments")
-_DEFAULT_RULES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "rules")
-RULES_DIR = os.environ.get("RULES_DIR", _DEFAULT_RULES_DIR)
+GCP_PROJECT = os.environ["GCP_PROJECT"]  # fail-closed; never default to a project ID
+
+# The rules-service searches multiple roots so it can serve framework-shared rules
+# (regulatory_thresholds, single_borrower_exposure) AND per-use-case rules
+# (credit-memo-eligibility, etc.). Set RULES_DIRS to a comma-separated list to
+# override; otherwise default to repo-level rules/ + every usecases/<uc>/rules/.
+_REPO_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_DEFAULT_RULES_DIRS = [
+    os.path.join(_REPO_ROOT, "rules"),
+]
+# Auto-discover per-use-case rule directories at startup.
+_uc_root = os.path.join(_REPO_ROOT, "usecases")
+if os.path.isdir(_uc_root):
+    for entry in sorted(os.listdir(_uc_root)):
+        candidate = os.path.join(_uc_root, entry, "rules")
+        if os.path.isdir(candidate):
+            _DEFAULT_RULES_DIRS.append(candidate)
+
+_env_dirs = os.environ.get("RULES_DIRS", "")
+if _env_dirs:
+    RULES_DIRS = [d.strip() for d in _env_dirs.split(",") if d.strip()]
+else:
+    RULES_DIRS = _DEFAULT_RULES_DIRS
+
+# Backwards-compat: RULES_DIR still works as a single override.
+_legacy_single = os.environ.get("RULES_DIR")
+if _legacy_single:
+    RULES_DIRS = [_legacy_single]
 
 _engine: sqlalchemy.Engine | None = None
 _zen_engine: zen.ZenEngine | None = None
@@ -100,17 +126,33 @@ def _write_audit(
         logger.error("audit_write_failed", extra={"error": str(exc)})
 
 
+_RULE_SET_RE = re.compile(r"^[A-Za-z0-9_\-/]+$")
+
+
 def _load_rule_content(rule_set: str) -> str:
     """
-    Load JDM rule JSON from RULES_DIR/<rule_set>.json.
-    Raises FileNotFoundError when not found.
+    Load JDM rule JSON from any configured RULES_DIRS root.
+
+    Path-traversal hardened: rule_set must match [A-Za-z0-9_\\-/]+ and the
+    resolved absolute path must remain under one of the configured roots.
+    Returns the first match across configured roots.
     """
-    rule_path = os.path.join(RULES_DIR, f"{rule_set}.json")
-    rule_path = os.path.normpath(rule_path)
-    if not os.path.isfile(rule_path):
-        raise FileNotFoundError(f"rule_set not found: {rule_set}")
-    with open(rule_path, encoding="utf-8") as fh:
-        return fh.read()
+    if not _RULE_SET_RE.match(rule_set):
+        raise ValueError(f"invalid rule_set name: {rule_set!r}")
+    for rules_dir in RULES_DIRS:
+        rules_root = os.path.realpath(rules_dir)
+        if not os.path.isdir(rules_root):
+            continue
+        rule_path = os.path.realpath(os.path.join(rules_dir, f"{rule_set}.json"))
+        # Common-path check rejects any traversal attempt
+        if os.path.commonpath([rule_path, rules_root]) != rules_root:
+            raise ValueError(f"rule_set escapes RULES_DIRS: {rule_set!r}")
+        if os.path.isfile(rule_path):
+            with open(rule_path, encoding="utf-8") as fh:
+                return fh.read()
+    raise FileNotFoundError(
+        f"rule_set not found in any of {len(RULES_DIRS)} configured rule roots: {rule_set}"
+    )
 
 
 def evaluate_rule(rule_set: str, inputs: dict[str, Any]) -> dict[str, Any]:

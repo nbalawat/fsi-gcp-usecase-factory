@@ -1,7 +1,7 @@
 {
   "scenario_id": "rated-substandard-decline",
   "description": "Decline path: stressed primary-metal manufacturer with DSCR below 1.0 under stress, elevated leverage, PE overhang, and short bank relationship. Agent rates 3-substandard; rules drive decline recommendation.",
-  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_rated_substandard_decline.py",
+  "e2e_test_id": "usecases/credit-memo-commercial/tests/test_e2e.py::test_rated_substandard_decline",
   "borrower_id": "DEMO-MFG-002",
   "application_id": "DEMO-APP-MFG-002-2026",
   "input_fixtures": {
@@ -29,7 +29,7 @@
     },
     {
       "step": "svc-industry-risk-scorer",
-      "expected": "industry_risk_band=3 (elevated); NAICS 331 primary metals — cyclical, China import exposure"
+      "expected": "industry_risk_band=3 (elevated); NAICS 331 primary metals \u2014 cyclical, China import exposure"
     },
     {
       "step": "rule-approval-matrix-commercial",
@@ -48,10 +48,10 @@
     "decision": "declined",
     "risk_band": "3-substandard",
     "decline_reasons": [
-      "Post-close DSCR 0.98 — below minimum covenant 1.10 at inception",
-      "Stressed DSCR 0.72 — insufficient debt service capacity under mild stress",
-      "Post-close leverage 4.95x — exceeds proposed covenant maximum 4.5x",
-      "Compiled (unaudited) financials — reliance caveat",
+      "Post-close DSCR 0.98 \u2014 below minimum covenant 1.10 at inception",
+      "Stressed DSCR 0.72 \u2014 insufficient debt service capacity under mild stress",
+      "Post-close leverage 4.95x \u2014 exceeds proposed covenant maximum 4.5x",
+      "Compiled (unaudited) financials \u2014 reliance caveat",
       "PE leverage overhang not captured in bank debt; hidden leverage risk",
       "Short 3-year bank relationship; limited credit history"
     ],
@@ -66,5 +66,5 @@
     "CreditMemo.citation_density >= 0.8",
     "len(CreditMemo.decline_reasons) >= 3"
   ],
-  "demo_note": "SYNTHETIC SCENARIO — tests decline path triggered by risk rating 3-substandard and covenant breaches at inception"
+  "demo_note": "SYNTHETIC SCENARIO \u2014 tests decline path triggered by risk rating 3-substandard and covenant breaches at inception"
 }

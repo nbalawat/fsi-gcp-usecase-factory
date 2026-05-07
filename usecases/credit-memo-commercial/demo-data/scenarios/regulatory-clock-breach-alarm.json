@@ -1,7 +1,7 @@
 {
   "scenario_id": "regulatory-clock-breach-alarm",
   "description": "Regulatory clock breach simulation: a loan application is submitted but the pipeline stalls (simulated processing failure / missing documents) causing the application to sit in a pending state past 5 business days without an initial credit decision communicated to the borrower. The regulatory-clock workflow fragment must fire an alarm to the credit officer queue and escalate to the compliance team.",
-  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_regulatory_clock_breach_alarm.py",
+  "e2e_test_id": "usecases/credit-memo-commercial/tests/test_e2e.py::test_regulatory_clock_breach_alarm",
   "borrower_id": "DEMO-HLT-002",
   "application_id": "DEMO-APP-HLT-002-2026",
   "input_fixtures": {
@@ -45,8 +45,8 @@
       "REDACTED-COMPLIANCE-TEAM (escalation notification)"
     ],
     "audit_log_entries_required": [
-      "regulatory_clock.breach — application_id, borrower_id, elapsed_business_days, deadline",
-      "dlq.entry — stall_reason, last_retry_at, retry_count"
+      "regulatory_clock.breach \u2014 application_id, borrower_id, elapsed_business_days, deadline",
+      "dlq.entry \u2014 stall_reason, last_retry_at, retry_count"
     ],
     "recovery_action": "Compliance team must manually communicate status to borrower within 1 business day; RM must resolve DLQ item and resubmit to pipeline"
   },
@@ -68,5 +68,5 @@
     "advance_clock_to_breach": true,
     "clock_advance_business_days": 5
   },
-  "demo_note": "SYNTHETIC SCENARIO — simulates regulatory clock breach; tests monitoring, alarm, escalation, and audit trail paths. Does not test credit quality — borrower is incidental."
+  "demo_note": "SYNTHETIC SCENARIO \u2014 simulates regulatory clock breach; tests monitoring, alarm, escalation, and audit trail paths. Does not test credit quality \u2014 borrower is incidental."
 }

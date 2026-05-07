@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@fsi-bank/components": ["packages/components/src/index.ts"],
+      "@fsi-bank/components/*": ["packages/components/src/*"],
+      "@fsi-bank/theme": ["packages/theme/src/index.ts"],
+      "@fsi-bank/api-client": ["packages/api-client/src/index.ts"]
+    }
+  }
+}

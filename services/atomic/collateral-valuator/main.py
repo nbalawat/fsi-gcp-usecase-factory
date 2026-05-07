@@ -138,8 +138,21 @@ def adjusted_value(
     condition: str,
     condition_multipliers: dict[str, float],
 ) -> float:
-    """Apply condition multiplier to estimated value."""
-    multiplier = condition_multipliers.get(condition.lower(), 0.85)
+    """Apply condition multiplier to estimated value.
+
+    Unknown conditions fall back to the policy-defined `unknown` multiplier
+    (loaded from Cloud SQL into condition_multipliers). If no such row exists,
+    raise — never silently apply a hardcoded haircut to an unknown condition.
+    """
+    cond_key = condition.lower()
+    multiplier = condition_multipliers.get(cond_key)
+    if multiplier is None:
+        multiplier = condition_multipliers.get("unknown")
+    if multiplier is None:
+        raise ValueError(
+            f"no condition multiplier for {condition!r} and no 'unknown' fallback "
+            "configured in Cloud SQL — refusing to compute an arbitrary haircut"
+        )
     return round(estimated_value * multiplier, 2)
 
 

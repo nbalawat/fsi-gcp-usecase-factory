@@ -53,6 +53,38 @@ CREATE TABLE IF NOT EXISTS loan_exposures (
 CREATE INDEX IF NOT EXISTS idx_loan_exposures_borrower ON loan_exposures (borrower_id, as_of_date DESC);
 CREATE INDEX IF NOT EXISTS idx_loan_exposures_status ON loan_exposures (status);
 
+-- Per-service threshold tables for services with structured config beyond a single
+-- threshold_name → threshold_value mapping (e.g. collateral haircut tables).
+CREATE TABLE IF NOT EXISTS collateral_valuator_thresholds (
+    id                   BIGSERIAL PRIMARY KEY,
+    row_type             VARCHAR(50) NOT NULL,   -- haircut_config | condition_multiplier
+    key_name             VARCHAR(100) NOT NULL,
+    base_haircut         DECIMAL(10, 6),
+    age_decay_per_year   DECIMAL(10, 6),
+    max_haircut          DECIMAL(10, 6),
+    multiplier_value     DECIMAL(10, 6),
+    effective_date       DATE NOT NULL,
+    created_at           TIMESTAMP DEFAULT NOW(),
+    UNIQUE (row_type, key_name, effective_date)
+);
+CREATE INDEX IF NOT EXISTS idx_cv_thresholds_lookup ON collateral_valuator_thresholds (row_type, key_name, effective_date DESC);
+
+-- Seed collateral-valuator thresholds. The 'unknown' condition_multiplier row is
+-- mandatory; without it, the service refuses to value collateral whose condition
+-- isn't recognised (no silent hardcoded fallback).
+INSERT INTO collateral_valuator_thresholds (row_type, key_name, base_haircut, age_decay_per_year, max_haircut, multiplier_value, effective_date) VALUES
+    ('haircut_config',        'real_estate',     0.10, 0.005, 0.30, NULL, '2024-01-01'),
+    ('haircut_config',        'equipment',       0.20, 0.020, 0.60, NULL, '2024-01-01'),
+    ('haircut_config',        'inventory',       0.30, 0.000, 0.50, NULL, '2024-01-01'),
+    ('haircut_config',        'receivables',     0.15, 0.000, 0.30, NULL, '2024-01-01'),
+    ('haircut_config',        'cash',            0.00, 0.000, 0.05, NULL, '2024-01-01'),
+    ('condition_multiplier',  'new',             NULL, NULL,  NULL, 1.00, '2024-01-01'),
+    ('condition_multiplier',  'good',            NULL, NULL,  NULL, 0.95, '2024-01-01'),
+    ('condition_multiplier',  'fair',            NULL, NULL,  NULL, 0.85, '2024-01-01'),
+    ('condition_multiplier',  'poor',            NULL, NULL,  NULL, 0.70, '2024-01-01'),
+    ('condition_multiplier',  'unknown',         NULL, NULL,  NULL, 0.85, '2024-01-01')
+ON CONFLICT DO NOTHING;
+
 -- Seed thresholds for credit-memo-commercial
 INSERT INTO thresholds (service_name, threshold_name, threshold_value, effective_date) VALUES
     ('dscr-calculator',       'dscr_pass_min',                    1.25,          '2024-01-01'),

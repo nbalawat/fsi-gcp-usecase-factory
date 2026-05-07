@@ -10,7 +10,6 @@ NO business logic lives here.  Rules belong in services/rules-service/.
 
 import base64
 import json
-import logging
 import os
 import uuid
 from datetime import datetime, timezone
@@ -18,14 +17,14 @@ from datetime import datetime, timezone
 import functions_framework
 from google.cloud import pubsub_v1
 
-# ---------------------------------------------------------------------------
-# Structured logger — never use print() in production (see CLAUDE.md)
-# ---------------------------------------------------------------------------
-logging.basicConfig(
-    format='{"severity":"%(levelname)s","message":"%(message)s","logger":"%(name)s"}',
-    level=logging.INFO,
-)
-logger = logging.getLogger("credit-memo-commercial.handler")
+try:
+    from bank.logging import redacting_logger
+except ImportError:
+    import logging as _logging
+    def redacting_logger(name: str) -> _logging.Logger:  # type: ignore[misc]
+        return _logging.getLogger(name)
+
+logger = redacting_logger("credit-memo-commercial.handler")
 
 # ---------------------------------------------------------------------------
 # Required fields on the inbound event payload
@@ -46,7 +45,8 @@ def _get_publisher() -> pubsub_v1.PublisherClient:
 
 
 def _enriched_topic_path() -> str:
-    project = os.environ.get("GCP_PROJECT", "agentic-experiments")
+    # Fail-closed: GCP_PROJECT must be set; never default to a hardcoded project ID.
+    project = os.environ["GCP_PROJECT"]
     topic = os.environ.get("ENRICHED_TOPIC", "credit-memo-commercial.enriched")
     return _get_publisher().topic_path(project, topic)
 

@@ -64,7 +64,7 @@ Sinks are idempotent. They handle exactly-once semantics for their destination, 
 
 ## Orchestration
 
-Cloud Workflows orchestrates the 5 steps for each use case. One YAML per use case at `workflows/{use_case}.yaml`. The workflow:
+Cloud Workflows orchestrates the 5 steps for each use case. One YAML per use case at `usecases/{use_case}/workflow.yaml`. The workflow:
 
 - Receives the event from the handler
 - Calls atomic services (often in parallel)

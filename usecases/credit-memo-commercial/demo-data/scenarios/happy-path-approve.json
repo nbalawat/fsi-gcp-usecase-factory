@@ -1,7 +1,7 @@
 {
   "scenario_id": "happy-path-approve",
   "description": "End-to-end approval path: strong mid-market manufacturer with healthy ratios, 12-year relationship, equipment term loan within exposure limits",
-  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_happy_path_approve.py",
+  "e2e_test_id": "usecases/credit-memo-commercial/tests/test_e2e.py::test_happy_path_approve",
   "borrower_id": "DEMO-MFG-001",
   "application_id": "DEMO-APP-MFG-001-2026",
   "input_fixtures": {
@@ -38,11 +38,11 @@
     },
     {
       "step": "svc-collateral-valuator",
-      "expected": "lendable_value=$12.9M vs loan $8M — LTV 62%; adequate"
+      "expected": "lendable_value=$12.9M vs loan $8M \u2014 LTV 62%; adequate"
     },
     {
       "step": "svc-exposure-aggregator",
-      "expected": "Post-close committed exposure $11.2M; single_borrower_pct=1.3% — well within limit"
+      "expected": "Post-close committed exposure $11.2M; single_borrower_pct=1.3% \u2014 well within limit"
     },
     {
       "step": "rule-regulatory-thresholds",
@@ -92,5 +92,5 @@
     "ExposureAggregator.single_borrower_pct < 0.08",
     "RegulatoryClock.elapsed_business_days < 5"
   ],
-  "demo_note": "SYNTHETIC SCENARIO — tests full happy path through all 5 pipeline stages to approval queue"
+  "demo_note": "SYNTHETIC SCENARIO \u2014 tests full happy path through all 5 pipeline stages to approval queue"
 }

@@ -1,0 +1,49 @@
+# Files to exclude from gcloud builds.
+# Critical: prevents secrets/credentials from being uploaded to Cloud Build.
+
+# Secrets — NEVER ship these to a build context
+keys/
+*.json.key
+dev.env
+dev.env.local
+.env
+*.pem
+
+# Per-machine cache
+.fsi-state/
+.fsi-state.json
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfplan.binary
+
+# Node
+node_modules/
+
+# Repo-only assets that don't need to ship in any container
+docs/methodology/
+agentic-banking-platform.tar.gz
+agentic-banking-platform.zip
