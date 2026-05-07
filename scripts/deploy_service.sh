@@ -72,6 +72,11 @@ deploy_one() {
     # The secret 'fsi-banking-db-pass-dev' must exist (created by the shared Cloud SQL TF).
     DB_PASS_SECRET="${DB_PASS_SECRET:-fsi-banking-db-pass-dev}"
 
+    # Ingress: in dev we use 'all' so smoke tests can hit the service via *.run.app
+    # (still auth-required, --no-allow-unauthenticated). In prod set INGRESS=internal
+    # so only Cloud Workflows/Pub/Sub-push (internal Google services) can call.
+    INGRESS="${INGRESS:-all}"
+
     gcloud run deploy "$cloud_run_name" \
         --source="$svc_dir" \
         --region="$REGION" \
@@ -80,7 +85,9 @@ deploy_one() {
         --set-env-vars="$ENV_VARS" \
         --set-secrets="DB_PASS=${DB_PASS_SECRET}:latest" \
         --no-allow-unauthenticated \
-        --ingress=internal \
+        --ingress="$INGRESS" \
+        --vpc-connector="${VPC_CONNECTOR:-fsi-banking-dev}" \
+        --vpc-egress=private-ranges-only \
         --memory=512Mi \
         --cpu=1 \
         --min-instances=0 \

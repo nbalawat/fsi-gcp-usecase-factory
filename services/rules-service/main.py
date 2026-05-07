@@ -78,6 +78,7 @@ def _get_engine() -> sqlalchemy.Engine:
                     user=os.environ["DB_USER"],
                     password=os.environ["DB_PASS"],
                     db=os.environ.get("DB_NAME", "fsi_banking"),
+                    ip_type=os.environ.get("DB_IP_TYPE", "PRIVATE"),
                 )
 
             _engine = sqlalchemy.create_engine("postgresql+pg8000://", creator=getconn, pool_size=2, max_overflow=0)

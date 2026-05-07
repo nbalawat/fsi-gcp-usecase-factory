@@ -41,3 +41,4 @@ tfplan*
 
 # Node
 node_modules/
+infra/shared/terraform.tfvars
