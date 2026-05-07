@@ -1,0 +1,12 @@
+{
+  "description": "Extract from a simple 10-K with clear income statement",
+  "input": {
+    "borrower_id": "DEMO-MFG-001",
+    "documents": [{"type": "10-K", "period": "2025", "text_excerpt": "Revenue: $85,000,000. Cost of goods sold: $51,000,000. EBITDA: $14,450,000. Interest expense: $1,700,000. Net income: $8,500,000."}]
+  },
+  "expected_output": {
+    "income_statement": {"revenue": 85000000, "cogs": 51000000, "ebitda": 14450000},
+    "period": "2025",
+    "period_type": "annual"
+  }
+}

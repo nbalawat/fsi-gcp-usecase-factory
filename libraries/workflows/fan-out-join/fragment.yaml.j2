@@ -1,0 +1,27 @@
+- fan_out_{{join_key}}:
+    parallel:
+      shared: [{{join_key}}]
+      branches:
+{%- for b in branches %}
+        - call_{{b.name}}:
+            steps:
+              - http_{{b.name}}:
+                  call: http.post
+                  args:
+                    url: {{b.service_url}}
+                    headers:
+                      X-Cloud-Trace-Context: ${context_id}
+                    body: {{b.body_template}}
+                    timeout: 10
+                  retry:
+                    predicate: ${http.default_retry_predicate}
+                    max_retries: 3
+                    backoff:
+                      initial_delay: 1
+                      max_delay: 10
+                      multiplier: 2
+                  result: result_{{b.name}}
+              - merge_{{b.name}}:
+                  assign:
+                    - {{join_key}}.{{b.name}}: ${result_{{b.name}}.body}
+{%- endfor %}

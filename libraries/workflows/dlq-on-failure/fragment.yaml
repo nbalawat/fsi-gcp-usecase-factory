@@ -1,0 +1,30 @@
+name: dlq-on-failure
+version: "1.0"
+
+description: >-
+  emit structured DLQ message (step_name, error, retry count, original
+  payload) to dlq_topic → re-raise so parent workflow can fail-fast or
+  continue per policy.
+
+parameters:
+  - name: dlq_topic
+    type: string
+    description: Pub/Sub topic receiving the DLQ envelope.
+  - name: original_payload_var
+    type: string
+    description: >-
+      Name of the workflow variable holding the input payload that failed
+      (for replay). Common values: "event", "enriched", "agent_input".
+  - name: step_name
+    type: string
+    description: >-
+      Logical name of the failing step (used as the DLQ envelope's
+      "failed_step" field for diagnostics + dashboarding).
+  - name: error_var
+    type: string
+    description: >-
+      Name of the captured exception variable from the parent's `except:
+      as: <name>` clause. Default "e".
+
+last_verified: 2026-05-04
+used_by: []

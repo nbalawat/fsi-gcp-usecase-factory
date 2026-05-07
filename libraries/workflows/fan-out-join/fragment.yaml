@@ -1,0 +1,23 @@
+name: fan-out-join
+version: "1.0"
+
+description: >-
+  parallel branches → atomic-service HTTP calls → await all → aggregate
+  results into named keys on a shared workflow var (join_key).
+
+parameters:
+  - name: branches
+    type: list[object]
+    description: >-
+      List of {name, service_url, body_template}. Each branch becomes a
+      parallel HTTP POST to service_url with body_template (Cloud Workflows
+      expression string). The result is assigned to ${join_key}.<name>.
+  - name: join_key
+    type: string
+    description: >-
+      Name of the shared workflow variable that collects all branch results
+      (e.g. "enriched"). Must be declared in the parent workflow's assign
+      block before this fragment runs.
+
+last_verified: 2026-05-04
+used_by: []

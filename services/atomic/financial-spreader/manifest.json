@@ -1,0 +1,29 @@
+{
+  "name": "financial-spreader",
+  "version": "0.1.0",
+  "description": "Parse extracted financials into standardised spread statements and credit ratios.",
+  "inputs": [
+    "income_statement",
+    "balance_sheet",
+    "cash_flow",
+    "context_id",
+    "borrower_id",
+    "period"
+  ],
+  "outputs": [
+    "spread_income_statement",
+    "spread_balance_sheet",
+    "spread_cash_flow",
+    "ratios"
+  ],
+  "endpoint": "https://fsi-atomic-financial-spreader-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 500,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "internal",
+  "pii_fields": [
+    "borrower_id"
+  ]
+}

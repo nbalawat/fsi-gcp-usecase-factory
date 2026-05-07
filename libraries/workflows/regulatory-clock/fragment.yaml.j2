@@ -1,0 +1,57 @@
+- regclock_init:
+    assign:
+      - regclock_start_ts: ${sys.now()}
+      - regclock_deadline: {{deadline_iso}}
+      - regclock_thresholds: {{alert_thresholds_pct}}
+      - regclock_fired: []
+
+- regclock_monitor:
+    parallel:
+      shared: [regclock_fired]
+      branches:
+        - clock_branch:
+            steps:
+              - clock_loop:
+                  for:
+                    value: pct
+                    in: {{alert_thresholds_pct}}
+                    steps:
+                      - sleep_until_pct:
+                          call: sys.sleep_until
+                          args:
+                            time: ${time.format(regclock_start_ts + (time.parse(regclock_deadline) - regclock_start_ts) * pct / 100)}
+                      - publish_threshold:
+                          call: googleapis.pubsub.v1.projects.topics.publish
+                          args:
+                            topic: {{alert_topic}}
+                            body:
+                              messages:
+                                - attributes:
+                                    context_id: ${context_id}
+                                    kind: "regclock-threshold"
+                                    pct: ${string(pct)}
+                                  data: ${base64.encode(json.encode({"deadline": regclock_deadline, "pct": pct}))}
+                      - record_fired:
+                          assign:
+                            - regclock_fired: ${list.concat(regclock_fired, pct)}
+              - sleep_until_breach:
+                  call: sys.sleep_until
+                  args:
+                    time: ${regclock_deadline}
+              - publish_breach:
+                  call: googleapis.pubsub.v1.projects.topics.publish
+                  args:
+                    topic: {{alert_topic}}
+                    body:
+                      messages:
+                        - attributes:
+                            context_id: ${context_id}
+                            kind: "regclock-breach"
+                            action: "{{breach_action}}"
+                          data: ${base64.encode(json.encode({"deadline": regclock_deadline}))}
+{%- if breach_action == 'terminate-workflow' %}
+              - terminate_on_breach:
+                  raise:
+                    code: "RegulatoryClockBreach"
+                    message: ${"Deadline breached: " + regclock_deadline}
+{%- endif %}

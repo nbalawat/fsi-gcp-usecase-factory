@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://internal.bank/schemas/reasons.json",
+  "title": "REASONS canvas",
+  "description": "Structured spec for an FSI use case. Every use case under usecases/<name>/ MUST have a reasons.yaml validating against this schema.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "use_case_id",
+    "owner",
+    "phase",
+    "requirements",
+    "entities",
+    "approach",
+    "structure",
+    "operations",
+    "norms",
+    "safeguards"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "REASONS schema version this file conforms to."
+    },
+    "use_case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$",
+      "description": "Kebab-case identifier matching the directory name under usecases/."
+    },
+    "owner": {
+      "type": "object",
+      "required": ["team", "primary_contact"],
+      "additionalProperties": false,
+      "properties": {
+        "team": { "type": "string" },
+        "primary_contact": { "type": "string" }
+      }
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["intake", "scaffolded", "piloting", "promoted", "retired"]
+    },
+    "requirements": {
+      "type": "object",
+      "description": "R — what problem and definition of done.",
+      "required": ["summary", "trigger_event", "outcome", "primary_user", "regulatory_regime", "latency_budget"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string", "minLength": 10 },
+        "trigger_event": { "type": "string", "description": "Pub/Sub topic or event name that starts the workflow" },
+        "outcome": { "type": "string", "description": "What success looks like" },
+        "primary_user": { "type": "string", "description": "The human role this serves" },
+        "regulatory_regime": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "OCC, BSA, SR 11-7, OFAC, CFPB, etc."
+        },
+        "latency_budget": {
+          "type": "string",
+          "enum": ["sub-second", "seconds", "minutes", "hours", "days"]
+        }
+      }
+    },
+    "entities": {
+      "type": "object",
+      "description": "E — domain model and relationships.",
+      "required": ["primary", "relationships"],
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "kind": { "type": "string", "description": "has-many | belongs-to | references | derives-from" }
+            }
+          }
+        }
+      }
+    },
+    "approach": {
+      "type": "object",
+      "description": "A — solution strategy and trade-offs.",
+      "required": ["use_case_archetype", "multi_agent_pattern", "trade_offs"],
+      "additionalProperties": false,
+      "properties": {
+        "use_case_archetype": {
+          "type": "string",
+          "description": "Reference to libraries/use-cases/<archetype>@<version>",
+          "pattern": "^[a-z][a-z0-9-]*@[0-9]+\\.[0-9]+$"
+        },
+        "multi_agent_pattern": {
+          "type": "string",
+          "description": "Reference to libraries/patterns/<name>@<version> or 'single-agent'",
+          "pattern": "^([a-z][a-z0-9-]*@[0-9]+\\.[0-9]+|single-agent)$"
+        },
+        "trade_offs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Stated trade-offs the team accepted (e.g. 'Verbosity over speed for memo prose')"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "description": "S — components and dependencies. Library references are version-pinned.",
+      "required": ["console_pattern", "agent_archetypes", "atomic_services_reused", "atomic_services_new", "rules", "workflow_fragments", "sinks"],
+      "additionalProperties": false,
+      "properties": {
+        "console_pattern": {
+          "type": "string",
+          "enum": ["pipeline-console", "investigations-console", "realtime-console", "surveillance-console", "run-console", "recommendations-console"]
+        },
+        "agent_archetypes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "archetype", "params"],
+            "additionalProperties": false,
+            "properties": {
+              "role": { "type": "string", "description": "Role within the multi-agent pattern (e.g. extractor, drafter)" },
+              "archetype": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*@[0-9]+\\.[0-9]+$",
+                "description": "Reference to libraries/agents/<archetype>@<version>"
+              },
+              "params": { "type": "object" }
+            }
+          }
+        },
+        "atomic_services_reused": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*@[0-9]+\\.[0-9]+$"
+          },
+          "description": "Pinned references into services/atomic/"
+        },
+        "atomic_services_new": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "description": "New services this use case introduces — must be promoted to library after second use"
+        },
+        "rules": {
+          "type": "array",
+          "items": { "type": "string", "description": "Pinned references into rules/" }
+        },
+        "workflow_fragments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*@[0-9]+\\.[0-9]+$"
+          },
+          "description": "Pinned references into libraries/workflows/"
+        },
+        "sinks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "description": "O — concrete buildable artifacts. Each entry maps 1:1 to a builder agent invocation in /fsi-build-parallel.",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "layer", "path", "spec"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Stable id, kebab-case, unique within this file" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "handler",
+              "atomic-service",
+              "jdm-rule",
+              "agent-specialist",
+              "agent-supervisor",
+              "workflow",
+              "terraform",
+              "console-config",
+              "e2e-test",
+              "demo-data",
+              "compliance-doc"
+            ]
+          },
+          "layer": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Parallel-build DAG layer: 1 = leaves (handler/services/rules/data/docs); 2 = agents; 3 = workflow/terraform/UI/tests; 4 = full review"
+          },
+          "path": {
+            "type": "string",
+            "description": "Repo-relative output path the builder writes to (must be unique across operations)"
+          },
+          "spec": {
+            "type": "object",
+            "description": "Builder-specific input spec. Validated by per-builder schema, not here."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "ids of operations that must complete first (within or across layers)"
+          }
+        }
+      }
+    },
+    "norms": {
+      "type": "object",
+      "description": "N — cross-cutting standards. Inherited from CLAUDE.md plus use-case-specific overrides.",
+      "required": ["inherited", "use_case_specific"],
+      "additionalProperties": false,
+      "properties": {
+        "inherited": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "References to global norms in CLAUDE.md (by section heading)"
+        },
+        "use_case_specific": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "safeguards": {
+      "type": "object",
+      "description": "S — non-negotiable invariants. Mechanically enforced where possible.",
+      "required": ["slo", "cost", "regulatory_clock", "security"],
+      "additionalProperties": false,
+      "properties": {
+        "slo": {
+          "type": "object",
+          "required": ["latency_p99_ms", "error_rate_max"],
+          "additionalProperties": false,
+          "properties": {
+            "latency_p99_ms": { "type": "integer", "minimum": 1 },
+            "error_rate_max": { "type": "number", "minimum": 0, "maximum": 1 },
+            "throughput_min_per_sec": { "type": "number" }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "required": ["per_invocation_max_usd"],
+          "additionalProperties": false,
+          "properties": {
+            "per_invocation_max_usd": { "type": "number", "minimum": 0 },
+            "monthly_max_usd": { "type": "number" }
+          }
+        },
+        "regulatory_clock": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "deadline": { "type": "string", "description": "e.g. 'within 30 days of detection'" },
+            "regulator": { "type": "string" }
+          }
+        },
+        "security": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PII handling, encryption, isolation rules specific to this use case"
+        }
+      }
+    }
+  }
+}

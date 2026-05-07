@@ -1,0 +1,83 @@
+# Rendered with:
+#   sinks:
+#     - {name: officer_queue, kind: pubsub, target: projects/bank-prod/topics/credit-officer-queue, body_template: '${final_memo}'}
+#     - {name: doc_store,     kind: gcs,    target: gs://bank-prod-credit-memos/memo.json,           body_template: '${final_memo}'}
+#   require_all: true
+#   dlq_topic: projects/bank-prod/topics/credit-memo-dlq
+
+- init_sink_results:
+    assign:
+      - sink_results: {}
+      - sink_failures: []
+
+- fan_out_sinks:
+    parallel:
+      shared: [sink_results, sink_failures]
+      branches:
+        - sink_officer_queue:
+            steps:
+              - try_officer_queue:
+                  try:
+                    steps:
+                      - publish_officer_queue:
+                          call: googleapis.pubsub.v1.projects.topics.publish
+                          args:
+                            topic: projects/bank-prod/topics/credit-officer-queue
+                            body:
+                              messages:
+                                - attributes:
+                                    context_id: ${context_id}
+                                  data: ${base64.encode(json.encode(${final_memo}))}
+                          result: r_officer_queue
+                      - mark_ok_officer_queue:
+                          assign:
+                            - sink_results.officer_queue: "ok"
+                  except:
+                    as: e
+                    steps:
+                      - mark_fail_officer_queue:
+                          assign:
+                            - sink_results.officer_queue: "fail"
+                            - sink_failures: ${list.concat(sink_failures, {"name": "officer_queue", "error": e.message})}
+        - sink_doc_store:
+            steps:
+              - try_doc_store:
+                  try:
+                    steps:
+                      - gcs_doc_store:
+                          call: googleapis.storage.v1.objects.insert
+                          args:
+                            bucket: ${text.split("gs://bank-prod-credit-memos/memo.json", "/")[2]}
+                            uploadType: media
+                            name: ${text.replace_all("gs://bank-prod-credit-memos/memo.json", "gs://" + text.split("gs://bank-prod-credit-memos/memo.json", "/")[2] + "/", "")}
+                            body: ${final_memo}
+                          result: r_doc_store
+                      - mark_ok_doc_store:
+                          assign:
+                            - sink_results.doc_store: "ok"
+                  except:
+                    as: e
+                    steps:
+                      - mark_fail_doc_store:
+                          assign:
+                            - sink_results.doc_store: "fail"
+                            - sink_failures: ${list.concat(sink_failures, {"name": "doc_store", "error": e.message})}
+
+- evaluate_sink_outcome:
+    switch:
+      - condition: ${len(sink_failures) > 0 }
+        steps:
+          - dlq_aggregate:
+              call: googleapis.pubsub.v1.projects.topics.publish
+              args:
+                topic: projects/bank-prod/topics/credit-memo-dlq
+                body:
+                  messages:
+                    - attributes:
+                        context_id: ${context_id}
+                        reason: "sink-fanout-failure"
+                      data: ${base64.encode(json.encode({"failures": sink_failures, "results": sink_results}))}
+          - raise_aggregate:
+              raise:
+                code: "SinkFanoutFailure"
+                message: ${"Sink failures: " + json.encode(sink_failures)}

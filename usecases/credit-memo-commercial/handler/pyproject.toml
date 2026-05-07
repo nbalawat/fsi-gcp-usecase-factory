@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "credit-memo-commercial-handler"
+version = "0.1.0"
+description = "Cloud Run Pub/Sub push handler for the credit-memo-commercial use case (step 1 of 5)"
+requires-python = ">=3.11"
+dependencies = [
+    "functions-framework>=3.5.0",
+    "google-cloud-pubsub>=2.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools.packages.find]
+where = ["."]

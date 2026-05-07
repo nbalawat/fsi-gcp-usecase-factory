@@ -1,0 +1,43 @@
+# Secrets / credentials — never commit
+keys/
+*.json.key
+dev.env
+dev.env.local
+.env
+*.pem
+
+# OS / editor noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+
+# Build artifacts
+dist/
+build/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfplan.binary
+tfplan*
+
+# Per-machine runtime cache (Cloud Run URLs etc.)
+.fsi-state/
+.fsi-state.json
+
+# Node
+node_modules/

@@ -1,0 +1,37 @@
+{
+  "_fixture_meta": {
+    "agent": "drafter",
+    "scenario": "exposure-limit-decline",
+    "borrower_id": "DEMO-HLT-001",
+    "context_id": "credit-memo-commercial-test-exposure-limit-decline-001",
+    "input_hash": "hlt001_rating1pass_exposure_breach",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "credit_memo",
+  "output_value": {
+    "recommendation": "DECLINE",
+    "risk_band": "1-pass",
+    "approval_authority": "board-risk-committee",
+    "word_count": 1410,
+    "citation_density": 0.93,
+    "sections": [
+      "Executive Summary",
+      "Borrower Credit Quality (Strong)",
+      "Exposure Limit Analysis",
+      "Regulatory Limit Breach Detail",
+      "Decline Rationale",
+      "Recommendation"
+    ],
+    "decline_reasons": [
+      "Single-borrower exposure limit breach: $73.5M committed (8.65%) exceeds 8.0% Tier 1 capital limit",
+      "Breach amount: $5.1M over regulatory limit",
+      "OCC 12 CFR Part 32 lending limit applies",
+      "Board Risk Committee escalation required"
+    ],
+    "suggested_revisions": [],
+    "regulatory_citations": ["OCC 12 CFR Part 32", "12 CFR 32"],
+    "memo_status": "draft"
+  }
+}

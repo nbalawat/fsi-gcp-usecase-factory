@@ -1,0 +1,71 @@
+{
+  "scenario_id": "covenant-projection-violation-return-for-revision",
+  "description": "Return-for-revision path: Summit Outfitters is a solid BBB retailer with strong full-year DSCR. However, the covenant-analyzer projects a Q3 seasonal trough breach of the proposed 1.25 minimum DSCR (projected 1.18 at trough). Credit quality passes; the pipeline returns the application to the RM with a specific covenant restructuring recommendation rather than declining.",
+  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_covenant_projection_violation_return_for_revision.py",
+  "borrower_id": "DEMO-RET-001",
+  "application_id": "DEMO-APP-RET-001-2026",
+  "input_fixtures": {
+    "profile": "borrowers/DEMO-RET-001/profile.json",
+    "financials": "borrowers/DEMO-RET-001/financials/10k_2025.json",
+    "loan_application": "borrowers/DEMO-RET-001/loan_application.json",
+    "peer_set": "peer_sets/retail.json"
+  },
+  "trailing_quarter_data": {
+    "q2_2025_trailing_dscr": 2.95,
+    "q3_2025_trailing_dscr": 1.18,
+    "q4_2025_trailing_dscr": 3.18,
+    "q1_2026_trailing_dscr": 2.80,
+    "seasonal_trough_quarter": "Q3",
+    "seasonal_trough_month": "October"
+  },
+  "pipeline_steps": [
+    {
+      "step": "svc-financial-spreader",
+      "expected": "Full-year DSCR=3.18; strong; leverage=0.53"
+    },
+    {
+      "step": "svc-dscr-calculator",
+      "expected": "dscr_base=3.18 (full-year); scenarios include quarterly trailing — Q3 trough 1.18"
+    },
+    {
+      "step": "svc-covenant-analyzer",
+      "expected": "violations_projected=true; violating_covenant='Minimum DSCR 1.25'; violating_period='Q3 seasonal trough'; headroom_pct=-5.6% at trough; suggested_revision='Q3 step-down covenant or fiscal-year-end only measurement'"
+    },
+    {
+      "step": "rule-approval-matrix-commercial",
+      "expected": "approval_authority_required=credit-committee; additional action: return-for-revision on covenant structure"
+    },
+    {
+      "step": "agent-rater",
+      "expected": "risk_band=2-special-mention due to covenant projection concern; full-year credit quality 1-pass"
+    },
+    {
+      "step": "agent-drafter",
+      "expected": "Memo documents strong annual metrics; flags projected Q3 covenant breach; proposes two covenant restructuring alternatives for RM consideration; recommendation=RETURN-FOR-REVISION"
+    }
+  ],
+  "expected_outcome": {
+    "decision": "returned",
+    "risk_band": "2-special-mention",
+    "return_reasons": [
+      "Proposed Minimum DSCR covenant 1.25 projects breach in Q3 seasonal trough (projected 1.18)",
+      "Seasonal retail cash flow pattern creates systematic annual covenant breach risk",
+      "Covenant structure must be revised before credit committee can approve"
+    ],
+    "suggested_revisions": [
+      "Option A: Q3 step-down — covenant 1.10 August 1 through October 31, 1.25 remainder of year",
+      "Option B: Measure DSCR on fiscal-year-end (January 31) basis only — eliminates seasonal noise"
+    ],
+    "regulatory_clock_breach": false
+  },
+  "assertions": [
+    "CreditMemo.recommendation == 'RETURN_FOR_REVISION'",
+    "CreditMemo.risk_band in ['1-pass', '2-special-mention']",
+    "CovenantAnalyzer.violations_projected == true",
+    "CovenantAnalyzer.violating_period contains 'Q3'",
+    "len(CreditMemo.suggested_revisions) >= 1",
+    "CreditMemo.citation_density >= 0.8"
+  ],
+  "critical_test_assertion": "Decision must be RETURN_FOR_REVISION (not DECLINE) — validates that covenant projection violation triggers revision path, not outright decline, when credit quality is otherwise acceptable",
+  "demo_note": "SYNTHETIC SCENARIO — tests return-for-revision path; validates covenant-analyzer seasonal projection logic and drafter revision recommendation"
+}

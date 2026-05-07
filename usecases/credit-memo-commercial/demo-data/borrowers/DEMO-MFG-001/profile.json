@@ -1,0 +1,40 @@
+{
+  "borrower_id": "DEMO-MFG-001",
+  "legal_name": "Apex Precision Components LLC",
+  "dba": "Apex Precision",
+  "entity_type": "LLC",
+  "state_of_incorporation": "OH",
+  "naics_code": "332",
+  "naics_description": "Fabricated Metal Product Manufacturing",
+  "industry_segment": "mid-market-manufacturing",
+  "employee_count": 850,
+  "annual_revenue_usd": 85000000,
+  "credit_rating": "BBB-",
+  "rating_agency": "S&P",
+  "bank_relationship_years": 12,
+  "relationship_start_year": 2013,
+  "primary_bank_contact": "REDACTED-RM-001",
+  "headquarters": {
+    "city": "Dayton",
+    "state": "OH",
+    "region": "Midwest"
+  },
+  "products": [
+    "Precision-machined structural components",
+    "Custom metal stampings",
+    "Industrial fastener assemblies"
+  ],
+  "primary_markets": ["Automotive OEM", "Aerospace (Tier 2)", "Industrial Equipment"],
+  "ownership_structure": "Private — family owned, second generation",
+  "key_customers_concentration": "Top-3 customers represent 42% of revenue",
+  "existing_facilities": [
+    {
+      "facility_type": "Term Loan",
+      "outstanding_balance_usd": 3200000,
+      "maturity": "2027-06-30",
+      "rate_type": "floating",
+      "spread_bps": 225
+    }
+  ],
+  "demo_note": "SYNTHETIC DATA — no real PII — for testing credit-memo-commercial pipeline only"
+}

@@ -1,0 +1,96 @@
+{
+  "scenario_id": "happy-path-approve",
+  "description": "End-to-end approval path: strong mid-market manufacturer with healthy ratios, 12-year relationship, equipment term loan within exposure limits",
+  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_happy_path_approve.py",
+  "borrower_id": "DEMO-MFG-001",
+  "application_id": "DEMO-APP-MFG-001-2026",
+  "input_fixtures": {
+    "profile": "borrowers/DEMO-MFG-001/profile.json",
+    "financials": "borrowers/DEMO-MFG-001/financials/10k_2025.json",
+    "loan_application": "borrowers/DEMO-MFG-001/loan_application.json",
+    "peer_set": "peer_sets/manufacturing.json"
+  },
+  "pipeline_steps": [
+    {
+      "step": "handler",
+      "event": "loans.application.submitted",
+      "expected": "Event enriched with borrower-master and financial-statement-blob; published to pipeline topic"
+    },
+    {
+      "step": "svc-financial-spreader",
+      "expected": "Spread financials produced; ratios: dscr_base=3.82, leverage=1.76, current_ratio=2.08"
+    },
+    {
+      "step": "svc-dscr-calculator",
+      "expected": "dscr_base=3.82, dscr_stressed=2.94 (post-close), no breach"
+    },
+    {
+      "step": "svc-covenant-analyzer",
+      "expected": "All proposed covenants pass current-period test; headroom_pct > 25% on all metrics"
+    },
+    {
+      "step": "svc-peer-benchmarker",
+      "expected": "DEMO-MFG-001 at 75th percentile on DSCR, 70th on EBITDA margin vs NAICS 332 peer set"
+    },
+    {
+      "step": "svc-industry-risk-scorer",
+      "expected": "industry_risk_band=2 (moderate); NAICS 332 stable with cyclical flag"
+    },
+    {
+      "step": "svc-collateral-valuator",
+      "expected": "lendable_value=$12.9M vs loan $8M — LTV 62%; adequate"
+    },
+    {
+      "step": "svc-exposure-aggregator",
+      "expected": "Post-close committed exposure $11.2M; single_borrower_pct=1.3% — well within limit"
+    },
+    {
+      "step": "rule-regulatory-thresholds",
+      "expected": "No threshold breaches"
+    },
+    {
+      "step": "rule-single-borrower-exposure",
+      "expected": "limit_status=pass; headroom_dollars=$57.8M"
+    },
+    {
+      "step": "rule-approval-matrix-commercial",
+      "expected": "approval_authority_required=senior-credit-committee; loan $8M, risk_band=2"
+    },
+    {
+      "step": "agent-extractor",
+      "expected": "Financial statements extracted and normalized; citation links to 10k_2025.json"
+    },
+    {
+      "step": "agent-rater",
+      "expected": "risk_band=1-pass; overall rating: Pass"
+    },
+    {
+      "step": "agent-drafter",
+      "expected": "Credit memo drafted; word_count <= 1500; citation_density >= 0.8"
+    },
+    {
+      "step": "sink-credit-officer-queue",
+      "expected": "Memo surfaced in pipeline console with regulatory clock showing 0 of 5 business days elapsed"
+    }
+  ],
+  "expected_outcome": {
+    "decision": "approved",
+    "risk_band": "1-pass",
+    "approval_authority": "senior-credit-committee",
+    "memo_word_count_max": 1500,
+    "citation_density_min": 0.8,
+    "pipeline_latency_hours_max": 5,
+    "regulatory_clock_breach": false
+  },
+  "assertions": [
+    "CreditMemo.recommendation == 'APPROVE'",
+    "CreditMemo.risk_band == '1-pass'",
+    "CreditMemo.word_count <= 1500",
+    "CreditMemo.citation_density >= 0.8",
+    "RiskRating.dscr_base >= 1.25",
+    "RiskRating.leverage <= 4.0",
+    "ExposureAggregator.single_borrower_pct < 0.08",
+    "RegulatoryClock.elapsed_business_days < 5"
+  ],
+  "demo_note": "SYNTHETIC SCENARIO — tests full happy path through all 5 pipeline stages to approval queue"
+}

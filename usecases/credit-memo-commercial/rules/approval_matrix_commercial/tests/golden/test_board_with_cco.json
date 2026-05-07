@@ -1,0 +1,14 @@
+{
+  "description": "Large loan ($30M) with high risk band (5) and elevated concentration (12%) requires board approval and chief_credit_officer additional review",
+  "input": {
+    "loan_amount": 30000000,
+    "risk_band": 5,
+    "industry_risk_band": 4,
+    "single_borrower_pct": 0.12
+  },
+  "expected_output": {
+    "approval_authority_required": "board",
+    "additional_reviewers": ["chief_credit_officer"]
+  },
+  "regulatory_basis": "Loan >$25M triggers board authority; risk_band=5 also triggers board; single_borrower_pct>10% adds CCO review per concentration policy"
+}

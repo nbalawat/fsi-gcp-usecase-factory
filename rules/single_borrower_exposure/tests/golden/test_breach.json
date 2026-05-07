@@ -1,0 +1,15 @@
+{
+  "description": "Total exposure (proposed + existing) exceeds 15% of Tier 1 capital — limit_status must be 'breach'",
+  "input": {
+    "proposed_amount": 30000000,
+    "existing_exposure_committed": 20000000,
+    "tier1_capital": 300000000
+  },
+  "expected_output": {
+    "limit_status": "breach",
+    "total_exposure": 50000000,
+    "limit_dollars": 45000000,
+    "headroom_dollars": -5000000
+  },
+  "regulatory_basis": "OCC 12 CFR 32.3 — aggregate committed exposure of $50M exceeds the 15% Tier 1 capital limit of $45M"
+}

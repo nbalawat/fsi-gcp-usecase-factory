@@ -1,0 +1,167 @@
+# Golden test case for the extractor-spreader-rater-drafter pattern.
+# Pattern-level happy-path trace: one trigger event → expected sequence of
+# specialist invocations → expected final bundle shape. Use case instances
+# (credit-memo-commercial) layer their own loopback / refusal traces on top.
+#
+# Test runner: the pattern's tests/golden harness stubs each sub-agent and
+# spreader service to deterministic responses, then asserts the supervisor's
+# call sequence and final bundle. See adk-agent-design SKILL.md.
+
+id: example_credit_memo_flow_happy_path
+description: >-
+  End-to-end happy path for a commercial credit memo: a loan application
+  triggers extractor → six spreaders → rater → drafter (no loopback) → bundle.
+  Verifies invocation order, schema conformance of the final bundle, and that
+  no sub-agent was skipped.
+
+pattern_params:
+  output_schema: CreditMemoBundle
+  citation_density_min: 0.8
+  loop_back_max: 1
+  spreader_service_ids:
+    - financial-spreader
+    - dscr-calculator
+    - covenant-analyzer
+    - peer-benchmarker
+    - industry-risk-scorer
+    - collateral-valuator
+    - exposure-aggregator
+
+# Archetype parameters for each role's instantiation. Match what
+# usecases/credit-memo-commercial/reasons.yaml declares.
+role_params:
+  extractor:
+    document_types: ["10-K", "10-Q", "audited-financials", "board-minutes"]
+    target_schema: commercial-financial-statement-v1
+  rater:
+    rubric: commercial-credit-rubric-v1
+    bands: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+    input_schema: commercial-credit-case-v1
+    tools:
+      - dscr-calculator
+      - covenant-analyzer
+      - peer-benchmarker
+      - industry-risk-scorer
+      - collateral-valuator
+      - exposure-aggregator
+      - regulatory-thresholds
+  drafter:
+    output_format: credit-memo-occ-v1
+    max_words: 1500
+    citation_density_min: 0.8
+    tone: regulatory-formal
+
+input:
+  trigger_event:
+    topic: "loans.application.submitted"
+    payload:
+      borrower_id: "ACME-CORP-001"
+      loan_id: "LN-2026-04429"
+      document_uri: "gs://fsi-test-fixtures/synthetic/acme-corp-application-bundle.pdf"
+      proposed_amount: 25000000
+
+# Stubbed sub-agent and spreader responses keyed by call. The harness wires
+# these as deterministic mocks. Each entry is what the corresponding stub
+# returns when invoked.
+stubs:
+  extractor:
+    requires_human_review: false
+    fields:
+      borrower: { legal_name: "ACME Corporation", naics_code: "3361" }
+      revenue_ttm: { value: 480000000, currency_code: "USD" }
+      ebitda_ttm: { value: 8200000, currency_code: "USD" }
+  spreaders:
+    financial-spreader:    { ratios: { ebitda_margin: 0.017, leverage: 4.20 } }
+    dscr-calculator:       { dscr_base: 1.42, dscr_stressed: 1.18 }
+    covenant-analyzer:     { headroom_pct: 0.08, violations_projected: [] }
+    peer-benchmarker:      { peer_set_size: 8, ratio_percentiles: { ebitda_margin: 0.55, leverage: 0.62 } }
+    industry-risk-scorer:  { industry_risk_band: "B", rationale_factors: ["cyclical-demand"] }
+    collateral-valuator:   { lendable_value: 12600000 }
+    exposure-aggregator:   { existing_exposure_committed: 8000000, single_borrower_pct: 0.014 }
+  rater:
+    band: "2-special-mention"
+    confidence: 0.82
+    requires_human_review: false
+    factors: "<5 factors, each cited to a stubbed spreader>"
+  drafter:
+    word_count: 1284
+    citation_density: 0.91
+    requires_human_review: false
+    warnings: []
+
+# Expected supervisor invocation sequence — order is asserted strictly.
+expected_invocation_sequence:
+  - { agent: "extractor",          mode: "primary" }
+  - { tool:  "financial-spreader", mode: "primary" }   # may run in parallel with peers below
+  - { tool:  "dscr-calculator",    mode: "primary" }
+  - { tool:  "covenant-analyzer",  mode: "primary" }
+  - { tool:  "peer-benchmarker",   mode: "primary" }
+  - { tool:  "industry-risk-scorer", mode: "primary" }
+  - { tool:  "collateral-valuator",  mode: "primary" }
+  - { tool:  "exposure-aggregator",  mode: "primary" }
+  - { agent: "rater",              mode: "primary" }
+  - { agent: "drafter",            mode: "primary" }
+
+expected_bundle_shape:
+  schema: CreditMemoBundle
+  extraction: "<extractor stub output>"
+  spreads:
+    financial-spreader:    "<stub>"
+    dscr-calculator:       "<stub>"
+    covenant-analyzer:     "<stub>"
+    peer-benchmarker:      "<stub>"
+    industry-risk-scorer:  "<stub>"
+    collateral-valuator:   "<stub>"
+    exposure-aggregator:   "<stub>"
+  rating:    "<rater stub output>"
+  narrative: "<drafter stub output>"
+  supervisor:
+    loopback_count: 0
+    requires_human_review: false
+    warnings: []
+
+assertions:
+  - id: extractor_invoked_first
+    description: First sub-agent invocation is the extractor.
+    check: invocation_sequence[0].agent == "extractor"
+
+  - id: rater_after_all_spreaders
+    description: Rater is invoked only after every declared spreader has been called.
+    check: |
+      index(invocation_sequence, agent="rater") >
+      max(index(invocation_sequence, tool=s) for s in pattern_params.spreader_service_ids)
+
+  - id: drafter_after_rater
+    description: Drafter is invoked only after the rater.
+    check: |
+      index(invocation_sequence, agent="drafter") >
+      index(invocation_sequence, agent="rater")
+
+  - id: no_loopback_on_clean_density
+    description: Citation density above threshold → drafter invoked exactly once.
+    check: count(invocation_sequence, agent="drafter") == 1
+
+  - id: no_extractor_or_rater_loopback
+    description: Extractor and rater are never invoked more than once per trigger.
+    check: |
+      count(invocation_sequence, agent="extractor") == 1 and
+      count(invocation_sequence, agent="rater") == 1
+
+  - id: bundle_conforms_to_schema
+    description: Final bundle validates against CreditMemoBundle.
+    check: validates(output, schema="CreditMemoBundle")
+
+  - id: supervisor_warnings_propagated
+    description: |
+      Supervisor warnings array is the union of sub-agent warnings (each prefixed
+      with the originating agent name).
+    check: |
+      output.supervisor.warnings == prefix_union(
+        extractor=output.extraction.warnings,
+        rater=output.rating.warnings,
+        drafter=output.narrative.warnings
+      )
+
+# TODO (platform team): confirm invocation_sequence introspection, validates(),
+# and prefix_union() helpers exist in the harness; otherwise the platform team
+# must add them.

@@ -1,0 +1,36 @@
+name: agent-call-with-retry
+version: "1.0"
+
+description: >-
+  invoke ADK agent (primary_model) → retry on timeout w/ exponential backoff →
+  on terminal exhaustion fallback to secondary model (optional) → return
+  agent_outcome to parent workflow.
+
+parameters:
+  - name: agent_url
+    type: string
+    description: HTTP endpoint of the ADK agent runtime (Cloud Run).
+  - name: input_template
+    type: object
+    description: >-
+      Cloud Workflows expression producing the agent input body. Must include
+      context_id for OTel propagation.
+  - name: primary_model
+    type: string
+    description: >-
+      First-choice model. Must be one of the platform-approved models
+      (claude-opus-4-7 or gemini-3-1-flash).
+  - name: fallback_model
+    type: string
+    description: >-
+      Optional secondary model used only on terminal failure of the primary
+      retry block. Pass empty string to disable fallback.
+  - name: retry_max
+    type: int
+    description: Max retry attempts on the primary model. Default 2.
+  - name: retry_initial_delay_s
+    type: int
+    description: Initial backoff delay seconds. Default 4. Multiplier is 2.
+
+last_verified: 2026-05-04
+used_by: []

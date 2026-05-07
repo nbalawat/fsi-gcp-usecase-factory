@@ -1,0 +1,53 @@
+{
+  "context_id": "credit-memo-commercial-test-covenant-projection-violation-001",
+  "scenario": "covenant-projection-violation-return-for-revision",
+  "description": "Solid BBB retailer (DEMO-RET-001) with full-year DSCR 3.18 but projected Q3 seasonal trough DSCR of 1.18, breaching the proposed 1.25 minimum covenant. Credit quality passes (1-pass/2-special-mention), but covenant structure must be revised. Decision is RETURN_FOR_REVISION, not DECLINE.",
+  "event_payload": {
+    "context_id": "credit-memo-commercial-test-covenant-projection-violation-001",
+    "borrower_id": "DEMO-RET-001",
+    "application_id": "DEMO-APP-RET-001-2026",
+    "loan_amount": 3000000,
+    "loan_type": "revolver",
+    "submitted_at": "2026-04-10T08:45:00Z",
+    "application_type": "renewal_and_increase",
+    "facility": {
+      "type": "Revolving Credit Facility",
+      "amount_requested_usd": 3000000,
+      "term_years": 3,
+      "rate_type": "floating",
+      "index": "SOFR",
+      "spread_bps_requested": 200,
+      "purpose": "Working capital revolver — seasonal inventory build ahead of Q4 peak selling season"
+    },
+    "trailing_quarter_data": {
+      "q2_2025_trailing_dscr": 2.95,
+      "q3_2025_trailing_dscr": 1.18,
+      "q4_2025_trailing_dscr": 3.18,
+      "q1_2026_trailing_dscr": 2.80,
+      "seasonal_trough_quarter": "Q3",
+      "seasonal_trough_month": "October"
+    },
+    "projected_post_close_ratios": {
+      "dscr_base_full_year": 2.86,
+      "dscr_q3_trough_projected": 1.18,
+      "leverage_total_debt_to_ebitda": 0.86
+    },
+    "proposed_covenant_minimum_dscr": 1.25,
+    "demo_fixture": "demo-data-borrower-set"
+  },
+  "expected_outcome": {
+    "status": "returned",
+    "risk_band": "2-special-mention",
+    "assertions": [
+      "response status code is 200",
+      "context_id echoed back in response",
+      "covenant-analyzer violations_projected == true",
+      "covenant-analyzer violating_period contains Q3",
+      "credit memo recommendation is RETURN_FOR_REVISION (not DECLINE)",
+      "risk_band is 1-pass or 2-special-mention",
+      "suggested_revisions length >= 1",
+      "citation_density >= 0.8",
+      "memo documents seasonal trough covenant breach"
+    ]
+  }
+}

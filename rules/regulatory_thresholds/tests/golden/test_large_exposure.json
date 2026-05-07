@@ -1,0 +1,14 @@
+{
+  "description": "Loan amount exceeds $50M large-exposure threshold; single-borrower pct is below 15% so only large_exposure fires",
+  "input": {
+    "loan_amount": 60000000,
+    "borrower_type": "corporate",
+    "single_borrower_pct": 0.05
+  },
+  "expected_output": {
+    "threshold_breaches": ["large_exposure"],
+    "regulations_triggered": ["OCC 12 CFR 32"],
+    "actions_required": ["senior_credit_committee_approval"]
+  },
+  "regulatory_basis": "OCC 12 CFR 32 — loans to a single borrower exceeding $50M require senior credit committee approval"
+}

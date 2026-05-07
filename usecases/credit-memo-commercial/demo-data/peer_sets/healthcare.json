@@ -1,0 +1,113 @@
+{
+  "peer_set_id": "healthcare-naics-62x",
+  "naics_prefix": "62",
+  "naics_description": "Health Care and Social Assistance (Hospitals, Ambulatory Health Care)",
+  "reference_date": "2025-06-30",
+  "size_band": "community health systems and specialty clinic groups",
+  "source": "SYNTHETIC peer set — illustrative ratios derived from public industry benchmarks (Moody's Non-Profit Healthcare median, MGMA)",
+  "sub_segments": {
+    "naics_622": "Hospitals (community, regional, critical access)",
+    "naics_621": "Ambulatory health care services (physician groups, ASCs, specialty clinics)"
+  },
+  "peers": [
+    {
+      "peer_id": "PEER-HLT-A",
+      "naics_code": "622",
+      "revenue_band_usd": "100M-200M",
+      "credit_rating_equivalent": "BBB+",
+      "entity_type": "Non-profit health system",
+      "ratios": {
+        "dscr": 4.50,
+        "leverage_total_debt_to_net_assets": 0.42,
+        "ebitda_margin_pct": 17.5,
+        "operating_margin_pct": 11.0,
+        "current_ratio": 3.20,
+        "days_cash_on_hand": 68.0,
+        "days_in_accounts_receivable": 38.0,
+        "return_on_net_assets_pct": 14.5
+      }
+    },
+    {
+      "peer_id": "PEER-HLT-B",
+      "naics_code": "622",
+      "revenue_band_usd": "80M-130M",
+      "credit_rating_equivalent": "BBB",
+      "entity_type": "Non-profit health system",
+      "ratios": {
+        "dscr": 3.80,
+        "leverage_total_debt_to_net_assets": 0.55,
+        "ebitda_margin_pct": 15.0,
+        "operating_margin_pct": 9.5,
+        "current_ratio": 2.80,
+        "days_cash_on_hand": 55.0,
+        "days_in_accounts_receivable": 42.0,
+        "return_on_net_assets_pct": 11.8
+      }
+    },
+    {
+      "peer_id": "PEER-HLT-C",
+      "naics_code": "622",
+      "revenue_band_usd": "50M-90M",
+      "credit_rating_equivalent": "BBB-",
+      "entity_type": "Non-profit community hospital",
+      "ratios": {
+        "dscr": 2.90,
+        "leverage_total_debt_to_net_assets": 0.70,
+        "ebitda_margin_pct": 12.0,
+        "operating_margin_pct": 7.0,
+        "current_ratio": 2.20,
+        "days_cash_on_hand": 42.0,
+        "days_in_accounts_receivable": 48.0,
+        "return_on_net_assets_pct": 8.5
+      }
+    },
+    {
+      "peer_id": "PEER-HLT-D",
+      "naics_code": "621",
+      "revenue_band_usd": "15M-30M",
+      "credit_rating_equivalent": "BB+",
+      "entity_type": "Specialty physician group (private)",
+      "ratios": {
+        "dscr": 2.50,
+        "leverage_total_debt_to_ebitda": 0.80,
+        "ebitda_margin_pct": 14.0,
+        "operating_margin_pct": 10.5,
+        "current_ratio": 1.65,
+        "days_in_accounts_receivable": 45.0,
+        "return_on_equity_pct": 28.0
+      }
+    },
+    {
+      "peer_id": "PEER-HLT-E",
+      "naics_code": "621",
+      "revenue_band_usd": "10M-20M",
+      "credit_rating_equivalent": "BB",
+      "entity_type": "Specialty physician group (private, early stage)",
+      "ratios": {
+        "dscr": 1.80,
+        "leverage_total_debt_to_ebitda": 1.50,
+        "ebitda_margin_pct": 11.0,
+        "operating_margin_pct": 7.5,
+        "current_ratio": 1.40,
+        "days_in_accounts_receivable": 52.0,
+        "return_on_equity_pct": 20.0
+      }
+    }
+  ],
+  "naics_622_medians": {
+    "dscr": 3.80,
+    "leverage_total_debt_to_net_assets": 0.55,
+    "ebitda_margin_pct": 15.0,
+    "operating_margin_pct": 9.5,
+    "days_cash_on_hand": 55.0,
+    "days_in_accounts_receivable": 42.0
+  },
+  "naics_621_medians": {
+    "dscr": 2.15,
+    "leverage_total_debt_to_ebitda": 1.15,
+    "ebitda_margin_pct": 12.5,
+    "operating_margin_pct": 9.0,
+    "days_in_accounts_receivable": 48.5
+  },
+  "demo_note": "SYNTHETIC DATA — illustrative peer ratios for testing peer-benchmarker atomic service"
+}

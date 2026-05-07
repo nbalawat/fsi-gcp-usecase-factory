@@ -1,0 +1,34 @@
+name: approval-gate
+version: "1.0"
+
+description: >-
+  create_callback_endpoint → publish case to approver queue → await_callback
+  (up to 5 days) → branch on approve/reject into named workflow vars.
+
+parameters:
+  - name: queue_topic
+    type: string
+    description: >-
+      Pub/Sub topic that fans the approval payload to the approver UI
+      (e.g. credit-officer-queue). Receives the case + callback URL.
+  - name: callback_timeout_seconds
+    type: int
+    description: >-
+      Max time to wait for human disposition. Default 432000 (5 days).
+      On timeout the workflow raises ApprovalTimeout for the parent to handle.
+  - name: approval_payload_template
+    type: object
+    description: >-
+      Cloud Workflows expression producing the payload posted to queue_topic.
+      Should include case context, agent recommendation, and any UI hints.
+  - name: on_approve_var
+    type: string
+    description: >-
+      Workflow var assigned the callback body when disposition == "approve".
+  - name: on_reject_var
+    type: string
+    description: >-
+      Workflow var assigned the callback body when disposition == "reject".
+
+last_verified: 2026-05-04
+used_by: []

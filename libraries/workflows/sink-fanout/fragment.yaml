@@ -1,0 +1,26 @@
+name: sink-fanout
+version: "1.0"
+
+description: >-
+  parallel sink dispatch (pubsub|http|gcs) → per-sink success tracking →
+  if require_all and any failure: route aggregate failure to dlq_topic.
+
+parameters:
+  - name: sinks
+    type: list[object]
+    description: >-
+      List of {name, kind, target, body_template}. kind ∈ {pubsub, http, gcs}.
+      For pubsub: target is the topic; for http: target is the URL; for gcs:
+      target is gs://bucket/object_path.
+  - name: require_all
+    type: bool
+    description: >-
+      If true (default), any single failure triggers DLQ aggregation. If
+      false, partial failures still mark workflow success but failed sinks
+      are still individually DLQ'd.
+  - name: dlq_topic
+    type: string
+    description: Pub/Sub topic receiving aggregated failure payloads.
+
+last_verified: 2026-05-04
+used_by: []

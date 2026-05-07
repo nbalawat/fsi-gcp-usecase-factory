@@ -1,0 +1,33 @@
+{
+  "_fixture_meta": {
+    "agent": "rater",
+    "scenario": "covenant-projection-violation-return-for-revision",
+    "borrower_id": "DEMO-RET-001",
+    "context_id": "credit-memo-commercial-test-covenant-projection-violation-001",
+    "input_hash": "ret001_covenant_projection_breach",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "risk_rating",
+  "output_value": {
+    "risk_band": "2-special-mention",
+    "risk_band_numeric": 2,
+    "overall_rating": "Special Mention",
+    "dscr_base": 3.18,
+    "dscr_q3_trough": 1.18,
+    "leverage": 0.53,
+    "industry_risk_band": 2,
+    "exposure_limit_flag": false,
+    "covenant_violation_flag": true,
+    "covenant_violation_type": "projected_seasonal_trough",
+    "rationale_summary": "DEMO-RET-001 full-year credit quality is strong: annual DSCR 3.18x, leverage 0.53x. Rated 2-special-mention due to projected Q3 seasonal trough DSCR of 1.18x, which would breach the proposed Minimum DSCR covenant of 1.25x. The violation is structural (seasonal retail pattern) rather than credit deterioration. Covenant restructuring is recommended before approval.",
+    "citations": [
+      {"source": "dscr-calculator", "field": "dscr_base", "value": 3.18},
+      {"source": "covenant-analyzer", "field": "violations_projected", "value": true},
+      {"source": "covenant-analyzer", "field": "violating_period", "value": "Q3 seasonal trough"},
+      {"source": "covenant-analyzer", "field": "trough_dscr", "value": 1.18}
+    ],
+    "citation_density": 0.92
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "_fixture_meta": {
+    "agent": "drafter",
+    "scenario": "rated-substandard-decline",
+    "borrower_id": "DEMO-MFG-002",
+    "context_id": "credit-memo-commercial-test-rated-substandard-decline-001",
+    "input_hash": "mfg002_rating3substandard",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "credit_memo",
+  "output_value": {
+    "recommendation": "DECLINE",
+    "risk_band": "3-substandard",
+    "approval_authority": "decline-recommended",
+    "word_count": 1380,
+    "citation_density": 0.92,
+    "sections": [
+      "Executive Summary",
+      "Borrower Overview",
+      "Financial Analysis",
+      "DSCR and Covenant Breach Analysis",
+      "Risk Factors",
+      "Decline Rationale",
+      "Recommendation"
+    ],
+    "decline_reasons": [
+      "Post-close DSCR 0.98 — below minimum covenant 1.10 at inception",
+      "Stressed DSCR 0.72 — insufficient debt service capacity under mild stress",
+      "Post-close leverage 4.95x — exceeds proposed covenant maximum 4.5x",
+      "Compiled (unaudited) financials — reliance caveat",
+      "PE leverage overhang not captured in bank debt; hidden leverage risk",
+      "Short 3-year bank relationship; limited credit history"
+    ],
+    "suggested_revisions": [],
+    "regulatory_citations": [],
+    "memo_status": "draft"
+  }
+}

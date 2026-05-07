@@ -1,0 +1,44 @@
+{
+  "_fixture_meta": {
+    "agent": "extractor",
+    "scenario": "exposure-limit-decline",
+    "borrower_id": "DEMO-HLT-001",
+    "context_id": "credit-memo-commercial-test-exposure-limit-decline-001",
+    "input_hash": "hlt001_10k_2025",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "extracted_financials",
+  "output_value": {
+    "borrower_id": "DEMO-HLT-001",
+    "period": "FY2025",
+    "financial_statement_type": "audited",
+    "income_statement": {
+      "revenue": 95000000,
+      "cogs": 57000000,
+      "ebitda": 19000000,
+      "interest_expense": 1425000,
+      "net_income": 12350000,
+      "depreciation_amortization": 3800000
+    },
+    "balance_sheet": {
+      "total_assets": 142500000,
+      "total_debt": 38000000,
+      "total_equity": 104500000,
+      "current_assets": 28500000,
+      "current_liabilities": 14250000,
+      "cash_and_equivalents": 9500000
+    },
+    "cash_flow": {
+      "operating_cash_flow": 15200000,
+      "capex": -5050000,
+      "free_cash_flow": 10150000
+    },
+    "citations": [
+      {"source": "borrowers/DEMO-HLT-001/financials/10k_2025.json", "field": "income_statement.revenue", "page_ref": null}
+    ],
+    "extraction_confidence": 0.96,
+    "extraction_warnings": []
+  }
+}

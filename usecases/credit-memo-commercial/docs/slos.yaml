@@ -1,0 +1,28 @@
+use_case_id: credit-memo-commercial
+version: "0.1.0"
+
+regulatory_deadline: "5 business days"
+
+latency_budgets:
+  handler_enrichment_p99_ms: 2000
+  atomic_service_fanout_p99_ms: 5000
+  rules_service_p99_ms: 500
+  agent_total_p99_ms: 120000
+  approval_gate_max_hours: 120
+  end_to_end_p95_business_days: 3
+  end_to_end_p99_business_days: 5
+
+error_rates:
+  handler_max: 0.001
+  atomic_service_max: 0.001
+  rules_service_max: 0.001
+  agent_max: 0.005
+  sink_max: 0.001
+
+cost_ceiling_per_memo_usd: 3.00
+cost_ceiling_monthly_usd: 9000.00
+
+decision_distribution:
+  approve_target_pct: 65
+  decline_target_pct: 25
+  refer_human_target_pct: 10

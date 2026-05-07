@@ -1,0 +1,79 @@
+{
+  "application_id": "DEMO-APP-RET-001-2026",
+  "borrower_id": "DEMO-RET-001",
+  "submitted_at": "2026-04-10T08:45:00Z",
+  "application_type": "renewal_and_increase",
+  "facility": {
+    "type": "Revolving Credit Facility",
+    "amount_requested_usd": 3000000,
+    "prior_commitment_usd": 1500000,
+    "term_years": 3,
+    "rate_type": "floating",
+    "index": "SOFR",
+    "spread_bps_requested": 200,
+    "purpose": "Working capital revolver — seasonal inventory build (Q3 draw) ahead of Q4 peak selling season; support for 3 new store openings planned for FY2026",
+    "use_of_proceeds": {
+      "seasonal_inventory_financing_usd": 2200000,
+      "new_store_pre_opening_costs_usd": 800000
+    },
+    "repayment_source": "Q4 seasonal cash conversion; projected FCF $5.6M FY2026"
+  },
+  "collateral": [
+    {
+      "description": "Inventory (merchandise, eligible per borrowing base certificate)",
+      "estimated_value_usd": 12400000,
+      "advance_rate_pct": 50,
+      "lendable_value_usd": 6200000,
+      "lien_position": "First"
+    },
+    {
+      "description": "Accounts receivable (B2B outfitting only; excludes consumer CC)",
+      "estimated_value_usd": 2480000,
+      "advance_rate_pct": 75,
+      "lendable_value_usd": 1860000,
+      "lien_position": "First"
+    }
+  ],
+  "proposed_covenants": [
+    {
+      "covenant_type": "financial",
+      "name": "Minimum DSCR",
+      "threshold": 1.25,
+      "measurement": "trailing-12-month",
+      "frequency": "quarterly",
+      "known_concern": "Projected Q3 trough DSCR 1.18 — below proposed 1.25 floor before Q4 recovery"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Minimum Fixed Charge Coverage Ratio",
+      "threshold": 1.15,
+      "measurement": "trailing-12-month",
+      "frequency": "semi-annual"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Maximum Total Debt to EBITDA",
+      "threshold": 2.0,
+      "frequency": "annual"
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Monthly Borrowing Base Certificate",
+      "frequency": "monthly"
+    }
+  ],
+  "projected_post_close_ratios": {
+    "dscr_base_full_year": 2.86,
+    "dscr_q3_trough_projected": 1.18,
+    "leverage_total_debt_to_ebitda": 0.86,
+    "interest_coverage": 7.20
+  },
+  "covenant_projection_concern": {
+    "covenant": "Minimum DSCR 1.25",
+    "concern": "Seasonal trough in Q3 (Aug–Oct) is projected to produce a trailing-12-month DSCR of approximately 1.18, breaching the proposed 1.25 floor before Q4 cash conversion restores compliance",
+    "suggested_resolution": "Structure covenant with Q3 step-down to 1.10, reverting to 1.25 after January 31 each year, OR test DSCR on fiscal-year-end basis only"
+  },
+  "approval_authority_sought": "Credit Committee",
+  "expected_scenario": "covenant-projection-violation-return-for-revision",
+  "demo_note": "SYNTHETIC DATA — no real PII — designed to produce return-for-revision on covenant structure"
+}

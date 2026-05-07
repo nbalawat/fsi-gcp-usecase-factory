@@ -1,0 +1,49 @@
+- agent_call_primary:
+    try:
+      call: http.post
+      args:
+        url: {{agent_url}}
+        headers:
+          X-Cloud-Trace-Context: ${context_id}
+        body:
+          model: "{{primary_model}}"
+          input: {{input_template}}
+          context_id: ${context_id}
+        timeout: 60
+      result: agent_outcome
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: {{retry_max}}
+      backoff:
+        initial_delay: {{retry_initial_delay_s}}
+        max_delay: 60
+        multiplier: 2
+    except:
+      as: e
+      steps:
+{%- if fallback_model %}
+        - agent_call_fallback:
+            call: http.post
+            args:
+              url: {{agent_url}}
+              headers:
+                X-Cloud-Trace-Context: ${context_id}
+              body:
+                model: "{{fallback_model}}"
+                input: {{input_template}}
+                context_id: ${context_id}
+                fallback_from: "{{primary_model}}"
+                primary_error: ${e.message}
+              timeout: 90
+            result: agent_outcome
+            retry:
+              predicate: ${http.default_retry_predicate}
+              max_retries: 1
+              backoff:
+                initial_delay: 4
+                max_delay: 30
+                multiplier: 2
+{%- else %}
+        - reraise_no_fallback:
+            raise: ${e}
+{%- endif %}

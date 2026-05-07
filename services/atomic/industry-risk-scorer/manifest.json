@@ -1,0 +1,24 @@
+{
+  "name": "industry-risk-scorer",
+  "version": "0.1.0",
+  "description": "Score industry risk on a 1-5 band using NAICS sector, economic vintage, and US regional geography. Returns a labelled risk band and factor-level rationale.",
+  "inputs": [
+    "naics_code",
+    "vintage",
+    "geography"
+  ],
+  "outputs": [
+    "industry_risk_band",
+    "rationale_factors"
+  ],
+  "endpoint": "https://fsi-atomic-industry-risk-scorer-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 200,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "internal",
+  "pii_fields": [
+    "borrower_id"
+  ]
+}

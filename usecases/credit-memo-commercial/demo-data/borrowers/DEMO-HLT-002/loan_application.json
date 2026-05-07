@@ -1,0 +1,75 @@
+{
+  "application_id": "DEMO-APP-HLT-002-2026",
+  "borrower_id": "DEMO-HLT-002",
+  "submitted_at": "2026-04-22T14:15:00Z",
+  "application_type": "new_credit",
+  "facility": {
+    "type": "Revolving Credit Facility",
+    "amount_requested_usd": 2000000,
+    "term_years": 2,
+    "rate_type": "floating",
+    "index": "SOFR",
+    "spread_bps_requested": 275,
+    "purpose": "Working capital bridge and liquidity reserve during expansion to two new clinic locations (planned Q3 2026)",
+    "use_of_proceeds": {
+      "new_clinic_pre_opening_costs_usd": 900000,
+      "equipment_deposits_usd": 600000,
+      "working_capital_buffer_usd": 500000
+    },
+    "repayment_source": "Operating cash flow from existing 6 clinics; revenue ramp from new locations"
+  },
+  "collateral": [
+    {
+      "description": "Accounts receivable — medical (all payers, Medicare/Medicaid/commercial)",
+      "estimated_value_usd": 2480000,
+      "advance_rate_pct": 70,
+      "lendable_value_usd": 1736000,
+      "lien_position": "First"
+    },
+    {
+      "description": "Personal guarantee — managing members (3 physicians, jointly and severally)",
+      "type": "Personal Guarantee",
+      "note": "Guarantors REDACTED per PII policy"
+    }
+  ],
+  "proposed_covenants": [
+    {
+      "covenant_type": "financial",
+      "name": "Minimum DSCR",
+      "threshold": 1.20,
+      "measurement": "trailing-12-month",
+      "frequency": "semi-annual"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Minimum Current Ratio",
+      "threshold": 1.25,
+      "frequency": "semi-annual"
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Quarterly Management-Prepared Financials",
+      "frequency": "quarterly"
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Annual Reviewed Financial Statements",
+      "deadline_days_after_fiscal_year_end": 120
+    }
+  ],
+  "projected_post_close_ratios": {
+    "dscr_base": 2.20,
+    "dscr_stressed_during_expansion": 1.35,
+    "leverage_total_debt_to_ebitda": 0.92,
+    "current_ratio": 1.50
+  },
+  "risk_mitigants": [
+    "Personal guarantees from three physician-owners",
+    "Strong existing DSCR and low leverage",
+    "Commercial payer mix (58%) reduces reimbursement rate risk vs Medicaid-heavy peers",
+    "Revolver size ($2M) modest relative to revenues ($22M)"
+  ],
+  "approval_authority_sought": "Relationship Manager + Senior Relationship Manager co-sign (new relationship < 3 years)",
+  "expected_scenario": "regulatory-clock-breach-alarm",
+  "demo_note": "SYNTHETIC DATA — no real PII — new borrower used for regulatory clock breach simulation scenario"
+}

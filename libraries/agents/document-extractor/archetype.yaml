@@ -1,0 +1,59 @@
+# Reusable agent archetype: document-extractor
+# Contract only — no ADK SDK code lives here. SDK wiring is the instantiator's job
+# (see fsi-adk-patterns for the current LlmAgent / McpToolset surface).
+
+name: document-extractor
+version: "1.0"
+description: >-
+  Receive uploaded document → call Document AI MCP tool → emit structured fields
+  conforming to the instance's target schema, with page-level citations.
+
+# Locked per the bank's two-model rule (see .claude/skills/model-selection/SKILL.md).
+# Document IQ + nuanced extraction → Claude Opus 4.7. Do not override at instantiation.
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5  # degraded path if primary times out
+
+# Default scope; instance may override (e.g., credit-memo uses `case`, KYC uses `customer`).
+# Architectural rule: pick the narrowest scope that supports the use case.
+memory_scope_default: borrower
+
+# MCP tools the instantiator MUST wire. The archetype does not bind the manifest path —
+# instances point at their environment's Document AI manifest.
+tools_required:
+  - document-ai
+
+# Placeholder. Each instantiation supplies a concrete Pydantic schema name registered
+# in the use case's schemas/ directory. The archetype does not define field shapes;
+# it guarantees the agent returns JSON conforming to whatever schema is supplied.
+output_schema: <instance-supplied>  # TODO: platform team to confirm registry path convention
+
+# Parameters the instantiator must (or may) supply. The instruction template (Jinja2)
+# substitutes these into the prompt at build time.
+parameters:
+  - name: document_types
+    type: list[string]
+    required: true
+    description: >-
+      Document classes this instance is expected to handle (e.g., ["10-K", "10-Q",
+      "audited-financials", "board-minutes"]). Used to scope the extractor's role
+      and to refuse out-of-class inputs.
+  - name: target_schema
+    type: string
+    required: true
+    description: >-
+      Name of the registered Pydantic schema the agent must conform output to
+      (e.g., "commercial-financial-statement-v1"). Schema is owned by the use case.
+  - name: language
+    type: string
+    required: false
+    default: "en"
+    description: >-
+      ISO 639-1 code for expected document language. Document AI is invoked with this
+      hint. Multi-language instances should pass the dominant language.
+
+# Bookkeeping — bumped by the platform team on each refresh.
+last_verified: 2026-05-04
+
+# Populated as use cases adopt this archetype. The architecture-auditor uses this list
+# to fan out impact analysis when the archetype version bumps.
+used_by: []

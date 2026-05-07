@@ -1,0 +1,110 @@
+# Golden test case for the narrative-drafter archetype.
+# Instance-agnostic shape assertions: any instantiation that targets a memo
+# template, a regulatory-formal tone, and a hard word cap must pass this.
+#
+# Test runner: the use case's tests/golden harness substitutes archetype params
+# and replays this case against the instantiated agent. See adk-agent-design
+# SKILL.md.
+
+id: example_credit_memo_draft_minimal
+description: >-
+  Synthetic upstream bundle for a mid-market C&I loan. Verifies the drafter
+  emits required sections in order, cites every numeric claim, respects the
+  word cap, and computes citation density honestly.
+
+archetype_params:
+  output_format: credit-memo-occ-v1
+  max_words: 1500
+  citation_density_min: 0.8
+  tone: regulatory-formal
+
+input:
+  upstream_state:
+    document-extractor:
+      borrower:
+        legal_name: "ACME Corporation"
+        industry_classification: "Tier-2 auto parts manufacturer (NAICS 3361)"
+      financials:
+        revenue_ttm: 480000000
+        ebitda_ttm: 8200000
+    dscr-calculator:
+      dscr_base: 1.42
+      dscr_stressed: 1.18
+    covenant-analyzer:
+      headroom_pct: 0.08
+      violations_projected: []
+    peer-benchmarker:
+      peer_set_size: 8
+      ratio_percentiles:
+        ebitda_margin: 0.55
+        leverage: 0.62
+    risk-rater:
+      band: "2-special-mention"
+      confidence: 0.82
+
+# Expected shape — values are exact where the template is deterministic;
+# otherwise the assertion block uses tolerances.
+expected_shape:
+  memo_text: "<non-empty string>"
+  section_map: "<object with credit-memo-occ-v1 sections as keys>"
+  citations: "<non-empty array>"
+  word_count: "<= 1500"
+  citation_density: ">= 0.8"
+  requires_human_review: false
+  warnings: []
+
+assertions:
+  - id: word_cap_respected
+    description: word_count never exceeds max_words.
+    check: output.word_count <= 1500
+
+  - id: no_silent_truncation
+    description: |
+      If word_count is at the cap minus a small tolerance, at least one section
+      must be the literal redaction marker — drafter must not silently shorten.
+    check: |
+      output.word_count < 1490 or
+      "[REDACTED FOR LENGTH]" in output.memo_text
+
+  - id: every_numeric_claim_cited
+    description: |
+      Every claim_text in citations references an upstream agent that appeared
+      in the input bundle.
+    check: |
+      all(
+        c.source.agent in [
+          "document-extractor", "dscr-calculator", "covenant-analyzer",
+          "peer-benchmarker", "risk-rater"
+        ]
+        for c in output.citations
+      )
+
+  - id: citation_density_honest
+    description: |
+      Computed citation_density matches len(citations) / total_claims within
+      ±0.02 tolerance.
+    check: |
+      abs(output.citation_density - (len(output.citations) / total_claims(output.memo_text))) <= 0.02
+
+  - id: human_review_when_below_density
+    description: requires_human_review reflects citation_density_min threshold.
+    check: |
+      output.requires_human_review == (
+        output.citation_density < 0.8 or
+        "[REDACTED FOR LENGTH]" in output.memo_text
+      )
+
+  - id: required_sections_present
+    description: All mandatory sections from credit-memo-occ-v1 appear in section_map.
+    check: |
+      set(output.section_map.keys()) >= template_required_sections("credit-memo-occ-v1")
+
+  - id: tone_regulatory_formal
+    description: |
+      No contractions in memo_text (regulatory-formal tone). Lightweight check;
+      full tone audit lives in the compliance-reviewer subagent.
+    check: |
+      not any(c in output.memo_text for c in ["don't", "won't", "can't", "isn't", "aren't"])
+
+# TODO (platform team): confirm total_claims() and template_required_sections()
+# helpers exist in the harness; otherwise the platform team must add them.

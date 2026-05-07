@@ -1,0 +1,86 @@
+{
+  "description": "Draft a pass-band credit memo from clean ExtractedFinancials and a band-2 RiskRating",
+  "input": {
+    "extracted_financials": {
+      "income_statement": {
+        "revenue": 85000000,
+        "cogs": 51000000,
+        "ebitda": 14450000,
+        "interest_expense": 1700000,
+        "net_income": 8500000,
+        "depreciation_amortization": 2100000
+      },
+      "balance_sheet": {
+        "total_assets": 120000000,
+        "total_debt": 45000000,
+        "total_equity": 75000000,
+        "current_assets": 32000000,
+        "current_liabilities": 18000000,
+        "cash_and_equivalents": 6500000,
+        "inventory": 9000000,
+        "accounts_receivable": 12000000
+      },
+      "cash_flow": {
+        "operating_cash_flow": 11200000,
+        "capex": 3400000
+      },
+      "period": "2025",
+      "period_type": "annual",
+      "confidence": 0.93,
+      "requires_human_review": false,
+      "warnings": []
+    },
+    "risk_rating": {
+      "risk_band": 2,
+      "dscr_results": {
+        "dscr_base": 1.42,
+        "dscr_stressed": 1.18,
+        "pass_threshold": 1.00
+      },
+      "covenant_analysis": [
+        {"name": "leverage_ratio", "status": "pass", "headroom": 0.45},
+        {"name": "interest_coverage", "status": "pass", "headroom": 0.72},
+        {"name": "minimum_liquidity", "status": "pass", "headroom": 2100000}
+      ],
+      "peer_benchmarking": {
+        "peer_set": "industrial-manufacturing-tier2",
+        "revenue_percentile": 62,
+        "leverage_percentile": 38
+      },
+      "industry_risk": {
+        "sector": "industrial-manufacturing",
+        "outlook": "stable",
+        "concentration_flag": false
+      },
+      "collateral_valuation": {
+        "type": "all-assets-lien",
+        "appraised_value": 68000000,
+        "ltv_ratio": 0.662,
+        "lien_position": "first"
+      },
+      "exposure_aggregation": {
+        "total_committed": 45000000,
+        "total_outstanding": 45000000,
+        "unfunded": 0
+      },
+      "occ_classification": "pass"
+    }
+  },
+  "expected_output": {
+    "recommendation": {
+      "decision": "approve"
+    },
+    "occ_classification": "pass",
+    "requires_human_review": false,
+    "word_count_max": 1500,
+    "citation_density_min": 0.8,
+    "required_sections": [
+      "executive_summary",
+      "borrower_profile",
+      "financial_analysis",
+      "risk_assessment",
+      "collateral_analysis",
+      "recommendation"
+    ]
+  }
+}

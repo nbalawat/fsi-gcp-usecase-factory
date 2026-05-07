@@ -1,0 +1,8 @@
+{
+  "message": {
+    "data": "eyJib3Jyb3dlcl9pZCI6ICJERU1PLU1GRy0wMDEiLCAibG9hbl9hbW91bnQiOiA1MDAwMDAwLCAibG9hbl90eXBlIjogInRlcm0ifQ==",
+    "messageId": "smoke-test-001",
+    "publishTime": "2026-05-06T00:00:00Z"
+  },
+  "subscription": "projects/agentic-experiments/subscriptions/credit-memo-handler-sub"
+}

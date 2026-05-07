@@ -1,0 +1,72 @@
+{
+  "borrower_id": "DEMO-MFG-002",
+  "filing_type": "10-K equivalent (compiled annual financials — not audited)",
+  "fiscal_year_end": "2025-12-31",
+  "currency": "USD",
+  "auditor": "REDACTED-COMPILE-FIRM",
+  "audit_opinion": "Compilation — no assurance expressed",
+  "income_statement": {
+    "revenue": 32000000,
+    "cost_of_goods_sold": 22400000,
+    "gross_profit": 9600000,
+    "gross_margin_pct": 30.0,
+    "sg_and_a": 5760000,
+    "ebitda": 3840000,
+    "ebitda_margin_pct": 12.0,
+    "depreciation_and_amortization": 960000,
+    "ebit": 2880000,
+    "interest_expense": 1280000,
+    "pre_tax_income": 1600000,
+    "income_tax": 0,
+    "net_income": 1600000,
+    "net_income_margin_pct": 5.0
+  },
+  "balance_sheet": {
+    "total_assets": 28000000,
+    "current_assets": 7000000,
+    "cash_and_equivalents": 840000,
+    "accounts_receivable": 3360000,
+    "inventory": 2800000,
+    "other_current_assets": 0,
+    "non_current_assets": 21000000,
+    "net_ppe": 20000000,
+    "intangibles": 1000000,
+    "total_liabilities": 14000000,
+    "current_liabilities": 5600000,
+    "accounts_payable": 2240000,
+    "current_portion_ltd": 1400000,
+    "other_current_liabilities": 1960000,
+    "long_term_debt": 8400000,
+    "total_debt": 14000000,
+    "total_equity": 14000000,
+    "retained_earnings": 4200000
+  },
+  "cash_flow": {
+    "operating_cash_flow": 3200000,
+    "capital_expenditures": -1280000,
+    "free_cash_flow": 1920000,
+    "investing_activities": -1280000,
+    "financing_activities": -960000,
+    "net_change_in_cash": 960000
+  },
+  "derived_ratios": {
+    "dscr_base": 1.09,
+    "dscr_stressed": 0.87,
+    "leverage_total_debt_to_ebitda": 3.65,
+    "interest_coverage": 2.25,
+    "current_ratio": 1.25,
+    "debt_to_equity": 1.00,
+    "days_sales_outstanding": 38.3,
+    "days_inventory_outstanding": 45.6,
+    "return_on_assets_pct": 5.7,
+    "return_on_equity_pct": 11.4
+  },
+  "stress_flags": [
+    "DSCR base is 1.09 — below typical 1.25 covenant floor",
+    "Stressed DSCR 0.87 — below 1.0 indicates debt service default risk under mild stress",
+    "Leverage 3.65x — elevated for primary metal manufacturing peer set (median 2.8x)",
+    "Thin interest coverage 2.25x leaves limited buffer",
+    "Compiled financials — lower reliance warranted vs audited statements"
+  ],
+  "demo_note": "SYNTHETIC DATA — no real PII — stressed scenario for rated-substandard-decline test"
+}

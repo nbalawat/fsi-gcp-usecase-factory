@@ -1,0 +1,52 @@
+# Rendered with:
+#   agent_url: https://supervisor.run.app/invoke
+#   input_template: '${{"case": enriched}}'
+#   primary_model: claude-opus-4-7
+#   fallback_model: gemini-3-1-flash
+#   retry_max: 2
+#   retry_initial_delay_s: 4
+
+- agent_call_primary:
+    try:
+      call: http.post
+      args:
+        url: https://supervisor.run.app/invoke
+        headers:
+          X-Cloud-Trace-Context: ${context_id}
+        body:
+          model: "claude-opus-4-7"
+          input: ${{"case": enriched}}
+          context_id: ${context_id}
+        timeout: 60
+      result: agent_outcome
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: 2
+      backoff:
+        initial_delay: 4
+        max_delay: 60
+        multiplier: 2
+    except:
+      as: e
+      steps:
+        - agent_call_fallback:
+            call: http.post
+            args:
+              url: https://supervisor.run.app/invoke
+              headers:
+                X-Cloud-Trace-Context: ${context_id}
+              body:
+                model: "gemini-3-1-flash"
+                input: ${{"case": enriched}}
+                context_id: ${context_id}
+                fallback_from: "claude-opus-4-7"
+                primary_error: ${e.message}
+              timeout: 90
+            result: agent_outcome
+            retry:
+              predicate: ${http.default_retry_predicate}
+              max_retries: 1
+              backoff:
+                initial_delay: 4
+                max_delay: 30
+                multiplier: 2

@@ -1,0 +1,46 @@
+# FSI use case portfolio
+#
+# Single source of truth for which use cases exist, who owns them, and what phase they're in.
+# Updated by /init-use-case (auto-registers new entries) and /promote (advances phase).
+# Read by /fsi-portfolio for rollups and /fsi-reuse-report for reuse % across all use cases.
+
+schema_version: "1.0"
+last_updated: "2026-05-04"
+
+use_cases:
+  - id: credit-memo-commercial
+    name: "Commercial loan credit memo generation"
+    phase: intake                                  # intake | scaffolded | piloting | promoted | retired
+    owner:
+      team: "Commercial Lending Platform"
+      primary_contact: "platform-team@bank.example.com"
+    console_pattern: pipeline-console
+    use_case_archetype: pipeline-originator@1.0
+    multi_agent_pattern: extractor-spreader-rater-drafter@1.0
+    regulatory_regime: ["OCC", "Reg O", "CECL"]
+    reasons_path: usecases/credit-memo-commercial/reasons.yaml
+    atomic_services_consumed:
+      - ofac-screen@1.0
+    atomic_services_authored:
+      - financial-spreader
+      - dscr-calculator
+      - covenant-analyzer
+      - peer-benchmarker
+      - industry-risk-scorer
+      - collateral-valuator
+      - exposure-aggregator
+    agent_archetypes_consumed:
+      - document-extractor@1.0
+      - risk-rater@1.0
+      - narrative-drafter@1.0
+    workflow_fragments_consumed:
+      - fan-out-join@1.0
+      - approval-gate@1.0
+      - agent-call-with-retry@1.0
+      - sink-fanout@1.0
+      - regulatory-clock@1.0
+      - dlq-on-failure@1.0
+    last_reviewed: "2026-05-04"
+    notes: >-
+      Pilot use case. Anchors the gold-standard build path. 22 operations
+      across 3 build layers; 14 parallel-safe Layer-1 builds.

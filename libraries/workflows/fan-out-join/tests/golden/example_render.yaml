@@ -1,0 +1,52 @@
+# Rendered with:
+#   branches:
+#     - {name: spreader, service_url: https://spreader.run.app, body_template: '${event}'}
+#     - {name: dscr,     service_url: https://dscr.run.app,     body_template: '${event}'}
+#   join_key: enriched
+
+- fan_out_enriched:
+    parallel:
+      shared: [enriched]
+      branches:
+        - call_spreader:
+            steps:
+              - http_spreader:
+                  call: http.post
+                  args:
+                    url: https://spreader.run.app
+                    headers:
+                      X-Cloud-Trace-Context: ${context_id}
+                    body: ${event}
+                    timeout: 10
+                  retry:
+                    predicate: ${http.default_retry_predicate}
+                    max_retries: 3
+                    backoff:
+                      initial_delay: 1
+                      max_delay: 10
+                      multiplier: 2
+                  result: result_spreader
+              - merge_spreader:
+                  assign:
+                    - enriched.spreader: ${result_spreader.body}
+        - call_dscr:
+            steps:
+              - http_dscr:
+                  call: http.post
+                  args:
+                    url: https://dscr.run.app
+                    headers:
+                      X-Cloud-Trace-Context: ${context_id}
+                    body: ${event}
+                    timeout: 10
+                  retry:
+                    predicate: ${http.default_retry_predicate}
+                    max_retries: 3
+                    backoff:
+                      initial_delay: 1
+                      max_delay: 10
+                      multiplier: 2
+                  result: result_dscr
+              - merge_dscr:
+                  assign:
+                    - enriched.dscr: ${result_dscr.body}

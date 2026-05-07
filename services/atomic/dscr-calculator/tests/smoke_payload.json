@@ -1,0 +1,50 @@
+{
+  "context_id": "smoke-dscr-20260506-001",
+  "borrower_id": "DEMO-MFG-042",
+  "period": "FY2025",
+  "spread_income_statement": {
+    "revenue": 48000000,
+    "ebitda": 8640000,
+    "capex": -1440000,
+    "depreciation_amortization": 2400000,
+    "interest_expense": 1125000,
+    "net_income": 4200000
+  },
+  "loan_terms": {
+    "loan_amount": 25000000,
+    "annual_principal_payment": 2500000,
+    "annual_interest_payment": 1125000,
+    "interest_rate": 0.045,
+    "term_years": 10,
+    "facility_type": "term_loan",
+    "maturity_date": "2035-05-01"
+  },
+  "scenarios": [
+    {
+      "name": "mild_revenue_stress",
+      "description": "Revenue declines 10 % due to demand softness",
+      "revenue_shock": 0.90,
+      "ebitda_margin_delta": 0.0,
+      "capex_multiplier": 1.0
+    },
+    {
+      "name": "moderate_combined_stress",
+      "description": "Revenue down 15 %, margin compressed 3 pp, capex up 20 %",
+      "revenue_shock": 0.85,
+      "ebitda_margin_delta": -0.03,
+      "capex_multiplier": 1.20
+    },
+    {
+      "name": "severe_recession",
+      "description": "Revenue down 20 %, margin compressed 5 pp, rates up 200 bps",
+      "revenue_shock": 0.80,
+      "ebitda_margin_delta": -0.05,
+      "rate_shock_bps": 200
+    },
+    {
+      "name": "rate_shock_only",
+      "description": "Rates increase 300 bps with flat revenues",
+      "rate_shock_bps": 300
+    }
+  ]
+}

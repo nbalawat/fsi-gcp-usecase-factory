@@ -1,0 +1,15 @@
+{
+  "name": "gl-posting",
+  "version": "0.1.0",
+  "description": "Posts approved credit memo GL entries to BigQuery ledger",
+  "inputs": ["context_id", "borrower_id", "approver_decision", "credit_memo"],
+  "outputs": ["context_id", "gl_entry_id", "posted_at"],
+  "endpoint": "https://fsi-sink-gl-posting-placeholder.run.app/",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 3000,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "confidential",
+  "pii_fields": ["borrower_id"]
+}

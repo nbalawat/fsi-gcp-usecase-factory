@@ -1,0 +1,45 @@
+{
+  "borrower_id": "DEMO-RET-001",
+  "legal_name": "Summit Outdoor Outfitters Inc",
+  "dba": "Summit Outfitters",
+  "entity_type": "C-Corp",
+  "state_of_incorporation": "CO",
+  "naics_code": "448",
+  "naics_description": "Clothing and Clothing Accessories Stores (Specialty Retail)",
+  "industry_segment": "specialty-retail",
+  "employee_count": 450,
+  "annual_revenue_usd": 62000000,
+  "credit_rating": "BBB",
+  "rating_agency": "S&P",
+  "bank_relationship_years": 7,
+  "relationship_start_year": 2018,
+  "primary_bank_contact": "REDACTED-RM-003",
+  "headquarters": {
+    "city": "Denver",
+    "state": "CO",
+    "region": "Mountain West"
+  },
+  "store_count": 28,
+  "store_footprint": "Rocky Mountain states + Pacific Northwest",
+  "products": [
+    "Technical outdoor apparel",
+    "Hardgoods (climbing, skiing, camping)",
+    "Footwear",
+    "E-commerce (18% of revenue)"
+  ],
+  "primary_markets": ["Direct-to-consumer retail", "B2B outfitting contracts (national parks, guides)"],
+  "ownership_structure": "Private — founder-owned, no institutional equity",
+  "key_customers_concentration": "Fragmented — largest single account 4% of revenue",
+  "existing_facilities": [
+    {
+      "facility_type": "Revolver",
+      "outstanding_balance_usd": 800000,
+      "committed_usd": 1500000,
+      "maturity": "2025-08-31",
+      "rate_type": "floating",
+      "spread_bps": 200
+    }
+  ],
+  "seasonal_pattern": "Q4 heavy (40% of annual revenue); draws on revolver Q3 for inventory build",
+  "demo_note": "SYNTHETIC DATA — no real PII — covenant-projection-violation-return-for-revision test scenario"
+}

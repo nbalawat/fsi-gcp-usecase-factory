@@ -1,0 +1,6 @@
+{
+  "event": "SessionStart",
+  "command": "${CLAUDE_PLUGIN_DIR}/hooks/session-start-context.sh",
+  "description": "Display project context banner when Claude Code starts in this repo.",
+  "timeout_seconds": 5
+}

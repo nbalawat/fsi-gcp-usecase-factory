@@ -1,0 +1,47 @@
+- create_approval_callback:
+    call: events.create_callback_endpoint
+    args:
+      http_callback_method: POST
+    result: approval_callback
+
+- publish_to_approver_queue:
+    call: googleapis.pubsub.v1.projects.topics.publish
+    args:
+      topic: {{queue_topic}}
+      body:
+        messages:
+          - attributes:
+              context_id: ${context_id}
+              callback_url: ${approval_callback.url}
+            data: ${base64.encode(json.encode({{approval_payload_template}}))}
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: 3
+      backoff:
+        initial_delay: 2
+        max_delay: 30
+        multiplier: 2
+
+- await_human_decision:
+    call: events.await_callback
+    args:
+      callback: ${approval_callback}
+      timeout: {{callback_timeout_seconds}}
+    result: human_disposition
+
+- branch_on_disposition:
+    switch:
+      - condition: ${human_disposition.http_request.body.disposition == "approve"}
+        steps:
+          - assign_approve:
+              assign:
+                - {{on_approve_var}}: ${human_disposition.http_request.body}
+      - condition: ${human_disposition.http_request.body.disposition == "reject"}
+        steps:
+          - assign_reject:
+              assign:
+                - {{on_reject_var}}: ${human_disposition.http_request.body}
+      - condition: true
+        raise:
+          code: "ApprovalUnknownDisposition"
+          message: ${"Unexpected disposition: " + human_disposition.http_request.body.disposition}

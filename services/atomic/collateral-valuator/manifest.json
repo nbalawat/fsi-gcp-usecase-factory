@@ -1,0 +1,27 @@
+{
+  "name": "collateral-valuator",
+  "version": "0.1.0",
+  "description": "Value collateral items, apply type-specific haircuts, and compute total lendable value for credit memo underwriting.",
+  "inputs": [
+    "collateral_descriptions",
+    "valuation_date",
+    "context_id",
+    "borrower_id"
+  ],
+  "outputs": [
+    "valuation_per_item",
+    "haircut_per_item",
+    "lendable_value"
+  ],
+  "endpoint": "https://fsi-atomic-collateral-valuator-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 300,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "confidential",
+  "pii_fields": [
+    "borrower_id"
+  ],
+  "use_case": "credit-memo-commercial"
+}

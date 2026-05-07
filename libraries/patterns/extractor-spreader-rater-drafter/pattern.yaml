@@ -1,0 +1,52 @@
+# Reusable multi-agent pattern: extractor-spreader-rater-drafter
+# Contract only — no ADK SDK code lives here. SDK wiring (SequentialAgent +
+# LlmAgent supervisor + sub-agent registration) is the instantiator's job
+# (see fsi-adk-patterns for the current surface).
+
+name: extractor-spreader-rater-drafter
+version: "1.0"
+
+description: >-
+  document-extractor → atomic-service spreaders (use-case supplied) →
+  risk-rater → narrative-drafter → supervisor synthesis (loops drafter on low
+  citation density), emitting a single bundled output conforming to the
+  instance's output_schema.
+
+# Roles that the pattern composes. Each binding pins an archetype + version.
+# At instantiation time, the use case supplies parameters for each archetype
+# per its own `reasons.yaml: structure.agent_archetypes`.
+composes:
+  - role: extractor
+    archetype: document-extractor@1.0
+  - role: rater
+    archetype: risk-rater@1.0
+  - role: drafter
+    archetype: narrative-drafter@1.0
+
+# The supervisor is generated from this pattern, not from a library archetype.
+# Its prompt skeleton lives in supervisor-instruction.md.j2.
+supervisor_role: >-
+  Synthesizes specialist outputs, decides loopback (drafter only, citation-
+  density driven), and emits the final structured bundle conforming to the
+  instance's output_schema.
+
+# The atomic spreader services (financial-spreader, dscr-calculator, etc.) are
+# NOT archetypes — they are use-case-supplied. The pattern requires that
+# spreader services be invoked AFTER the extractor and BEFORE the rater so the
+# rater has the spreads to draw evidence from. The rater's `tools` parameter
+# is the canonical declaration of which spreaders the supervisor must ensure
+# have run.
+
+data_flow:
+  - extractor          # document-extractor: doc → extracted fields
+  - spreader-services  # use-case-supplied atomic services (parallel where independent)
+  - rater              # risk-rater: case bundle → band + factors
+  - drafter            # narrative-drafter: full bundle → memo prose
+  - supervisor         # synthesizes, validates, optionally loops drafter
+
+# Bookkeeping — bumped by the platform team on each refresh.
+last_verified: 2026-05-04
+
+# Populated as use cases adopt this pattern. The architecture-auditor uses
+# this list to fan out impact analysis when the pattern version bumps.
+used_by: []

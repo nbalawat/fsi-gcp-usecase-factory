@@ -1,0 +1,27 @@
+{
+  "use_case": "credit-memo-commercial",
+  "step": 1,
+  "component": "handler",
+  "description": "Cloud Run Pub/Sub push handler that ingests loans.application.submitted events, validates schema, normalises fields, stubs enrichment, and publishes to credit-memo-commercial.enriched.",
+  "runtime": "python311",
+  "entry_point": "handle_loan_submitted",
+  "source_topic": "loans.application.submitted",
+  "sink_topic": "credit-memo-commercial.enriched",
+  "event_type_in": "loans.application.submitted",
+  "event_type_out": "loans.application.enriched",
+  "required_env_vars": [
+    "GCP_PROJECT",
+    "ENRICHED_TOPIC"
+  ],
+  "min_instances": 1,
+  "max_instances": 20,
+  "memory": "512Mi",
+  "cpu": "1",
+  "timeout": "60s",
+  "service_account": "credit-memo-handler-sa@{GCP_PROJECT}.iam.gserviceaccount.com",
+  "labels": {
+    "use-case": "credit-memo-commercial",
+    "layer": "handler",
+    "paradigm-step": "1"
+  }
+}

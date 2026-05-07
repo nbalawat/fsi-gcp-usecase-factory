@@ -1,0 +1,74 @@
+{
+  "scenario_id": "exposure-limit-decline",
+  "description": "Decline path triggered by single-borrower exposure limit breach, NOT credit quality. Ridgecrest Health is a strong BBB+ borrower; the $15M equipment loan pushes committed exposure to 8.6% of Tier 1 capital, exceeding the 8.0% limit. Rules engine fires limit_status=breach and drives decline regardless of strong financials.",
+  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_exposure_limit_decline.py",
+  "borrower_id": "DEMO-HLT-001",
+  "application_id": "DEMO-APP-HLT-001-2026",
+  "input_fixtures": {
+    "profile": "borrowers/DEMO-HLT-001/profile.json",
+    "financials": "borrowers/DEMO-HLT-001/financials/10k_2025.json",
+    "loan_application": "borrowers/DEMO-HLT-001/loan_application.json",
+    "peer_set": "peer_sets/healthcare.json"
+  },
+  "injected_exposure_state": {
+    "existing_exposure_committed_usd": 58500000,
+    "existing_exposure_outstanding_usd": 50500000,
+    "proposed_new_usd": 15000000,
+    "total_post_close_committed_usd": 73500000,
+    "bank_tier1_capital_usd": 850000000,
+    "single_borrower_pct_post_close": 8.647,
+    "single_borrower_limit_pct": 8.0
+  },
+  "pipeline_steps": [
+    {
+      "step": "svc-financial-spreader",
+      "expected": "Strong financials: dscr_base=4.28, leverage=1.92, operating_margin=12%"
+    },
+    {
+      "step": "svc-exposure-aggregator",
+      "expected": "existing_exposure_committed=$58.5M; post-close=$73.5M; single_borrower_pct=8.65%"
+    },
+    {
+      "step": "rule-single-borrower-exposure",
+      "expected": "limit_status=BREACH; headroom_dollars=-5,100,000 (negative — over limit by $5.1M)"
+    },
+    {
+      "step": "rule-regulatory-thresholds",
+      "expected": "threshold_breaches=['single_borrower_exposure_limit'] — OCC 12 CFR 32 limits"
+    },
+    {
+      "step": "rule-approval-matrix-commercial",
+      "expected": "approval_authority_required=board-risk-committee; additional_reviewers=['chief-credit-officer']"
+    },
+    {
+      "step": "agent-rater",
+      "expected": "risk_band=1-pass (credit quality strong); exposure_limit_flag=true — independent of credit rating"
+    },
+    {
+      "step": "agent-drafter",
+      "expected": "Memo documents strong credit quality separately from exposure limit breach; DECLINE recommendation driven by regulatory limit, not credit quality; cites OCC 12 CFR 32"
+    }
+  ],
+  "expected_outcome": {
+    "decision": "declined",
+    "risk_band": "1-pass",
+    "decline_reasons": [
+      "Single-borrower exposure limit breach: $73.5M committed (8.65%) exceeds 8.0% Tier 1 capital limit",
+      "Breach amount: $5.1M over regulatory limit",
+      "OCC 12 CFR Part 32 lending limit applies",
+      "Board Risk Committee escalation required"
+    ],
+    "approval_authority": "board-risk-committee",
+    "regulatory_clock_breach": false
+  },
+  "assertions": [
+    "CreditMemo.recommendation == 'DECLINE'",
+    "CreditMemo.risk_band == '1-pass'",
+    "SingleBorrowerExposureRule.limit_status == 'BREACH'",
+    "ExposureAggregator.single_borrower_pct > 0.08",
+    "CreditMemo.decline_reasons[0] contains 'exposure'",
+    "CreditMemo.regulatory_citations contains '12 CFR 32'"
+  ],
+  "critical_test_assertion": "Decision must be DECLINE despite 1-pass credit rating — validates that exposure rules gate independently of credit quality rating",
+  "demo_note": "SYNTHETIC SCENARIO — tests that single-borrower-exposure rule produces decline independent of credit quality; validates regulatory-rules gate in workflow"
+}

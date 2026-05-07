@@ -1,0 +1,14 @@
+{
+  "description": "Mid-market loan ($15M) with moderate risk band (3) routes to senior_credit_committee; concentration below 10% so no additional reviewers",
+  "input": {
+    "loan_amount": 15000000,
+    "risk_band": 3,
+    "industry_risk_band": 3,
+    "single_borrower_pct": 0.07
+  },
+  "expected_output": {
+    "approval_authority_required": "senior_credit_committee",
+    "additional_reviewers": []
+  },
+  "regulatory_basis": "Loan between $5M and $25M triggers senior credit committee; risk_band=3 also satisfies credit_officer level but amount-based rule takes precedence for collect policy"
+}

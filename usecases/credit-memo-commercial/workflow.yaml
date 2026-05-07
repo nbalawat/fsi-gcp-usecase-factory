@@ -1,0 +1,408 @@
+# usecases/credit-memo-commercial/workflow.yaml
+# 5-step paradigm: handler → atomic services → rules-service → agent → sinks
+# Sub-workflows: service_fan_out (7 parallel services), credit_memo_sink_fanout (2 sinks)
+# Regime: OCC / Reg O / CECL — 5-business-day regulatory clock
+# DO NOT EDIT — use /fsi-prompt-update to change behavior
+main:
+  params: [args]
+  steps:
+    # ── 1. Init ──────────────────────────────────────────────────────
+    - init:
+        assign:
+          - context_id: ${args.context_id}
+          - borrower_id: ${args.borrower_id}
+          - use_case: "credit-memo-commercial"
+          - event: ${args}
+          - rules_service_url: ${sys.get_env("RULES_SERVICE_URL")}
+          - regclock_topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/regclock-credit-memo-commercial"}
+          - dlq_topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.dlq"}
+
+    # ── 2. Regulatory clock — OCC 5-business-day deadline ────────────
+    # Fragment: regulatory-clock@1.0 (non-blocking — main flow continues)
+    - regclock_init:
+        assign:
+          - regclock_start_map:
+              context_id: ${context_id}
+              deadline: ${args.regulatory_deadline}
+              action_on_breach: "escalate"
+
+    - regclock_publish_start:
+        call: googleapis.pubsub.v1.projects.topics.publish
+        args:
+          topic: ${regclock_topic}
+          body:
+            messages:
+              - attributes: {context_id: "${context_id}", kind: "regclock-start"}
+                data: ${base64.encode(json.encode(regclock_start_map))}
+          timeout: 30
+
+    # ── Step 2 (5-step paradigm): Fan-out — 7 atomic services ────────
+    # Fragment: fan-out-join@1.0 (via sub-workflow)
+    - fan_out_all_services:
+        call: service_fan_out
+        args:
+          event: ${event}
+          context_id: ${context_id}
+        result: service_results
+
+    # ── Step 3 (5-step paradigm): Rules-service ──────────────────────
+    # MANDATORY — eligibility, exposure limits, approval matrix gates.
+    # Business rules live here. The agent must NOT re-evaluate rules.
+    - call_rules_service:
+        call: http.post
+        args:
+          url: ${rules_service_url + "/evaluate"}
+          auth: {type: OIDC}
+          headers: {X-Cloud-Trace-Context: "${context_id}"}
+          body:
+            context_id: ${context_id}
+            rule_set: "credit-memo-eligibility"
+            inputs: ${service_results}
+          timeout: 30
+        retry: {predicate: "${http.default_retry_predicate}", max_retries: 2, backoff: {initial_delay: 2, max_delay: 10, multiplier: 2}}
+        result: rules_result_raw
+
+    - assign_rules_result:
+        assign:
+          - rules_result: ${rules_result_raw.body}
+
+    - check_rules_decision:
+        switch:
+          - condition: ${rules_result.decision == "DECLINE"}
+            next: route_decline
+        next: agent_call_primary
+
+    - route_decline:
+        steps:
+          - publish_decline:
+              call: googleapis.pubsub.v1.projects.topics.publish
+              args:
+                topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.decided"}
+                body:
+                  messages:
+                    - attributes: {context_id: "${context_id}", disposition: "decline"}
+                      data: ${base64.encode(json.encode({context_id: context_id, borrower_id: borrower_id, decision: "DECLINE", reason: rules_result.reason}))}
+                timeout: 30
+          - return_decline:
+              return: ${{context_id: context_id, borrower_id: borrower_id, disposition: "DECLINE", reason: rules_result.reason}}
+
+    # ── Step 4 (5-step paradigm): Agent — memo draft + risk rating ───
+    # Receives service_results + rules_result. Does NOT re-call services.
+    # Fragment: agent-call-with-retry@1.0
+    - agent_call_primary:
+        try:
+          call: http.post
+          args:
+            url: ${"https://us-central1-aiplatform.googleapis.com/v1/projects/" + sys.get_env("GCP_PROJECT") + "/locations/us-central1/reasoningEngines/credit_memo_supervisor:query"}
+            auth: {type: OAuth2}
+            headers: {X-Cloud-Trace-Context: "${context_id}"}
+            body:
+              context_id: ${context_id}
+              borrower_id: ${borrower_id}
+              service_results: ${service_results}
+              rules_result: ${rules_result}
+            timeout: 120
+          result: agent_outcome
+        retry: {predicate: "${http.default_retry_predicate}", max_retries: 2, backoff: {initial_delay: 4, max_delay: 60, multiplier: 2}}
+        except:
+          as: e
+          steps:
+            - agent_fallback:
+                call: http.post
+                args:
+                  url: ${"https://us-central1-aiplatform.googleapis.com/v1/projects/" + sys.get_env("GCP_PROJECT") + "/locations/us-central1/reasoningEngines/credit_memo_supervisor:query"}
+                  auth: {type: OAuth2}
+                  headers: {X-Cloud-Trace-Context: "${context_id}"}
+                  body:
+                    context_id: ${context_id}
+                    borrower_id: ${borrower_id}
+                    service_results: ${service_results}
+                    rules_result: ${rules_result}
+                    model: "gemini-3-1-flash"
+                    fallback_from: "claude-opus-4-7"
+                    primary_error: ${e.message}
+                  timeout: 120
+                retry: {predicate: "${http.default_retry_predicate}", max_retries: 1, backoff: {initial_delay: 4, max_delay: 30, multiplier: 2}}
+                result: agent_outcome
+
+    # ── Approval gate — Fragment: approval-gate@1.0 (callback, no polling)
+    - create_approval_callback:
+        call: events.create_callback_endpoint
+        args: {http_callback_method: POST, timeout: 30}
+        result: approval_callback
+
+    - publish_to_approver_queue:
+        call: googleapis.pubsub.v1.projects.topics.publish
+        args:
+          topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-officer-queue"}
+          body:
+            messages:
+              - attributes: {context_id: "${context_id}", borrower_id: "${borrower_id}"}
+                data: ${base64.encode(json.encode({context_id: context_id, borrower_id: borrower_id, callback_url: approval_callback.http_callback.url, credit_memo: agent_outcome.body, rules_result: rules_result}))}
+          timeout: 30
+        retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 2, max_delay: 30, multiplier: 2}}
+
+    - await_human_decision:
+        call: events.await_callback
+        args:
+          callback: ${approval_callback}
+          timeout: 432000
+        result: human_disposition
+
+    - branch_on_disposition:
+        switch:
+          - condition: ${human_disposition.http_request.body.disposition == "approve"}
+            next: call_sink_fanout
+          - condition: ${human_disposition.http_request.body.disposition == "reject"}
+            next: handle_rejection
+        raise: {code: "ApprovalUnknownDisposition", message: '${"Unexpected disposition: " + human_disposition.http_request.body.disposition}'}
+
+    # ── Step 5 (5-step paradigm): Sinks — GL posting + GCS document ──
+    # Fragment: sink-fanout@1.0 (via sub-workflow)
+    - call_sink_fanout:
+        call: credit_memo_sink_fanout
+        args:
+          context_id: ${context_id}
+          borrower_id: ${borrower_id}
+          agent_outcome: ${agent_outcome.body}
+          approver_decision: ${human_disposition.http_request.body}
+          dlq_topic: ${dlq_topic}
+        result: sink_results
+
+    - build_complete_result:
+        assign:
+          - workflow_result: {context_id: "${context_id}", borrower_id: "${borrower_id}", disposition: "approve", sink_results: "${sink_results}"}
+    - return_complete:
+        return: ${workflow_result}
+
+    # ── Rejection ─────────────────────────────────────────────────────
+    - handle_rejection:
+        return: ${{context_id: context_id, borrower_id: borrower_id, disposition: "reject", reason: human_disposition.http_request.body.reason}}
+
+    # ── DLQ — Fragment: dlq-on-failure@1.0 ───────────────────────────
+    - handle_error:
+        steps:
+          - publish_dlq:
+              call: googleapis.pubsub.v1.projects.topics.publish
+              args:
+                topic: ${dlq_topic}
+                body:
+                  messages:
+                    - attributes: {context_id: "${context_id}", failed_step: "unhandled", use_case: "${use_case}"}
+                      data: ${base64.encode(json.encode({failed_step: "unhandled", error_code: default(map.get(exception_, "code"), "UNKNOWN"), error_message: default(map.get(exception_, "message"), "no message"), context_id: context_id, ts: sys.now()}))}
+                timeout: 30
+              retry: {predicate: "${http.default_retry_predicate}", max_retries: 5, backoff: {initial_delay: 2, max_delay: 60, multiplier: 2}}
+          - reraise:
+              raise: ${exception_}
+
+
+# ═════════════════════════════════════════════════════════════════════
+# Sub-workflow: fan out 7 atomic services in parallel, collect results
+# ═════════════════════════════════════════════════════════════════════
+service_fan_out:
+  params: [event, context_id]
+  steps:
+    - init_results:
+        assign:
+          - service_results: {}
+    - fan_out:
+        parallel:
+          shared: [service_results]
+          branches:
+            - call_financial_spreader:
+                steps:
+                  - http_spreader:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-financial-spreader-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_spreader
+                  - merge_spreader:
+                      assign:
+                        - service_results.financial_spreader: ${r_spreader.body}
+
+            - call_dscr_calculator:
+                steps:
+                  - http_dscr:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-dscr-calculator-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_dscr
+                  - merge_dscr:
+                      assign:
+                        - service_results.dscr_calculator: ${r_dscr.body}
+
+            - call_covenant_analyzer:
+                steps:
+                  - http_covenant:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-covenant-analyzer-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_covenant
+                  - merge_covenant:
+                      assign:
+                        - service_results.covenant_analyzer: ${r_covenant.body}
+
+            - call_peer_benchmarker:
+                steps:
+                  - http_peer:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-peer-benchmarker-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_peer
+                  - merge_peer:
+                      assign:
+                        - service_results.peer_benchmarker: ${r_peer.body}
+
+            - call_industry_risk_scorer:
+                steps:
+                  - http_industry:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-industry-risk-scorer-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_industry
+                  - merge_industry:
+                      assign:
+                        - service_results.industry_risk_scorer: ${r_industry.body}
+
+            - call_collateral_valuator:
+                steps:
+                  - http_collateral:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-collateral-valuator-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_collateral
+                  - merge_collateral:
+                      assign:
+                        - service_results.collateral_valuator: ${r_collateral.body}
+
+            - call_exposure_aggregator:
+                steps:
+                  - http_exposure:
+                      call: http.post
+                      args:
+                        url: https://fsi-atomic-exposure-aggregator-v4uibzu6ga-uc.a.run.app
+                        auth: {type: OIDC}
+                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                        body: ${event}
+                        timeout: 10
+                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      result: r_exposure
+                  - merge_exposure:
+                      assign:
+                        - service_results.exposure_aggregator: ${r_exposure.body}
+
+    - return_results:
+        return: ${service_results}
+
+
+# ═════════════════════════════════════════════════════════════════════
+# Sub-workflow: sink fan-out after credit officer approves
+# ═════════════════════════════════════════════════════════════════════
+credit_memo_sink_fanout:
+  params: [context_id, borrower_id, agent_outcome, approver_decision, dlq_topic]
+  steps:
+    - init_sink_results:
+        assign:
+          - sink_results: {}
+          - sink_failures: []
+
+    - fan_out_sinks:
+        parallel:
+          shared: [sink_results, sink_failures]
+          branches:
+            - sink_gl_posting:
+                steps:
+                  - try_gl:
+                      try:
+                        steps:
+                          - publish_gl:
+                              call: googleapis.pubsub.v1.projects.topics.publish
+                              args:
+                                topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/gl-posting"}
+                                body:
+                                  messages:
+                                    - attributes: {context_id: "${context_id}", borrower_id: "${borrower_id}"}
+                                      data: ${base64.encode(json.encode({context_id: context_id, borrower_id: borrower_id, approver_decision: approver_decision, credit_memo: agent_outcome}))}
+                                timeout: 30
+                          - mark_ok_gl:
+                              assign:
+                                - sink_results.gl_posting: "ok"
+                      except:
+                        as: e_gl
+                        steps:
+                          - mark_fail_gl:
+                              assign:
+                                - sink_results.gl_posting: "fail"
+                                - sink_failures: ${list.concat(sink_failures, {name: "gl_posting", error: e_gl.message})}
+
+            - sink_document_store:
+                steps:
+                  - try_gcs:
+                      try:
+                        steps:
+                          - write_gcs:
+                              call: googleapis.storage.v1.objects.insert
+                              args:
+                                bucket: ${"agentic-experiments-credit-memo-docs"}
+                                uploadType: media
+                                name: ${"credit-memo-commercial/" + borrower_id + "/" + context_id + "/memo.json"}
+                                body: ${agent_outcome}
+                          - mark_ok_gcs:
+                              assign:
+                                - sink_results.document_store_gcs: "ok"
+                      except:
+                        as: e_gcs
+                        steps:
+                          - mark_fail_gcs:
+                              assign:
+                                - sink_results.document_store_gcs: "fail"
+                                - sink_failures: ${list.concat(sink_failures, {name: "document_store_gcs", error: e_gcs.message})}
+
+    - check_sink_failures:
+        switch:
+          - condition: ${len(sink_failures) > 0}
+            steps:
+              - publish_sink_dlq:
+                  call: googleapis.pubsub.v1.projects.topics.publish
+                  args:
+                    topic: ${dlq_topic}
+                    body:
+                      messages:
+                        - attributes: {context_id: "${context_id}", reason: "sink-fanout-failure"}
+                          data: ${base64.encode(json.encode({failures: sink_failures, results: sink_results}))}
+                    timeout: 30
+              - raise_sink_failure:
+                  raise: {code: "SinkFanoutFailure", message: '${"Sink failures: " + json.encode(sink_failures)}'}
+
+    - return_sink_results:
+        return: ${sink_results}

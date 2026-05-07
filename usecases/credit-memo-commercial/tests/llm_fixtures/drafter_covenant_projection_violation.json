@@ -1,0 +1,41 @@
+{
+  "_fixture_meta": {
+    "agent": "drafter",
+    "scenario": "covenant-projection-violation-return-for-revision",
+    "borrower_id": "DEMO-RET-001",
+    "context_id": "credit-memo-commercial-test-covenant-projection-violation-001",
+    "input_hash": "ret001_rating2specialmention",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "credit_memo",
+  "output_value": {
+    "recommendation": "RETURN_FOR_REVISION",
+    "risk_band": "2-special-mention",
+    "approval_authority": "credit-committee",
+    "word_count": 1350,
+    "citation_density": 0.91,
+    "sections": [
+      "Executive Summary",
+      "Borrower Overview",
+      "Annual Financial Performance (Strong)",
+      "Seasonal Cash Flow Pattern Analysis",
+      "Covenant Projection Analysis",
+      "Revision Options",
+      "Recommendation"
+    ],
+    "decline_reasons": [],
+    "suggested_revisions": [
+      "Option A: Q3 step-down — covenant 1.10 August 1 through October 31, 1.25 remainder of year",
+      "Option B: Measure DSCR on fiscal-year-end (January 31) basis only — eliminates seasonal noise"
+    ],
+    "regulatory_citations": [],
+    "memo_status": "draft",
+    "return_reasons": [
+      "Proposed Minimum DSCR covenant 1.25 projects breach in Q3 seasonal trough (projected 1.18)",
+      "Seasonal retail cash flow pattern creates systematic annual covenant breach risk",
+      "Covenant structure must be revised before credit committee can approve"
+    ]
+  }
+}

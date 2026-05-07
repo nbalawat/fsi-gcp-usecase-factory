@@ -1,0 +1,6 @@
+{
+  "message": {
+    "data": "eyJjb250ZXh0X2lkIjoidGVzdC1jdHgtMDAxIiwiYm9ycm93ZXJfaWQiOiJCUlctMTIzNDUiLCJhcHByb3Zlcl9kZWNpc2lvbiI6eyJhcHByb3Zlcl9pZCI6InVzZXItYWJjIiwiZGlzcG9zaXRpb24iOiJhcHByb3ZlIiwiYXBwcm92ZWRfYXQiOiIyMDI2LTA1LTA3VDEwOjAwOjAwWiJ9LCJjcmVkaXRfbWVtbyI6eyJsb2FuX2Ftb3VudCI6MTAwMDAwMCwicmlza19yYXRpbmciOiIyLXNwZWNpYWwtbWVudGlvbiJ9fQ==",
+    "attributes": {"context_id": "test-ctx-001", "borrower_id": "BRW-12345"}
+  }
+}

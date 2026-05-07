@@ -1,0 +1,47 @@
+{
+  "_fixture_meta": {
+    "agent": "extractor",
+    "scenario": "happy-path-approve",
+    "borrower_id": "DEMO-MFG-001",
+    "context_id": "credit-memo-commercial-test-happy-path-approve-001",
+    "input_hash": "mfg001_10k_2025",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "extracted_financials",
+  "output_value": {
+    "borrower_id": "DEMO-MFG-001",
+    "period": "FY2025",
+    "financial_statement_type": "audited",
+    "income_statement": {
+      "revenue": 85000000,
+      "cogs": 51000000,
+      "ebitda": 14450000,
+      "interest_expense": 1700000,
+      "net_income": 8500000,
+      "depreciation_amortization": 2550000
+    },
+    "balance_sheet": {
+      "total_assets": 68000000,
+      "total_debt": 25500000,
+      "total_equity": 42500000,
+      "current_assets": 21250000,
+      "current_liabilities": 10200000,
+      "cash_and_equivalents": 4250000,
+      "inventory": 6800000,
+      "accounts_receivable": 10200000
+    },
+    "cash_flow": {
+      "operating_cash_flow": 12750000,
+      "capex": -3400000,
+      "free_cash_flow": 9350000
+    },
+    "citations": [
+      {"source": "borrowers/DEMO-MFG-001/financials/10k_2025.json", "field": "income_statement.revenue", "page_ref": null},
+      {"source": "borrowers/DEMO-MFG-001/financials/10k_2025.json", "field": "balance_sheet.total_assets", "page_ref": null}
+    ],
+    "extraction_confidence": 0.97,
+    "extraction_warnings": []
+  }
+}

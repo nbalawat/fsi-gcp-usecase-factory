@@ -1,0 +1,522 @@
+# Pipeline console configuration — credit-memo-commercial
+# Console pattern: pipeline-console
+# Generated from: usecases/credit-memo-commercial/reasons.yaml (console-config op, layer 3)
+# Depends on: usecases/credit-memo-commercial/workflow.yaml
+#
+# The runtime renders this config. Do NOT add custom React code. All UI shape
+# lives here. Changes to stage order, metrics, or bindings go through this file.
+
+console_pattern: pipeline-console
+use_case: credit-memo-commercial
+persona: Credit operations lead
+in_flight_label: Memos in flight
+
+# ── Stages ──────────────────────────────────────────────────────────────────
+# Six stages matching the REASONS canvas. Types:
+#   agent      — fully automated; no human required to advance
+#   mixed      — agent runs first, then human checkpoint may intervene
+#   human      — human action required to advance
+#   auto       — system action fires automatically (no agent, no human)
+#
+# duration_target_h drives stuck-case detection (alert at 150 % of target).
+# slo_h is the SLO budget for the stage; used in bottleneck analysis.
+
+stages:
+  - id: intake
+    name: Intake
+    type: agent
+    description: Loan application received; borrower data enriched
+    agent_roles: []                          # handler enriches, no ADK agent at this stage
+    duration_target_h: 1
+    slo_h: 2
+
+  - id: spreading
+    name: Spreading
+    type: agent
+    description: Financial statements spread; standard ratios computed
+    agent_roles:
+      - role: extractor
+        agent_id: credit_memo_extractor
+        archetype: document-extractor@1.0
+    atomic_services_involved:
+      - financial-spreader
+      - dscr-calculator
+      - peer-benchmarker
+      - industry-risk-scorer
+    duration_target_h: 4
+    slo_h: 8
+
+  - id: rating
+    name: Rating
+    type: agent
+    description: Risk rating in progress; covenant and collateral analysis
+    agent_roles:
+      - role: rater
+        agent_id: credit_memo_rater
+        archetype: risk-rater@1.0
+    atomic_services_involved:
+      - covenant-analyzer
+      - collateral-valuator
+      - exposure-aggregator
+    rules_evaluated:
+      - regulatory_thresholds@2026-q2
+      - single_borrower_exposure@1.0
+    duration_target_h: 2
+    slo_h: 4
+
+  - id: drafting
+    name: Drafting
+    type: agent
+    description: Credit memo being drafted; citation density enforced
+    agent_roles:
+      - role: drafter
+        agent_id: credit_memo_drafter
+        archetype: narrative-drafter@1.0
+    rules_evaluated:
+      - approval_matrix_commercial@1.0
+    duration_target_h: 2
+    slo_h: 4
+
+  - id: approval
+    name: Approval
+    type: human
+    description: Credit officer reviewing memo; approval gate open
+    human_roles:
+      - credit-officer
+    actions_available:
+      - accept
+      - return           # returns to drafting with revision comments
+      - escalate         # escalates to senior credit committee
+    callback_timeout_seconds: 432000    # 5 business days (approval-gate@1.0 default)
+    duration_target_h: 24
+    slo_h: 120           # 5 business days
+
+  - id: posted
+    name: Posted
+    type: auto
+    description: Approved; GL posting fired and memo archived to document store
+    sinks_fired:
+      - gl-posting
+      - document-store-gcs
+    duration_target_h: 0.25
+    slo_h: 1
+
+# ── Stuck-case detection ─────────────────────────────────────────────────────
+# Cases that exceed alert_after_pct of duration_target_h surface in the
+# stuck-cases panel. reason_field names the workflow variable to display.
+
+stuck_detection:
+  method: duration_exceeds_target
+  alert_after_pct: 150
+  reason_field: stuck_reason
+  panel_max_rows: 50
+
+# ── Components ───────────────────────────────────────────────────────────────
+# Each component maps to one entry in the shared component library.
+# order determines left-to-right / top-to-bottom render sequence.
+# data_binding.source names the BFF endpoint; query is the BFF query param or
+# BigQuery SQL fragment passed server-side (never client-side SQL).
+
+components:
+
+  # 1. BreadcrumbNav ─────────────────────────────────────────────────────────
+  - type: BreadcrumbNav
+    order: 1
+    config:
+      crumbs:
+        - label: "Commercial Lending"
+          href: "/consoles/commercial-lending"
+        - label: "Credit Memo"
+          href: "/consoles/credit-memo-commercial"
+        - label: "{{borrower_name}}"
+          field: borrower_name
+        - label: "{{loan_id}}"
+          field: loan_id
+      back_label: "Live floor"
+      back_href: "/consoles/commercial-lending"
+    data_binding:
+      source: workflow_state
+      fields:
+        borrower_name: "$.context.borrower_name"
+        loan_id: "$.context.loan_id"
+        borrower_id: "$.context.borrower_id"
+
+  # 2. MetricStrip ────────────────────────────────────────────────────────────
+  # Five numbers across the header. These are portfolio-level aggregates for
+  # everything currently in flight, not per-loan values.
+  - type: MetricStrip
+    order: 2
+    config:
+      metrics:
+        - id: dscr
+          label: "Avg DSCR"
+          unit: "x"
+          precision: 2
+          alert_below: 1.20
+          tooltip: "Debt-service coverage ratio averaged across in-flight memos"
+
+        - id: debt_ebitda
+          label: "Debt / EBITDA"
+          unit: "x"
+          precision: 1
+          alert_above: 6.0
+          tooltip: "Leverage ratio; OCC guidance flags > 6× as highly leveraged"
+
+        - id: leverage_ratio
+          label: "Leverage Ratio"
+          unit: "%"
+          precision: 1
+          tooltip: "Equity / total assets across in-flight borrowers"
+
+        - id: exposure_pct
+          label: "Exposure %"
+          unit: "%"
+          precision: 1
+          alert_above: 80.0
+          tooltip: "Single-borrower exposure as % of Tier 1 capital limit"
+
+        - id: approval_time_remaining_h
+          label: "Time Remaining"
+          unit: "h"
+          precision: 0
+          alert_below: 8
+          format: countdown
+          tooltip: "Hours remaining to OCC 5-business-day deadline (earliest expiring memo)"
+    data_binding:
+      source: bigquery
+      dataset: fsi_banking
+      table: credit_memo_agent_outputs
+      query: >-
+        SELECT
+          AVG(dscr_base)                              AS dscr,
+          AVG(debt_to_ebitda)                         AS debt_ebitda,
+          AVG(leverage_ratio_pct)                     AS leverage_ratio,
+          MAX(single_borrower_pct)                    AS exposure_pct,
+          MIN(TIMESTAMP_DIFF(regulatory_deadline_ts,
+                             CURRENT_TIMESTAMP(), HOUR))
+                                                      AS approval_time_remaining_h
+        FROM fsi_banking.credit_memo_agent_outputs
+        WHERE workflow_status NOT IN ('posted', 'declined')
+          AND created_date = CURRENT_DATE()
+      refresh_seconds: 60
+
+  # 3. WorkflowStageRail ──────────────────────────────────────────────────────
+  # Horizontal pipeline of the 6 stages. Active stage is highlighted.
+  # Stage counts (n) come from Cloud Workflows execution state.
+  - type: WorkflowStageRail
+    order: 3
+    config:
+      stage_ids:
+        - intake
+        - spreading
+        - rating
+        - drafting
+        - approval
+        - posted
+      show_count_per_stage: true
+      highlight_active: true
+      show_type_badge: true          # agent / human / auto badge on each stage
+      show_duration_target: true
+      click_action: scroll_to_stage  # scrolls the pipeline canvas to that stage column
+    data_binding:
+      source: workflow_state
+      endpoint: /bff/credit-memo-commercial/stage-counts
+      # BFF aggregates Cloud Workflows execution states for all active executions
+      # and returns { stage_id: count } map.
+      push_protocol: sse              # server-sent events; no polling
+
+  # 4. CaseCard ───────────────────────────────────────────────────────────────
+  # One card per active loan application. Rendered inside each stage column
+  # of the pipeline canvas. Compact by default; click expands to detail.
+  - type: CaseCard
+    order: 4
+    config:
+      view: compact                   # compact | detail | expanded
+      detail_on_click: true
+      fields_compact:
+        - key: borrower_name
+          label: "Borrower"
+        - key: loan_amount_usd
+          label: "Amount"
+          format: currency
+        - key: stage
+          label: "Stage"
+        - key: risk_band
+          label: "Risk Band"
+          color_map:
+            "1-pass":            green
+            "2-special-mention": yellow
+            "3-substandard":     orange
+            "4-doubtful":        red
+            "5-loss":            red
+      fields_detail:
+        - key: borrower_id
+          label: "Borrower ID"
+        - key: loan_id
+          label: "Loan ID"
+        - key: naics_code
+          label: "NAICS"
+        - key: loan_amount_usd
+          label: "Loan Amount"
+          format: currency
+        - key: dscr_base
+          label: "DSCR (Base)"
+          format: "0.00x"
+        - key: dscr_stressed
+          label: "DSCR (Stressed)"
+          format: "0.00x"
+        - key: single_borrower_pct
+          label: "Single-Borrower %"
+          format: percent
+        - key: risk_band
+          label: "Risk Band"
+        - key: industry_risk_band
+          label: "Industry Risk"
+        - key: stage_entered_at
+          label: "Stage Since"
+          format: relative_time
+        - key: regulatory_deadline_ts
+          label: "OCC Deadline"
+          format: datetime
+      stuck_indicator: true           # shows ⚠ badge if case is past SLA
+      stuck_threshold_pct: 150
+    data_binding:
+      source: bigquery
+      dataset: fsi_banking
+      table: credit_memo_agent_outputs
+      query: >-
+        SELECT
+          loan_id,
+          borrower_id,
+          borrower_name,
+          loan_amount_usd,
+          naics_code,
+          current_stage          AS stage,
+          risk_band,
+          industry_risk_band,
+          dscr_base,
+          dscr_stressed,
+          single_borrower_pct,
+          stage_entered_at,
+          regulatory_deadline_ts
+        FROM fsi_banking.credit_memo_agent_outputs
+        WHERE workflow_status NOT IN ('posted', 'declined')
+        ORDER BY regulatory_deadline_ts ASC
+      push_protocol: sse
+
+  # 5. AgentReasoningPanel ────────────────────────────────────────────────────
+  # Displays the extractor → rater → drafter reasoning chain for the selected
+  # case, with confidence scores and citations linked to source documents.
+  - type: AgentReasoningPanel
+    order: 5
+    config:
+      chain:
+        - step: extractor
+          agent_id: credit_memo_extractor
+          label: "Document Extraction"
+          show_confidence: true
+          show_citations: true
+        - step: rater
+          agent_id: credit_memo_rater
+          label: "Risk Rating"
+          show_confidence: true
+          show_citations: true
+          show_rule_outputs: true   # surfaces rule engine decisions inline
+        - step: drafter
+          agent_id: credit_memo_drafter
+          label: "Memo Drafting"
+          show_confidence: true
+          show_citations: true
+          show_citation_density: true
+          citation_density_min: 0.8
+      expand_by_default: false
+      selected_step_on_load: rater   # most useful step for credit officer review
+      max_height_px: 600
+    data_binding:
+      source: bigquery
+      dataset: fsi_banking
+      table: credit_memo_agent_outputs
+      query: >-
+        SELECT
+          loan_id,
+          agent_step,
+          reasoning_text,
+          confidence_score,
+          citations,
+          rule_outputs,
+          citation_density,
+          produced_at
+        FROM fsi_banking.credit_memo_agent_outputs
+        WHERE loan_id = :loan_id
+        ORDER BY agent_step_order ASC
+      # :loan_id injected by BFF from selected CaseCard
+
+  # 6. RegulatoryClock ────────────────────────────────────────────────────────
+  # OCC 5-business-day countdown. Reads workflow variable regulatory_clock_start
+  # set by regulatory-clock@1.0 fragment when the workflow starts.
+  - type: RegulatoryClock
+    order: 6
+    config:
+      label: "OCC Decision Deadline"
+      regime: OCC
+      deadline_rule: "5 business days from complete application"
+      business_days: 5
+      alert_thresholds:
+        - pct: 50
+          severity: info
+        - pct: 75
+          severity: warning
+        - pct: 90
+          severity: critical
+      red_at_hours_remaining: 8      # full red when < 1 business day left
+      display_format: countdown      # DD:HH:MM:SS countdown
+      show_breach_banner: true       # full-width red banner on breach
+      breach_message: >-
+        OCC 5-business-day deadline has been breached for this application.
+        Escalation required immediately.
+    data_binding:
+      source: workflow_state
+      endpoint: /bff/credit-memo-commercial/regulatory-clock
+      # BFF reads Cloud Workflows execution variable `regulatory_clock_start`
+      # (set by regulatory-clock@1.0) and returns:
+      #   { clock_start_ts, deadline_ts, elapsed_pct, hours_remaining, breached }
+      workflow_variable: regulatory_clock_start
+      push_protocol: sse
+
+  # 7. ApprovalGate ───────────────────────────────────────────────────────────
+  # Credit officer action surface. Only active when current_stage == approval.
+  # Irrevocable actions (GL posting) are never auto-fired; they go through
+  # this gate per the forbidden-patterns policy.
+  - type: ApprovalGate
+    order: 7
+    config:
+      visible_in_stages:
+        - approval
+      actions:
+        - id: accept
+          label: "Approve"
+          style: primary
+          confirm: true
+          confirm_message: >-
+            Approve this credit memo? GL posting will be initiated and the memo
+            archived. This action cannot be undone.
+          irrevocable: true
+          required_role: credit-officer
+
+        - id: return
+          label: "Return for Revision"
+          style: secondary
+          confirm: false
+          requires_comment: true
+          comment_label: "Revision instructions for the drafting agent"
+          irrevocable: false
+          required_role: credit-officer
+          next_stage: drafting      # workflow transitions back to drafting stage
+
+        - id: escalate
+          label: "Escalate to Committee"
+          style: secondary
+          confirm: true
+          confirm_message: >-
+            Escalate to senior credit committee? The regulatory clock continues.
+          irrevocable: false
+          requires_comment: true
+          comment_label: "Escalation rationale"
+          required_role: credit-officer
+      approval_timeout_seconds: 432000   # mirrors approval-gate@1.0 fragment
+      timeout_action: escalate           # auto-escalates on ApprovalTimeout
+    data_binding:
+      source: cloud_tasks
+      queue: credit-memo-approvals
+      endpoint: /bff/credit-memo-commercial/approve
+      # POST body: { loan_id, disposition, comment, officer_id, ts }
+      # BFF validates role, writes to audit.human_actions, then calls
+      # Cloud Workflows callback URL from approval-gate@1.0 fragment.
+
+# ── Currently-moving feed ────────────────────────────────────────────────────
+# Live feed of cases transitioning between stages. Displayed below the
+# pipeline canvas. Delivered via SSE; no polling.
+
+currently_moving:
+  enabled: true
+  max_rows: 20
+  fields:
+    - borrower_name
+    - loan_id
+    - from_stage
+    - to_stage
+    - transitioned_at
+  data_binding:
+    source: pubsub
+    topic: credit-memo-stage-transitions
+    push_protocol: sse
+    bff_endpoint: /bff/credit-memo-commercial/transitions
+
+# ── Footer action bar ─────────────────────────────────────────────────────────
+
+footer_actions:
+  - id: all_cases
+    label: "All Cases"
+    action: filter_reset
+
+  - id: bottleneck_analysis
+    label: "Bottleneck Analysis"
+    action: open_panel
+    panel: bottleneck_analysis
+    data_binding:
+      source: bigquery
+      dataset: fsi_banking
+      table: credit_memo_agent_outputs
+      query: >-
+        SELECT
+          current_stage,
+          COUNT(*)                                          AS case_count,
+          AVG(TIMESTAMP_DIFF(CURRENT_TIMESTAMP(),
+                             stage_entered_at, HOUR))      AS avg_age_h,
+          COUNTIF(TIMESTAMP_DIFF(CURRENT_TIMESTAMP(),
+                                 stage_entered_at, HOUR)
+                  > duration_target_h * 1.5)               AS stuck_count
+        FROM fsi_banking.credit_memo_agent_outputs
+        WHERE workflow_status NOT IN ('posted', 'declined')
+        GROUP BY current_stage
+
+  - id: underwriter_workload
+    label: "Officer Workload"
+    action: open_panel
+    panel: officer_workload
+    data_binding:
+      source: bigquery
+      dataset: fsi_banking
+      table: credit_memo_agent_outputs
+      query: >-
+        SELECT
+          assigned_officer_id,
+          COUNT(*) AS pending_count,
+          MIN(regulatory_deadline_ts) AS earliest_deadline
+        FROM fsi_banking.credit_memo_agent_outputs
+        WHERE current_stage = 'approval'
+          AND workflow_status = 'active'
+        GROUP BY assigned_officer_id
+        ORDER BY pending_count DESC
+
+  - id: export_csv
+    label: "Export"
+    action: export
+    format: csv
+    scope: current_filter
+
+# ── Mobile behaviour ──────────────────────────────────────────────────────────
+# Below 768 px, the console degrades to read-only stage summary.
+# No editing or approval actions on small screens (console-pipeline hard rule).
+
+mobile:
+  breakpoint_px: 768
+  mode: read_only_stage_summary
+  visible_components:
+    - WorkflowStageRail
+    - CaseCard
+    - RegulatoryClock
+  hidden_components:
+    - AgentReasoningPanel
+    - ApprovalGate
+    - currently_moving

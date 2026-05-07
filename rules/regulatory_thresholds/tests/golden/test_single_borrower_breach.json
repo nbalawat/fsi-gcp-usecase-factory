@@ -1,0 +1,14 @@
+{
+  "description": "Single-borrower concentration pct exceeds 15% limit; loan amount is below $50M so only single_borrower_limit fires",
+  "input": {
+    "loan_amount": 5000000,
+    "borrower_type": "corporate",
+    "single_borrower_pct": 0.18
+  },
+  "expected_output": {
+    "threshold_breaches": ["single_borrower_limit"],
+    "regulations_triggered": ["OCC 12 CFR 32.3"],
+    "actions_required": ["board_approval_required"]
+  },
+  "regulatory_basis": "OCC 12 CFR 32.3 — aggregate exposure to a single borrower exceeding 15% of Tier 1 capital requires board approval"
+}

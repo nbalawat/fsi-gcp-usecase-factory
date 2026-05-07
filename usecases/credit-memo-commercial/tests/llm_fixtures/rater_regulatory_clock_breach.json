@@ -1,0 +1,18 @@
+{
+  "_fixture_meta": {
+    "agent": "rater",
+    "scenario": "regulatory-clock-breach-alarm",
+    "borrower_id": "DEMO-HLT-002",
+    "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+    "input_hash": "hlt002_rater_not_reached",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Rater is never invoked in this scenario — extractor failure stalls pipeline before rater step"
+  },
+  "output_key": "rater_skipped",
+  "output_value": {
+    "status": "NOT_REACHED",
+    "reason": "Pipeline stalled at agent-extractor step before rater could be invoked",
+    "risk_rating": null
+  }
+}

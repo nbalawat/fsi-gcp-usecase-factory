@@ -1,0 +1,27 @@
+{
+  "name": "exposure-aggregator",
+  "version": "0.1.0",
+  "description": "Aggregate existing credit exposure (committed and outstanding) for a borrower across the bank, and compute single-borrower concentration percentage.",
+  "inputs": [
+    "borrower_id",
+    "as_of_date",
+    "context_id"
+  ],
+  "outputs": [
+    "existing_exposure_committed",
+    "existing_exposure_outstanding",
+    "single_borrower_pct"
+  ],
+  "endpoint": "https://fsi-atomic-exposure-aggregator-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 400,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "confidential",
+  "pii_fields": [
+    "borrower_id"
+  ],
+  "production_data_source": "bigquery:fsi_banking.loan_exposures",
+  "use_case": "credit-memo-commercial"
+}

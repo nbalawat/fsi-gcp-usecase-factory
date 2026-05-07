@@ -1,0 +1,30 @@
+name: regulatory-clock
+version: "1.0"
+
+description: >-
+  start deadline timer → emit threshold alerts (50/75/90 % default) →
+  on breach: alarm | escalate | terminate-workflow per breach_action policy.
+
+parameters:
+  - name: deadline_iso
+    type: string
+    description: >-
+      ISO 8601 absolute timestamp ("2026-05-09T17:00:00Z") OR ISO 8601
+      duration ("PT120H") added to workflow start time. The fragment uses
+      the resulting absolute deadline.
+  - name: alert_thresholds_pct
+    type: list[int]
+    description: >-
+      Percent-elapsed thresholds at which to publish alerts. Default
+      [50, 75, 90]. Each threshold publishes one message to alert_topic.
+  - name: alert_topic
+    type: string
+    description: Pub/Sub topic receiving threshold alerts and breach events.
+  - name: breach_action
+    type: string
+    description: >-
+      One of: alarm (publish breach + continue), escalate (publish
+      escalation flag + continue), terminate-workflow (raise to abort).
+
+last_verified: 2026-05-04
+used_by: []

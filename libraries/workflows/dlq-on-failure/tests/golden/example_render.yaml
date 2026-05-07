@@ -1,0 +1,36 @@
+# Rendered with:
+#   dlq_topic: projects/bank-prod/topics/credit-memo-dlq
+#   original_payload_var: event
+#   step_name: agent_supervisor_invocation
+#   error_var: e
+
+- dlq_publish_agent_supervisor_invocation:
+    call: googleapis.pubsub.v1.projects.topics.publish
+    args:
+      topic: projects/bank-prod/topics/credit-memo-dlq
+      body:
+        messages:
+          - attributes:
+              context_id: ${context_id}
+              failed_step: "agent_supervisor_invocation"
+              use_case: ${use_case}
+            data: ${base64.encode(json.encode({
+                "failed_step": "agent_supervisor_invocation",
+                "error_code": e.code,
+                "error_message": e.message,
+                "error_tags": e.tags,
+                "retry_count": default(map.get(e, "retry_count"), 0),
+                "original_payload": event,
+                "context_id": context_id,
+                "ts": sys.now()
+              }))}
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: 5
+      backoff:
+        initial_delay: 2
+        max_delay: 60
+        multiplier: 2
+
+- dlq_reraise_agent_supervisor_invocation:
+    raise: ${e}

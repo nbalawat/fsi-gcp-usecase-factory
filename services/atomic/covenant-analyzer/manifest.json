@@ -1,0 +1,27 @@
+{
+  "name": "covenant-analyzer",
+  "version": "0.1.0",
+  "description": "Test proposed loan covenants against borrower financials and project 4-quarter breach risk.",
+  "inputs": [
+    "proposed_covenants",
+    "spread_financials",
+    "trailing_quarters",
+    "context_id",
+    "borrower_id"
+  ],
+  "outputs": [
+    "covenant_test_results",
+    "headroom_pct",
+    "violations_projected"
+  ],
+  "endpoint": "https://fsi-atomic-covenant-analyzer-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 300,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "internal",
+  "pii_fields": [
+    "borrower_id"
+  ]
+}

@@ -1,0 +1,1 @@
+web: functions-framework --target=handle_loan_submitted --port=$PORT

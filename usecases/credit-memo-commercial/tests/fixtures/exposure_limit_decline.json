@@ -1,0 +1,53 @@
+{
+  "context_id": "credit-memo-commercial-test-exposure-limit-decline-001",
+  "scenario": "exposure-limit-decline",
+  "description": "Strong BBB+ healthcare borrower (DEMO-HLT-001) with DSCR 4.28. The $15M equipment loan pushes total committed exposure to $73.5M (8.65% of $850M Tier 1 capital), breaching the 8.0% single-borrower limit by $5.1M. Decision must be DECLINE despite 1-pass credit quality.",
+  "event_payload": {
+    "context_id": "credit-memo-commercial-test-exposure-limit-decline-001",
+    "borrower_id": "DEMO-HLT-001",
+    "application_id": "DEMO-APP-HLT-001-2026",
+    "loan_amount": 15000000,
+    "loan_type": "term",
+    "submitted_at": "2026-04-05T10:00:00Z",
+    "application_type": "new_credit",
+    "facility": {
+      "type": "Equipment Financing — Term Loan",
+      "amount_requested_usd": 15000000,
+      "term_years": 7,
+      "rate_type": "fixed",
+      "rate_pct_requested": 4.75,
+      "purpose": "Medical equipment financing — MRI suite expansion and surgical robotics"
+    },
+    "injected_exposure_state": {
+      "existing_exposure_committed_usd": 58500000,
+      "existing_exposure_outstanding_usd": 50500000,
+      "proposed_new_usd": 15000000,
+      "total_post_close_committed_usd": 73500000,
+      "bank_tier1_capital_usd": 850000000,
+      "single_borrower_pct_post_close": 8.647,
+      "single_borrower_limit_pct": 8.0
+    },
+    "projected_post_close_ratios": {
+      "dscr_base": 3.61,
+      "dscr_stressed_minus_10pct_revenue": 2.80,
+      "leverage_debt_to_net_assets": 0.51
+    },
+    "demo_fixture": "demo-data-borrower-set"
+  },
+  "expected_outcome": {
+    "status": "declined",
+    "risk_band": "1-pass",
+    "decline_reason": "single-borrower-exposure-limit-breach",
+    "assertions": [
+      "response status code is 200",
+      "context_id echoed back in response",
+      "exposure-aggregator single_borrower_pct > 0.08",
+      "single-borrower-exposure rule limit_status == BREACH",
+      "credit memo recommendation is DECLINE",
+      "risk_band is 1-pass (credit quality independent of exposure limit)",
+      "decline reason references exposure limit breach",
+      "regulatory citation contains 12 CFR 32",
+      "approval_authority escalated to board-risk-committee"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "borrower_id": "DEMO-HLT-001",
+  "legal_name": "Ridgecrest Regional Health System",
+  "dba": "Ridgecrest Health",
+  "entity_type": "Non-profit Corporation (501(c)(3))",
+  "state_of_incorporation": "TN",
+  "naics_code": "622",
+  "naics_description": "Hospitals",
+  "industry_segment": "regional-healthcare",
+  "employee_count": 1200,
+  "annual_revenue_usd": 145000000,
+  "credit_rating": "BBB+",
+  "rating_agency": "Moody's",
+  "bank_relationship_years": 15,
+  "relationship_start_year": 2010,
+  "primary_bank_contact": "REDACTED-RM-004",
+  "headquarters": {
+    "city": "Knoxville",
+    "state": "TN",
+    "region": "Southeast"
+  },
+  "facilities": [
+    "Ridgecrest General Hospital (285 beds)",
+    "Ridgecrest Rehabilitation Center",
+    "3 ambulatory surgery centers",
+    "12 primary care clinics"
+  ],
+  "payor_mix": {
+    "medicare_pct": 42,
+    "medicaid_pct": 18,
+    "commercial_pct": 35,
+    "self_pay_pct": 5
+  },
+  "ownership_structure": "Independent non-profit health system; board governed",
+  "existing_facilities": [
+    {
+      "facility_type": "Term Loan",
+      "outstanding_balance_usd": 18500000,
+      "maturity": "2029-03-31",
+      "rate_type": "fixed",
+      "rate_pct": 4.25
+    },
+    {
+      "facility_type": "Tax-Exempt Revenue Bond",
+      "outstanding_balance_usd": 32000000,
+      "maturity": "2035-06-01",
+      "rate_type": "fixed",
+      "rate_pct": 3.80
+    },
+    {
+      "facility_type": "Revolver",
+      "outstanding_balance_usd": 0,
+      "committed_usd": 8000000,
+      "maturity": "2026-06-30",
+      "rate_type": "floating",
+      "spread_bps": 175
+    }
+  ],
+  "accreditation": ["Joint Commission", "CMS Certified", "Tennessee Dept. of Health Licensed"],
+  "demo_note": "SYNTHETIC DATA — no real PII — exposure-limit-decline scenario (large existing exposure)"
+}

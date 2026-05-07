@@ -1,0 +1,31 @@
+{
+  "_fixture_meta": {
+    "agent": "rater",
+    "scenario": "exposure-limit-decline",
+    "borrower_id": "DEMO-HLT-001",
+    "context_id": "credit-memo-commercial-test-exposure-limit-decline-001",
+    "input_hash": "hlt001_dscr428_exposure_breach",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model. Critical: risk_band must be 1-pass despite exposure breach."
+  },
+  "output_key": "risk_rating",
+  "output_value": {
+    "risk_band": "1-pass",
+    "risk_band_numeric": 1,
+    "overall_rating": "Pass",
+    "dscr_base": 4.28,
+    "dscr_stressed": 3.61,
+    "leverage": 1.92,
+    "industry_risk_band": 2,
+    "exposure_limit_flag": true,
+    "covenant_violation_flag": false,
+    "rationale_summary": "DEMO-HLT-001 credit quality is strong: DSCR 4.28x base, 3.61x stressed, leverage 1.92x, all covenants pass. Risk band 1-pass on credit quality alone. However, single-borrower exposure limit breach flag is set independently: post-close committed exposure $73.5M represents 8.65% of Tier 1 capital, exceeding the 8.0% OCC 12 CFR Part 32 limit by $5.1M. The exposure limit flag overrides the approval path regardless of credit rating.",
+    "citations": [
+      {"source": "dscr-calculator", "field": "dscr_base", "value": 4.28},
+      {"source": "exposure-aggregator", "field": "single_borrower_pct", "value": 0.0865},
+      {"source": "rules-service", "field": "single_borrower_exposure.limit_status", "value": "BREACH"}
+    ],
+    "citation_density": 0.94
+  }
+}

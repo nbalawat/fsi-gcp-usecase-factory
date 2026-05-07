@@ -1,0 +1,49 @@
+use_case_id: credit-memo-commercial
+version: "0.1.0"
+
+consumes:
+  pubsub_topics:
+    - loans.application.submitted
+
+  atomic_services:
+    - financial-spreader
+    - dscr-calculator
+    - covenant-analyzer
+    - peer-benchmarker
+    - industry-risk-scorer
+    - collateral-valuator
+    - exposure-aggregator
+    - ofac-screen
+
+  rules:
+    - credit-memo-eligibility
+    - regulatory-thresholds
+    - single-borrower-exposure
+    - approval-matrix-commercial
+
+  agents:
+    - credit_memo_supervisor
+    - credit_memo_extractor
+    - credit_memo_rater
+    - credit_memo_drafter
+
+  external_systems:
+    - bigquery_audit
+    - gcs_memo_bucket
+    - gl_ledger_bigquery
+
+produces:
+  pubsub_topics:
+    - credit-memo-commercial.decided
+    - gl-posting
+    - credit-officer-queue
+    - regclock-credit-memo-commercial
+    - credit-memo-commercial.dlq
+
+  gcs_artifacts:
+    - credit-memo-commercial/{borrower_id}/{context_id}/memo.json
+
+  bigquery_tables:
+    - audit.gl_posting_events
+    - audit.rules_service_events
+    - gl_ledger.credit_memo_postings

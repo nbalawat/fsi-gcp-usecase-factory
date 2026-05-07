@@ -1,0 +1,114 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "loan_amount", "name": "loan_amount", "dataType": "number"},
+          {"id": "risk_band", "name": "risk_band", "dataType": "number"},
+          {"id": "industry_risk_band", "name": "industry_risk_band", "dataType": "number"},
+          {"id": "single_borrower_pct", "name": "single_borrower_pct", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "Commercial Approval Matrix",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "collect",
+        "inputs": [
+          {"id": "c1", "name": "loan_amount", "field": "loan_amount", "dataType": "number"},
+          {"id": "c2", "name": "risk_band", "field": "risk_band", "dataType": "number"},
+          {"id": "c3", "name": "single_borrower_pct", "field": "single_borrower_pct", "dataType": "number"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "approval_authority_required", "field": "approval_authority_required", "dataType": "string"},
+          {"id": "o2", "name": "additional_reviewers", "field": "additional_reviewers", "dataType": "string"}
+        ],
+        "rules": [
+          {
+            "_id": "r1",
+            "c1": "<=1000000",
+            "c2": "in(1,2)",
+            "c3": "",
+            "o1": "relationship_manager",
+            "o2": ""
+          },
+          {
+            "_id": "r2",
+            "c1": "(1000000..5000000]",
+            "c2": "",
+            "c3": "",
+            "o1": "credit_officer",
+            "o2": ""
+          },
+          {
+            "_id": "r3",
+            "c1": "",
+            "c2": "3",
+            "c3": "",
+            "o1": "credit_officer",
+            "o2": ""
+          },
+          {
+            "_id": "r4",
+            "c1": "(5000000..25000000]",
+            "c2": "",
+            "c3": "",
+            "o1": "senior_credit_committee",
+            "o2": ""
+          },
+          {
+            "_id": "r5",
+            "c1": "",
+            "c2": "4",
+            "c3": "",
+            "o1": "senior_credit_committee",
+            "o2": ""
+          },
+          {
+            "_id": "r6",
+            "c1": ">25000000",
+            "c2": "",
+            "c3": "",
+            "o1": "board",
+            "o2": ""
+          },
+          {
+            "_id": "r7",
+            "c1": "",
+            "c2": "5",
+            "c3": "",
+            "o1": "board",
+            "o2": ""
+          },
+          {
+            "_id": "r8",
+            "c1": "",
+            "c2": "",
+            "c3": ">0.10",
+            "o1": "",
+            "o2": "chief_credit_officer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

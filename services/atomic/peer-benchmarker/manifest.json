@@ -1,0 +1,24 @@
+{
+  "name": "peer-benchmarker",
+  "version": "0.1.0",
+  "description": "Select a NAICS+size-band peer group and compute percentile rankings for borrower financial ratios against that peer set.",
+  "inputs": [
+    "borrower_naics",
+    "borrower_size_band",
+    "borrower_ratios"
+  ],
+  "outputs": [
+    "peer_set",
+    "ratio_percentiles"
+  ],
+  "endpoint": "https://fsi-atomic-peer-benchmarker-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 300,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "internal",
+  "pii_fields": [
+    "borrower_id"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Manifest for atomic services",
+  "description": "Schema for the manifest.json that exposes an atomic service as an MCP tool.",
+  "type": "object",
+  "required": ["name", "version", "description", "endpoint", "method", "input_schema", "output_schema", "owner", "category"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "kebab-case service name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "semver"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "endpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "method": {
+      "type": "string",
+      "enum": ["POST", "GET"]
+    },
+    "input_schema": {"type": "object"},
+    "output_schema": {"type": "object"},
+    "owner": {"type": "string", "minLength": 1},
+    "category": {
+      "type": "string",
+      "enum": ["atomic-service", "shared-agent", "sink-adapter", "rules-service"]
+    },
+    "data_classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"]
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Loan amount and concentration pct are both well below all regulatory thresholds; no breaches expected",
+  "input": {
+    "loan_amount": 1000000,
+    "borrower_type": "sme",
+    "single_borrower_pct": 0.02
+  },
+  "expected_output": {
+    "threshold_breaches": [],
+    "regulations_triggered": [],
+    "actions_required": []
+  },
+  "regulatory_basis": "No OCC 12 CFR 32 thresholds triggered — loan is below $10M and concentration is below 10%"
+}

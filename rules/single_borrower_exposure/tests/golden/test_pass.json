@@ -1,0 +1,15 @@
+{
+  "description": "Total exposure is well within the 15% limit with comfortable headroom — limit_status must be 'pass'",
+  "input": {
+    "proposed_amount": 5000000,
+    "existing_exposure_committed": 3000000,
+    "tier1_capital": 300000000
+  },
+  "expected_output": {
+    "limit_status": "pass",
+    "total_exposure": 8000000,
+    "limit_dollars": 45000000,
+    "headroom_dollars": 37000000
+  },
+  "regulatory_basis": "Total exposure of $8M is well within the $45M Tier 1 15% limit; headroom of $37M exceeds 10% buffer threshold"
+}

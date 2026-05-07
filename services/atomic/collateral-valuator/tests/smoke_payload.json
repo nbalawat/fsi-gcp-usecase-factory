@@ -1,0 +1,37 @@
+{
+  "context_id": "smoke-col-001",
+  "borrower_id": "DEMO-MFG-001",
+  "valuation_date": "2026-05-06",
+  "collateral_descriptions": [
+    {
+      "type": "real_estate",
+      "estimated_value": 2500000,
+      "age_years": 0,
+      "condition": "good"
+    },
+    {
+      "type": "equipment",
+      "estimated_value": 750000,
+      "age_years": 3,
+      "condition": "fair"
+    },
+    {
+      "type": "accounts_receivable",
+      "estimated_value": 400000,
+      "age_years": 0,
+      "condition": "excellent"
+    },
+    {
+      "type": "inventory",
+      "estimated_value": 300000,
+      "age_years": 0,
+      "condition": "good"
+    },
+    {
+      "type": "marketable_securities",
+      "estimated_value": 600000,
+      "age_years": 0,
+      "condition": "excellent"
+    }
+  ]
+}

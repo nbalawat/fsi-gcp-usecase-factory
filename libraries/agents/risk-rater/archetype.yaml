@@ -1,0 +1,80 @@
+# Reusable agent archetype: risk-rater
+# Contract only — no ADK SDK code lives here. SDK wiring is the instantiator's job
+# (see fsi-adk-patterns for the current LlmAgent / McpToolset surface).
+
+name: risk-rater
+version: "1.0"
+description: >-
+  Score a case against a domain rubric → emit a banded score plus the factor
+  breakdown that justifies it, with every factor cited to a specific upstream
+  tool/agent output.
+
+# Locked per the bank's two-model rule (see .claude/skills/model-selection/SKILL.md).
+# Banding under uncertainty + calibrated confidence → Claude Opus 4.7. Do not
+# override at instantiation.
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5  # degraded path if primary times out
+
+# Default scope; instance may override (e.g., AML rates per case, vendor risk per
+# vendor). Architectural rule: pick the narrowest scope that supports the use case.
+memory_scope_default: borrower
+
+# The archetype does NOT bind a fixed tool list — different rubrics need different
+# evidence. The instantiator MUST pass `tools` as a parameter (see below).
+# The credit-memo instance, for example, wires DSCR, covenant, peer, industry,
+# collateral, and exposure services plus the regulatory-thresholds rule.
+tools_required: <instance-supplied via `tools` parameter>
+
+# Each instantiation supplies a Pydantic schema for the rated bundle. The
+# archetype guarantees the agent returns JSON conforming to whatever schema is
+# supplied (band + factors[] + confidence + warnings).
+output_schema: <instance-supplied>  # TODO: platform team to confirm registry path convention
+
+# Parameters the instantiator must (or may) supply. The instruction template
+# (Jinja2) substitutes these into the prompt at build time.
+parameters:
+  - name: rubric
+    type: string
+    required: true
+    description: >-
+      Reference to a registered rubric document defining the factors, weights,
+      and banding criteria the rater must apply (e.g., "commercial-credit-rubric-v1",
+      "aml-case-rubric-v2"). Rubric is owned by the use case.
+  - name: bands
+    type: list[string]
+    required: true
+    description: >-
+      Ordered list of allowed band labels, lowest-risk first. Example for credit:
+      ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"].
+      The agent MUST return exactly one of these strings; partial / hyphenated /
+      "between" answers are rejected.
+  - name: input_schema
+    type: string
+    required: true
+    description: >-
+      Reference to the registered Pydantic schema describing the case bundle the
+      rater receives (extracted financials, spreads, borrower attributes, etc.).
+  - name: tools
+    type: list[string]
+    required: true
+    description: >-
+      Names of MCP tools / atomic services the rater may call to gather evidence.
+      Order is significant — rater calls them in declared order unless the rubric
+      conditions a call on an earlier output. Example for credit-memo:
+      ["dscr-calculator", "covenant-analyzer", "peer-benchmarker",
+      "industry-risk-scorer", "collateral-valuator", "exposure-aggregator",
+      "regulatory-thresholds"].
+  - name: confidence_floor
+    type: float
+    required: false
+    default: 0.6
+    description: >-
+      Below this confidence the rater MUST set `requires_human_review: true`
+      regardless of band. Range [0, 1].
+
+# Bookkeeping — bumped by the platform team on each refresh.
+last_verified: 2026-05-04
+
+# Populated as use cases adopt this archetype. The architecture-auditor uses
+# this list to fan out impact analysis when the archetype version bumps.
+used_by: []

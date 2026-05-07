@@ -1,0 +1,107 @@
+# Golden test case for the peer-comparator archetype.
+# Instance-agnostic shape assertions: any instantiation that targets a borrower-
+# type entity with a percentile benchmark method must pass this.
+#
+# Test runner: the use case's tests/golden harness substitutes archetype params
+# and replays this case against the instantiated agent. See adk-agent-design
+# SKILL.md.
+
+id: example_borrower_peer_compare_minimal
+description: >-
+  Synthetic mid-market borrower with a clean 8-peer cohort. Verifies the
+  comparator returns a named peer set, both percentile and dollar-distance
+  for every metric, a cited selection rationale, and no straddle commentary.
+
+archetype_params:
+  entity_type: borrower
+  peer_set_tool: peer-benchmarker
+  metric_set:
+    - ebitda_margin
+    - leverage
+    - interest_coverage
+    - revenue_growth_3y
+  benchmark_method: percentile
+  peer_set_size: 8
+
+input:
+  subject:
+    borrower_id: "ACME-CORP-001"
+    naics_code: "3361"
+    size_band: "200M-500M-revenue"
+    geography: "US"
+    currency: "USD"
+    scale: "actual"
+    metrics:
+      ebitda_margin: 0.062
+      leverage: 4.20
+      interest_coverage: 3.91
+      revenue_growth_3y: 0.04
+  # Inline peer fixture — the harness wires this through a stubbed
+  # peer-benchmarker tool so the test is hermetic.
+  fixture_peers:
+    selection_criteria: { naics: "3361", size_band: "200M-500M-revenue", geography: "US" }
+    currency: "USD"
+    scale: "actual"
+    members:
+      - { id: "peer-001", ebitda_margin: 0.078, leverage: 3.40, interest_coverage: 4.50, revenue_growth_3y: 0.06 }
+      - { id: "peer-002", ebitda_margin: 0.082, leverage: 3.20, interest_coverage: 4.80, revenue_growth_3y: 0.08 }
+      - { id: "peer-003", ebitda_margin: 0.071, leverage: 3.60, interest_coverage: 4.10, revenue_growth_3y: 0.05 }
+      - { id: "peer-004", ebitda_margin: 0.090, leverage: 3.00, interest_coverage: 5.20, revenue_growth_3y: 0.09 }
+      - { id: "peer-005", ebitda_margin: 0.066, leverage: 3.80, interest_coverage: 3.90, revenue_growth_3y: 0.03 }
+      - { id: "peer-006", ebitda_margin: 0.075, leverage: 3.50, interest_coverage: 4.30, revenue_growth_3y: 0.07 }
+      - { id: "peer-007", ebitda_margin: 0.084, leverage: 3.10, interest_coverage: 4.90, revenue_growth_3y: 0.10 }
+      - { id: "peer-008", ebitda_margin: 0.069, leverage: 3.70, interest_coverage: 4.00, revenue_growth_3y: 0.04 }
+
+# Expected shape — exact values come from the deterministic fixture above.
+expected_shape:
+  peer_set:
+    tool: "peer-benchmarker"
+    size: 8
+    currency: "USD"
+    scale: "actual"
+  per_metric: "<array of length 4>"
+  selection_rationale: "<sentence ≤ 40 words referencing NAICS 3361 / size band / geography>"
+  requires_human_review: false
+  warnings: []
+
+assertions:
+  - id: peer_set_named
+    description: peer_set.selection_criteria echoes the tool response.
+    check: |
+      output.peer_set.selection_criteria.naics == "3361" and
+      output.peer_set.selection_criteria.size_band == "200M-500M-revenue"
+
+  - id: peer_set_size_sufficient
+    description: Peer set size meets minimum threshold.
+    check: output.peer_set.size >= 5
+
+  - id: every_metric_has_both_percentile_and_dollar_distance
+    description: Each metric carries both subject_percentile (0-100) and dollar_distance_to_median.
+    check: |
+      all(
+        0 <= m.subject_percentile <= 100 and
+        m.dollar_distance_to_median is number
+        for m in output.per_metric
+      )
+
+  - id: currency_consistent
+    description: All comparisons share a single currency; no mixed-currency output.
+    check: output.peer_set.currency == "USD"
+
+  - id: rationale_cites_axes
+    description: |
+      selection_rationale names at least two of: NAICS, size, geography. Generic
+      phrases like "industry peers" are a contract violation.
+    check: |
+      sum([
+        "NAICS" in output.selection_rationale or "3361" in output.selection_rationale,
+        "size" in output.selection_rationale or "revenue" in output.selection_rationale,
+        "geograph" in output.selection_rationale or "US" in output.selection_rationale
+      ]) >= 2
+
+  - id: rationale_under_40_words
+    description: selection_rationale stays inside its hard sentence budget.
+    check: word_count(output.selection_rationale) <= 40
+
+# TODO (platform team): confirm word_count() helper exists in the harness;
+# otherwise the platform team must add it.

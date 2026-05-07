@@ -1,0 +1,17 @@
+agent_id: credit_memo_supervisor
+version: 0.1.0
+description: "Coordinates commercial credit memo pipeline: extract → spread → rate → draft."
+framework: adk
+pattern: extractor-spreader-rater-drafter@1.0
+sub_agents:
+  - credit_memo_extractor
+  - credit_memo_rater
+  - credit_memo_drafter
+memory_scope: borrower_id
+output_schema_ref: ./output_schema.json
+models:
+  primary: claude-opus-4-7
+governance:
+  data_classification: pii-adjacent
+  observability_endpoint: "https://otel-collector.internal:4317"
+  regulatory_regime: ["OCC", "Reg O", "CECL"]

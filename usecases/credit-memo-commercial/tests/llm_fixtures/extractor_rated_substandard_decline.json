@@ -1,0 +1,43 @@
+{
+  "_fixture_meta": {
+    "agent": "extractor",
+    "scenario": "rated-substandard-decline",
+    "borrower_id": "DEMO-MFG-002",
+    "context_id": "credit-memo-commercial-test-rated-substandard-decline-001",
+    "input_hash": "mfg002_10k_2025",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "extracted_financials",
+  "output_value": {
+    "borrower_id": "DEMO-MFG-002",
+    "period": "FY2025",
+    "financial_statement_type": "compiled",
+    "income_statement": {
+      "revenue": 42000000,
+      "cogs": 31500000,
+      "ebitda": 3360000,
+      "interest_expense": 1890000,
+      "net_income": 756000
+    },
+    "balance_sheet": {
+      "total_assets": 38500000,
+      "total_debt": 28000000,
+      "total_equity": 10500000,
+      "current_assets": 11200000,
+      "current_liabilities": 9800000,
+      "cash_and_equivalents": 1260000
+    },
+    "cash_flow": {
+      "operating_cash_flow": 2940000,
+      "capex": -1680000,
+      "free_cash_flow": 1260000
+    },
+    "citations": [
+      {"source": "borrowers/DEMO-MFG-002/financials/10k_2025.json", "field": "income_statement.revenue", "page_ref": null}
+    ],
+    "extraction_confidence": 0.88,
+    "extraction_warnings": ["Financial statements are compiled (not audited) — reliance caveat applies"]
+  }
+}

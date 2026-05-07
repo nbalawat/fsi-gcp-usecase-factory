@@ -1,0 +1,361 @@
+# REASONS canvas — credit-memo-commercial
+# Validated by: policies/reasons_schema.json
+# Authoring skill: .claude/skills/fsi-reasons-canvas/SKILL.md
+#
+# This file is the contract for /fsi-build-parallel. Behavior changes go through
+# /fsi-prompt-update, not direct code edits. Refactors go through /fsi-sync.
+
+schema_version: "1.0"
+use_case_id: credit-memo-commercial
+
+owner:
+  team: "Commercial Lending Platform"
+  primary_contact: "platform-team@bank.example.com"
+
+phase: intake
+
+# ─── R — Requirements ─────────────────────────────────────────────
+requirements:
+  summary: >-
+    Generate a commercial credit memo for a new or renewing C&I loan, including
+    financial spreading, peer benchmarking, covenant analysis, and a recommended
+    decision with a narrative justification cited back to source documents.
+  trigger_event: "loans.application.submitted"
+  outcome: >-
+    Approved memo + GL posting + document store record, within 48 hours of
+    application. Credit officer sees the memo with a regulatory clock and
+    citation density inline; approves, declines with reason, or returns for
+    revision.
+  primary_user: "Credit officer reviewing memo in approval queue (Gemini Enterprise)"
+  regulatory_regime: ["OCC", "Reg O", "CECL"]
+  latency_budget: "hours"
+
+# ─── E — Entities ─────────────────────────────────────────────────
+entities:
+  primary:
+    - {name: "Borrower",            description: "The legal entity applying for credit"}
+    - {name: "Loan",                description: "The proposed credit facility (term, rate, covenants)"}
+    - {name: "FinancialStatement",  description: "10-K, 10-Q, audited or compiled financials uploaded with the application"}
+    - {name: "PeerSet",             description: "Industry peers used for benchmarking ratios"}
+    - {name: "Covenant",            description: "Affirmative or negative covenant attached to the proposed loan"}
+    - {name: "Collateral",          description: "Assets pledged to secure the loan"}
+    - {name: "CreditOfficer",       description: "Bank human reviewer who approves, declines, or returns the memo"}
+    - {name: "GLPosting",           description: "General-ledger entry triggered on approval"}
+  relationships:
+    - {from: "Loan",               to: "Borrower",           kind: "belongs-to"}
+    - {from: "Loan",               to: "FinancialStatement", kind: "references"}
+    - {from: "Loan",               to: "Covenant",           kind: "has-many"}
+    - {from: "Loan",               to: "Collateral",         kind: "has-many"}
+    - {from: "Borrower",           to: "PeerSet",            kind: "references"}
+    - {from: "GLPosting",          to: "Loan",               kind: "derives-from"}
+
+# ─── A — Approach ─────────────────────────────────────────────────
+approach:
+  use_case_archetype: "pipeline-originator@1.0"
+  multi_agent_pattern: "extractor-spreader-rater-drafter@1.0"
+  trade_offs:
+    - "Verbosity over speed for memo prose — credit officers value depth"
+    - "Citations over inferred narratives — every claim links back to an atomic-service output"
+    - "Approval-gate latency over auto-approval — regulatory expectation"
+    - "Memory Bank scope is borrower_id, not loan_id — memo benefits from prior covenant + peer-set decisions on the same borrower"
+
+# ─── S — Structure ────────────────────────────────────────────────
+structure:
+  console_pattern: "pipeline-console"
+  agent_archetypes:
+    - role: "extractor"
+      archetype: "document-extractor@1.0"
+      params:
+        document_types: ["10-K", "10-Q", "audited-financials", "board-minutes"]
+        target_schema: "commercial-financial-statement-v1"
+    - role: "rater"
+      archetype: "risk-rater@1.0"
+      params:
+        rubric: "commercial-credit-rubric-v1"
+        bands: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+    - role: "drafter"
+      archetype: "narrative-drafter@1.0"
+      params:
+        output_format: "credit-memo-occ-v1"
+        max_words: 1500
+        citation_density_min: 0.8
+  # Supervisor is generated from multi_agent_pattern (extractor-spreader-rater-drafter@1.0),
+  # not from a library archetype. Its build is tracked under operations[agent-supervisor].
+  atomic_services_reused: []        # No services in services/atomic/ yet — pilot is the seed.
+  atomic_services_new:
+    - "financial-spreader"          # parses extracted financials → spread; outputs std ratios
+    - "dscr-calculator"             # debt-service coverage ratio over scenarios
+    - "covenant-analyzer"           # tests proposed covenants against borrower's run-rate financials
+    - "peer-benchmarker"            # selects peer set, computes percentile ratios
+    - "industry-risk-scorer"        # NAICS-based industry risk band
+    - "collateral-valuator"         # marks collateral to current market with haircuts
+    - "exposure-aggregator"         # rolls up borrower's existing exposure across the bank
+    - "ofac-screen"                 # OFAC screen — promote to library after pilot ships
+  rules:
+    - "regulatory_thresholds@2026-q2"
+    - "single_borrower_exposure@1.0"
+    - "approval_matrix_commercial@1.0"
+  workflow_fragments:
+    - "fan-out-join@1.0"
+    - "approval-gate@1.0"
+    - "agent-call-with-retry@1.0"
+    - "sink-fanout@1.0"
+    - "regulatory-clock@1.0"
+    - "dlq-on-failure@1.0"
+  sinks:
+    - "credit-officer-queue"        # Gemini Enterprise app
+    - "document-store-gcs"          # versioned PDF
+    - "gl-posting"                  # only fires on approval
+
+# ─── O — Operations ───────────────────────────────────────────────
+# Each entry is one builder agent invocation. layer = parallel-build DAG layer.
+# Layer 1 = leaves (handler, services, rules, demo data, compliance docs).
+# Layer 2 = agents (depend on Layer-1 manifests).
+# Layer 3 = workflow + Terraform + UI config + e2e tests (depend on Layer-2 contracts).
+# Layer 4 = full review (architecture-auditor, compliance-reviewer, security-reviewer).
+
+operations:
+  # ── Layer 1 ────────────────────────────────────────────────────
+  - id: "handler"
+    kind: "handler"
+    layer: 1
+    path: "usecases/credit-memo-commercial/handler/main.py"
+    spec:
+      trigger_topic: "loans.application.submitted"
+      enrichments: ["borrower-master", "financial-statement-blob"]
+
+  - id: "svc-financial-spreader"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/financial-spreader/"
+    spec:
+      inputs: ["extracted_financials"]
+      outputs: ["spread_balance_sheet", "spread_income_statement", "spread_cash_flow", "ratios"]
+
+  - id: "svc-dscr-calculator"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/dscr-calculator/"
+    spec:
+      inputs: ["spread_income_statement", "loan_terms", "scenarios"]
+      outputs: ["dscr_base", "dscr_stressed", "min_dscr_breach"]
+
+  - id: "svc-covenant-analyzer"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/covenant-analyzer/"
+    spec:
+      inputs: ["proposed_covenants", "spread_financials", "trailing_quarters"]
+      outputs: ["covenant_test_results", "headroom_pct", "violations_projected"]
+
+  - id: "svc-peer-benchmarker"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/peer-benchmarker/"
+    spec:
+      inputs: ["borrower_naics", "borrower_size_band", "borrower_ratios"]
+      outputs: ["peer_set", "ratio_percentiles"]
+
+  - id: "svc-industry-risk-scorer"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/industry-risk-scorer/"
+    spec:
+      inputs: ["naics_code", "vintage", "geography"]
+      outputs: ["industry_risk_band", "rationale_factors"]
+
+  - id: "svc-collateral-valuator"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/collateral-valuator/"
+    spec:
+      inputs: ["collateral_descriptions", "valuation_date"]
+      outputs: ["valuation_per_item", "haircut_per_item", "lendable_value"]
+
+  - id: "svc-exposure-aggregator"
+    kind: "atomic-service"
+    layer: 1
+    path: "services/atomic/exposure-aggregator/"
+    spec:
+      inputs: ["borrower_id", "as_of_date"]
+      outputs: ["existing_exposure_committed", "existing_exposure_outstanding", "single_borrower_pct"]
+
+  - id: "rule-regulatory-thresholds"
+    kind: "jdm-rule"
+    layer: 1
+    path: "rules/regulatory_thresholds/v2026-q2.json"
+    spec:
+      inputs: ["loan_amount", "borrower_type", "single_borrower_pct"]
+      outputs: ["threshold_breaches"]
+
+  - id: "rule-single-borrower-exposure"
+    kind: "jdm-rule"
+    layer: 1
+    path: "rules/single_borrower_exposure/v1.json"
+    spec:
+      inputs: ["proposed_amount", "existing_exposure_committed", "tier1_capital"]
+      outputs: ["limit_status", "headroom_dollars"]
+
+  - id: "rule-approval-matrix-commercial"
+    kind: "jdm-rule"
+    layer: 1
+    path: "usecases/credit-memo-commercial/rules/approval_matrix_commercial/v1.json"
+    spec:
+      inputs: ["loan_amount", "risk_band", "industry_risk_band", "single_borrower_pct"]
+      outputs: ["approval_authority_required", "additional_reviewers"]
+
+  - id: "demo-data-borrower-set"
+    kind: "demo-data"
+    layer: 1
+    path: "usecases/credit-memo-commercial/demo-data/"
+    spec:
+      borrowers: 5
+      include: ["10-K", "10-Q", "board-minutes-excerpt", "M&A-history", "industry-peer-set"]
+      domains: ["mid-market-manufacturing", "specialty-retail", "regional-healthcare"]
+
+  - id: "compliance-doc-model-card"
+    kind: "compliance-doc"
+    layer: 1
+    path: "usecases/credit-memo-commercial/compliance/model_card.md"
+    spec:
+      framework: "SR 11-7"
+      derived_from: "reasons.yaml"
+
+  - id: "compliance-doc-risk-assessment"
+    kind: "compliance-doc"
+    layer: 1
+    path: "usecases/credit-memo-commercial/compliance/risk_assessment.md"
+    spec:
+      framework: "SR 11-7"
+
+  # ── Layer 2 ────────────────────────────────────────────────────
+  - id: "agent-extractor"
+    kind: "agent-specialist"
+    layer: 2
+    path: "usecases/credit-memo-commercial/agents/extractor.py"
+    spec:
+      archetype: "document-extractor@1.0"
+      memory_scope: "borrower"
+      tools: []
+      output_schema: "ExtractedFinancials"
+    depends_on: ["svc-financial-spreader"]
+
+  - id: "agent-rater"
+    kind: "agent-specialist"
+    layer: 2
+    path: "usecases/credit-memo-commercial/agents/rater.py"
+    spec:
+      archetype: "risk-rater@1.0"
+      memory_scope: "borrower"
+      tools: ["svc-dscr-calculator", "svc-covenant-analyzer", "svc-peer-benchmarker", "svc-industry-risk-scorer", "svc-collateral-valuator", "svc-exposure-aggregator", "rule-regulatory-thresholds"]
+      output_schema: "RiskRating"
+    depends_on:
+      - "svc-dscr-calculator"
+      - "svc-covenant-analyzer"
+      - "svc-peer-benchmarker"
+      - "svc-industry-risk-scorer"
+      - "svc-collateral-valuator"
+      - "svc-exposure-aggregator"
+      - "rule-regulatory-thresholds"
+
+  - id: "agent-drafter"
+    kind: "agent-specialist"
+    layer: 2
+    path: "usecases/credit-memo-commercial/agents/drafter.py"
+    spec:
+      archetype: "narrative-drafter@1.0"
+      memory_scope: "borrower"
+      tools: []
+      output_schema: "CreditMemo"
+    depends_on: ["agent-extractor", "agent-rater"]
+
+  - id: "agent-supervisor"
+    kind: "agent-supervisor"
+    layer: 2
+    path: "usecases/credit-memo-commercial/agents/supervisor.py"
+    spec:
+      pattern: "extractor-spreader-rater-drafter@1.0"
+      memory_scope: "borrower"
+      sub_agents: ["agent-extractor", "agent-rater", "agent-drafter"]
+      output_schema: "CreditMemoBundle"
+    depends_on: ["agent-extractor", "agent-rater", "agent-drafter"]
+
+  # ── Layer 3 ────────────────────────────────────────────────────
+  - id: "workflow"
+    kind: "workflow"
+    layer: 3
+    path: "usecases/credit-memo-commercial/workflow.yaml"
+    spec:
+      fragments:
+        - "fan-out-join@1.0"
+        - "agent-call-with-retry@1.0"
+        - "approval-gate@1.0"
+        - "regulatory-clock@1.0"
+        - "sink-fanout@1.0"
+        - "dlq-on-failure@1.0"
+      callback_url_for_approval: "/approvals/credit-memo-commercial"
+    depends_on: ["agent-supervisor"]
+
+  - id: "terraform-module"
+    kind: "terraform"
+    layer: 3
+    path: "usecases/credit-memo-commercial/infra/credit-memo-commercial.tf"
+    spec:
+      modules: ["use_case_template", "atomic_service", "agent", "rules_service", "approval_queue"]
+      env: "dev"
+    depends_on: ["agent-supervisor", "rule-approval-matrix-commercial"]
+
+  - id: "console-config"
+    kind: "console-config"
+    layer: 3
+    path: "ui/usecases/credit-memo-commercial/console.yaml"
+    spec:
+      console_pattern: "pipeline-console"
+      stages: ["intake", "spreading", "rating", "drafting", "approval", "posted"]
+      data_bindings: ["workflow-state", "agent-outputs", "regulatory-clock"]
+    depends_on: ["workflow"]
+
+  - id: "e2e-test"
+    kind: "e2e-test"
+    layer: 3
+    path: "usecases/credit-memo-commercial/tests/"
+    spec:
+      fixtures: ["demo-data-borrower-set"]
+      scenarios:
+        - "happy-path-approve"
+        - "rated-substandard-decline"
+        - "exposure-limit-decline"
+        - "covenant-projection-violation-return-for-revision"
+        - "regulatory-clock-breach-alarm"
+    depends_on: ["workflow", "console-config"]
+
+# ─── N — Norms ────────────────────────────────────────────────────
+norms:
+  inherited:
+    - "## The 5-step paradigm"
+    - "## Approved models (only these in production)"
+    - "## Forbidden patterns"
+    - "## Required for every use case"
+  use_case_specific:
+    - "Memo prose ≤ 1500 words; section structure prescribed by credit-memo-occ-v1 template"
+    - "Every claim in the memo MUST cite at least one atomic-service output (citation_density_min: 0.8)"
+    - "Borrower financials are PII-adjacent; redact in agent prompts via the redacting-logger"
+    - "Memory Bank scope is borrower_id; cross-borrower memory is forbidden without arch review"
+
+# ─── S — Safeguards ───────────────────────────────────────────────
+safeguards:
+  slo:
+    latency_p99_ms: 18000000   # 5 hours from event submission to memo ready for officer
+    error_rate_max: 0.005
+  cost:
+    per_invocation_max_usd: 3.00
+    monthly_max_usd: 9000.00
+  regulatory_clock:
+    deadline: "Initial credit decision communicated within 5 business days of complete application (OCC expectation)"
+    regulator: "OCC"
+  security:
+    - "Borrower financials encrypted at rest with CMEK"
+    - "No PII in agent prompts; redact via redacting-logger before any model call"
+    - "Memory Bank scope strictly borrower_id; cross-borrower retrieval forbidden"
+    - "Approval queue access restricted to credit-officer role; auditable via Cloud Logging"
+    - "GL posting MUST go through approval gate; never auto-fire"

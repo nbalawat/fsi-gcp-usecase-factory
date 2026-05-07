@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "proposed_amount", "name": "proposed_amount", "dataType": "number"},
+          {"id": "existing_exposure_committed", "name": "existing_exposure_committed", "dataType": "number"},
+          {"id": "tier1_capital", "name": "tier1_capital", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Single Borrower Limit Check",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "const total = proposed_amount + existing_exposure_committed;\nconst limit = tier1_capital * 0.15;\nconst headroom = limit - total;\nreturn { limit_status: total > limit ? 'breach' : headroom < limit * 0.1 ? 'warning' : 'pass', headroom_dollars: headroom, total_exposure: total, limit_dollars: limit };"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

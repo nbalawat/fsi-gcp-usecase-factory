@@ -1,0 +1,88 @@
+# Reusable agent archetype: peer-comparator
+# Contract only — no ADK SDK code lives here. SDK wiring is the instantiator's
+# job (see fsi-adk-patterns for the current LlmAgent / McpToolset surface).
+
+name: peer-comparator
+version: "1.0"
+description: >-
+  Compare an entity against a named peer group → emit relative position
+  (percentile + dollar-distance to median) for each declared metric, plus
+  one-sentence commentary justifying peer-set selection.
+
+# Locked per the bank's two-model rule (see .claude/skills/model-selection/SKILL.md).
+# Comparative judgement with calibrated commentary → Claude Opus 4.7.
+# TODO (v1.1): explore downgrading the high-volume surveillance instance to
+# gemini-3-1-flash once the 5-band rubric is validated. Surveillance latency /
+# cost profile is materially different from credit-memo / M&A diligence and
+# warrants a re-evaluation against the model-selection skill.
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5  # degraded path if primary times out
+
+# Default scope; instance may parameterize to borrower / customer / vendor.
+# Architectural rule: pick the narrowest scope that supports the use case.
+memory_scope_default: entity
+
+# The peer-comparator requires an upstream peer-set fetcher to materialize the
+# peer group. The archetype does NOT bind a specific tool name — different use
+# cases use different fetchers (industry peer DB, M&A comp DB, surveillance
+# behavior cohorts). Instantiator passes the tool name via `peer_set_tool`.
+tools_required: <instance-supplied via `peer_set_tool` parameter>
+
+# Each instantiation supplies a Pydantic schema for the comparison bundle.
+# The archetype guarantees the agent returns JSON conforming to whatever schema
+# is supplied (peer_set + per_metric[] + commentary).
+output_schema: <instance-supplied>  # TODO: platform team to confirm registry path convention
+
+# Parameters the instantiator must (or may) supply. The instruction template
+# (Jinja2) substitutes these into the prompt at build time.
+parameters:
+  - name: entity_type
+    type: string
+    required: true
+    description: >-
+      Type of entity being compared. Drives memory scope and the wording of
+      commentary. One of: "borrower", "customer", "vendor", "merchant",
+      "counterparty". Mismatched entity_type vs memory_scope is a contract
+      violation.
+  - name: peer_set_size
+    type: int
+    required: false
+    default: 8
+    description: >-
+      Target size of the peer set the upstream tool is asked to materialize.
+      Below 5 the agent must set `requires_human_review: true` and add a
+      warning — small peer sets produce unstable percentiles.
+  - name: metric_set
+    type: list[string]
+    required: true
+    description: >-
+      Metrics to compare on. Each metric must be present on both the subject
+      and every peer; if absent on the subject the metric is skipped with a
+      warning, if absent on >25% of peers the metric is skipped with a warning.
+      Example for credit: ["ebitda_margin", "leverage", "interest_coverage",
+      "revenue_growth_3y"].
+  - name: benchmark_method
+    type: string
+    required: true
+    description: >-
+      Aggregation method for the peer comparison. One of "median",
+      "percentile" (returns subject's percentile in the peer distribution),
+      "weighted" (size-weighted; requires a peer_size_field on each peer).
+    enum:
+      - median
+      - percentile
+      - weighted
+  - name: peer_set_tool
+    type: string
+    required: true
+    description: >-
+      Name of the MCP tool that returns the peer set (e.g.,
+      "peer-benchmarker", "ma-comp-fetcher", "surveillance-cohort-fetcher").
+      The agent calls this tool exactly once per invocation.
+
+# Bookkeeping — bumped by the platform team on each refresh.
+last_verified: 2026-05-04
+
+# Populated as use cases adopt this archetype. The architecture-auditor uses
+# this list to fan out impact analysis when the archetype version bumps.
+used_by: []

@@ -1,0 +1,78 @@
+# Reusable agent archetype: narrative-drafter
+# Contract only — no ADK SDK code lives here. SDK wiring is the instantiator's job
+# (see fsi-adk-patterns for the current LlmAgent / McpToolset surface).
+
+name: narrative-drafter
+version: "1.0"
+description: >-
+  Produce a long-form memo / report from structured upstream inputs (extracted
+  fields + atomic-service outputs + rater band) → emit prose conforming to a
+  named output_format template, with every claim cited to an upstream output.
+
+# Locked per the bank's two-model rule (see .claude/skills/model-selection/SKILL.md).
+# Long-form regulatory prose with strict citation discipline → Claude Opus 4.7.
+# Do not override at instantiation.
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5  # degraded path if primary times out
+
+# Default scope; instance may override (credit-memo overrides to `borrower` to
+# benefit from prior memos on the same borrower; SAR narrative stays at `case`).
+# Architectural rule: pick the narrowest scope that supports the use case.
+memory_scope_default: case
+
+# The drafter does NOT call MCP tools directly. It consumes upstream agent outputs
+# via SequentialAgent state. The supervisor / pattern is responsible for ensuring
+# all required upstream outputs are present before invoking the drafter.
+tools_required: []
+
+# Each instantiation supplies a Pydantic schema for the rendered memo bundle.
+# The archetype guarantees the agent returns JSON conforming to whatever schema
+# is supplied (memo_text + section_map + citations[] + warnings[]).
+output_schema: <instance-supplied>  # TODO: platform team to confirm registry path convention
+
+# Parameters the instantiator must (or may) supply. The instruction template
+# (Jinja2) substitutes these into the prompt at build time.
+parameters:
+  - name: output_format
+    type: string
+    required: true
+    description: >-
+      Reference to a registered prose template defining required sections and
+      ordering (e.g., "credit-memo-occ-v1", "sar-narrative-fincen-v1",
+      "dispute-letter-reg-e-v1", "complaint-resolution-cfpb-v1"). Template is
+      owned by the use case.
+  - name: max_words
+    type: int
+    required: true
+    description: >-
+      Hard cap on rendered memo word count. The drafter MUST NOT silently
+      truncate — if the prose exceeds the cap, return the literal string
+      "[REDACTED FOR LENGTH]" in place of the offending section and add
+      `warnings: ["section_<name>_over_max_words"]`.
+  - name: citation_density_min
+    type: float
+    required: true
+    description: >-
+      Minimum ratio of cited claims to total claims, in [0, 1]. A "claim" is a
+      sentence asserting a fact about the entity, the case, or a metric. The
+      drafter computes the ratio after generation; if below the threshold, set
+      `warnings: ["citation_density_below_min"]` and `requires_human_review: true`.
+      The supervisor pattern may loop the drafter back for one more attempt.
+  - name: tone
+    type: string
+    required: true
+    description: >-
+      One of: "regulatory-formal", "customer-empathetic", "internal-technical".
+      Governs voice, hedging language, and addressee assumptions. Mismatched
+      tone is a contract violation, not a stylistic preference.
+    enum:
+      - regulatory-formal
+      - customer-empathetic
+      - internal-technical
+
+# Bookkeeping — bumped by the platform team on each refresh.
+last_verified: 2026-05-04
+
+# Populated as use cases adopt this archetype. The architecture-auditor uses
+# this list to fan out impact analysis when the archetype version bumps.
+used_by: []

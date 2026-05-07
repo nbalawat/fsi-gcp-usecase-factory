@@ -1,0 +1,15 @@
+{
+  "description": "Total exposure is within the 15% limit but headroom is less than 10% of the limit — limit_status must be 'warning'",
+  "input": {
+    "proposed_amount": 20000000,
+    "existing_exposure_committed": 22000000,
+    "tier1_capital": 300000000
+  },
+  "expected_output": {
+    "limit_status": "warning",
+    "total_exposure": 42000000,
+    "limit_dollars": 45000000,
+    "headroom_dollars": 3000000
+  },
+  "regulatory_basis": "Headroom of $3M is less than 10% of the $45M limit ($4.5M); warning triggered per internal concentration policy"
+}

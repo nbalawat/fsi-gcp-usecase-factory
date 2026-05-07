@@ -1,0 +1,134 @@
+# Cloud Workflows skeleton for pipeline-originator@1.0
+# Rendered by /fsi-build-parallel against the use case's reasons.yaml.
+# Each `# include: libraries/workflows/<name>@<ver>` marker is spliced by the
+# build pipeline with the named fragment's fragment.yaml.j2 (rendered with
+# the parameters in the include's `# params:` JSON literal).
+
+main:
+  params: [event]
+  steps:
+
+    - init:
+        assign:
+          - context_id: ${event.context_id}
+          - use_case: "{{use_case_id}}"
+          - enriched: {}
+          - rule_outcomes: {}
+          - agent_outcome: {}
+          - approver_decision: {}
+          - rejection_reason: {}
+          - final_payload: {}
+
+    # Parallel regulatory clock alongside the main pipeline ─────────────
+    - run_pipeline_with_clock:
+        parallel:
+          shared: [enriched, rule_outcomes, agent_outcome, approver_decision, rejection_reason, final_payload]
+          branches:
+
+            # Regulatory clock branch ──────────────────────────────────
+            - regulatory_clock_branch:
+                steps:
+                  # include: libraries/workflows/regulatory-clock@1.0
+                  # params: {"deadline_iso": "{{regulatory_clock.deadline_iso}}", "alert_thresholds_pct": [50, 75, 90], "alert_topic": "{{regulatory_clock.alert_topic}}", "breach_action": "{{regulatory_clock.breach_action}}"}
+
+            # Main pipeline branch ─────────────────────────────────────
+            - main_pipeline_branch:
+                steps:
+
+                  # Step 2 — atomic-service fan-out ────────────────────
+                  - atomic_services:
+                      try:
+                        steps:
+                          # include: libraries/workflows/fan-out-join@1.0
+                          # params: {"branches": {{atomic_branches | tojson}}, "join_key": "enriched"}
+                      except:
+                        as: e
+                        steps:
+                          # include: libraries/workflows/dlq-on-failure@1.0
+                          # params: {"dlq_topic": "{{dlq_topic}}", "original_payload_var": "event", "step_name": "atomic_services", "error_var": "e"}
+
+                  # Step 3 — rules evaluation ──────────────────────────
+                  - rules_evaluation:
+                      try:
+                        call: http.post
+                        args:
+                          url: {{rules_service_url}}
+                          headers:
+                            X-Cloud-Trace-Context: ${context_id}
+                          body:
+                            rules: {{rules | tojson}}
+                            context: ${enriched}
+                            context_id: ${context_id}
+                          timeout: 10
+                        result: rule_response
+                        retry:
+                          predicate: ${http.default_retry_predicate}
+                          max_retries: 3
+                          backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}
+                      except:
+                        as: e
+                        steps:
+                          # include: libraries/workflows/dlq-on-failure@1.0
+                          # params: {"dlq_topic": "{{dlq_topic}}", "original_payload_var": "enriched", "step_name": "rules_evaluation", "error_var": "e"}
+                  - capture_rule_outcomes:
+                      assign:
+                        - rule_outcomes: ${rule_response.body}
+
+                  # Step 4 — multi-agent supervisor (with retry+fallback)
+                  - invoke_supervisor:
+                      try:
+                        steps:
+                          # include: libraries/workflows/agent-call-with-retry@1.0
+                          # params: {"agent_url": "{{supervisor_url}}", "input_template": "${{\"case\": enriched, \"rule_outcomes\": rule_outcomes, \"context_id\": context_id}}", "primary_model": "claude-opus-4-7", "fallback_model": "gemini-3-1-flash", "retry_max": 2, "retry_initial_delay_s": 4}
+                      except:
+                        as: e
+                        steps:
+                          # include: libraries/workflows/dlq-on-failure@1.0
+                          # params: {"dlq_topic": "{{dlq_topic}}", "original_payload_var": "enriched", "step_name": "invoke_supervisor", "error_var": "e"}
+
+                  # HITL — approval gate ───────────────────────────────
+                  - approval_gate:
+                      # include: libraries/workflows/approval-gate@1.0
+                      # params: {"queue_topic": "{{approval_queue_topic}}", "callback_timeout_seconds": {{approval_timeout_seconds | default(432000)}}, "approval_payload_template": "${{\"case\": enriched, \"memo\": agent_outcome.body, \"rule_outcomes\": rule_outcomes, \"use_case\": use_case}}", "on_approve_var": "approver_decision", "on_reject_var": "rejection_reason"}
+
+                  # Branch on approver decision ────────────────────────
+                  - branch_on_approval:
+                      switch:
+                        - condition: ${approver_decision != {}}
+                          next: assemble_final_payload
+                        - condition: true
+                          next: publish_rejection
+
+                  - assemble_final_payload:
+                      assign:
+                        - final_payload:
+                            case: ${enriched}
+                            memo: ${agent_outcome.body}
+                            approver: ${approver_decision}
+                            context_id: ${context_id}
+                      next: sink_dispatch
+
+                  - publish_rejection:
+                      call: googleapis.pubsub.v1.projects.topics.publish
+                      args:
+                        topic: {{rejection_topic}}
+                        body:
+                          messages:
+                            - attributes: {context_id: "${context_id}"}
+                              data: ${base64.encode(json.encode({"rejection": rejection_reason, "case": enriched}))}
+                      next: end
+
+                  # Step 5 — sink fanout ───────────────────────────────
+                  - sink_dispatch:
+                      try:
+                        steps:
+                          # include: libraries/workflows/sink-fanout@1.0
+                          # params: {"sinks": {{sinks | tojson}}, "require_all": true, "dlq_topic": "{{dlq_topic}}"}
+                      except:
+                        as: e
+                        steps:
+                          # include: libraries/workflows/dlq-on-failure@1.0
+                          # params: {"dlq_topic": "{{dlq_topic}}", "original_payload_var": "final_payload", "step_name": "sink_dispatch", "error_var": "e"}
+
+                  - end:
+                      return: ${final_payload}

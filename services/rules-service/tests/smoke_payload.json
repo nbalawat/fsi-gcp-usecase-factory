@@ -1,0 +1,10 @@
+{
+  "context_id": "test-ctx-001",
+  "rule_set": "credit-memo-eligibility",
+  "inputs": {
+    "dscr_base": 1.35,
+    "dscr_stressed": 1.15,
+    "single_borrower_pct": 8.5,
+    "borrower_id": "BRW-12345"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+  "scenario": "regulatory-clock-breach-alarm",
+  "description": "Application submitted for DEMO-HLT-002 at 2026-04-22T14:15:00Z. The agent-extractor step is simulated to time out and exhaust retries, creating a DLQ entry. The event is submitted with the clock already at 4 days 22 hours elapsed (simulating near-breach), triggering a P1 alarm to the credit-officer-queue and compliance escalation.",
+  "event_payload": {
+    "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+    "borrower_id": "DEMO-HLT-002",
+    "application_id": "DEMO-APP-HLT-002-2026",
+    "loan_amount": 2000000,
+    "loan_type": "revolver",
+    "submitted_at": "2026-04-22T14:15:00Z",
+    "application_type": "new_credit",
+    "facility": {
+      "type": "Revolving Credit Facility",
+      "amount_requested_usd": 2000000,
+      "term_years": 2,
+      "rate_type": "floating",
+      "index": "SOFR",
+      "spread_bps_requested": 275,
+      "purpose": "Working capital bridge during expansion to two new clinic locations"
+    },
+    "clock_simulation": {
+      "application_submitted_at": "2026-04-22T14:15:00Z",
+      "simulated_clock_at": "2026-04-29T12:15:00Z",
+      "business_days_elapsed": 4.917,
+      "decision_communicated": false,
+      "inject_failure": {
+        "target_step": "agent-extractor",
+        "failure_type": "timeout",
+        "retry_count": 3,
+        "dlq_entry": true
+      }
+    },
+    "demo_fixture": "demo-data-borrower-set"
+  },
+  "expected_outcome": {
+    "status": "STALLED",
+    "regulatory_clock_breach": true,
+    "alarm_severity": "P1",
+    "assertions": [
+      "response status code is 200",
+      "context_id echoed back in response",
+      "handler ingests event and starts regulatory clock",
+      "regulatory_clock elapsed_business_days >= 5",
+      "regulatory_clock breach == true",
+      "alarm severity is P1",
+      "audit log contains regulatory_clock.breach entry",
+      "DLQ contains entry for agent-extractor step",
+      "credit-officer-queue receives alarm for application DEMO-APP-HLT-002-2026",
+      "pipeline_status is STALLED"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+- init_sink_results:
+    assign:
+      - sink_results: {}
+      - sink_failures: []
+
+- fan_out_sinks:
+    parallel:
+      shared: [sink_results, sink_failures]
+      branches:
+{%- for s in sinks %}
+        - sink_{{s.name}}:
+            steps:
+              - try_{{s.name}}:
+                  try:
+                    steps:
+{%- if s.kind == 'pubsub' %}
+                      - publish_{{s.name}}:
+                          call: googleapis.pubsub.v1.projects.topics.publish
+                          args:
+                            topic: {{s.target}}
+                            body:
+                              messages:
+                                - attributes:
+                                    context_id: ${context_id}
+                                  data: ${base64.encode(json.encode({{s.body_template}}))}
+                          result: r_{{s.name}}
+{%- elif s.kind == 'http' %}
+                      - http_{{s.name}}:
+                          call: http.post
+                          args:
+                            url: {{s.target}}
+                            headers:
+                              X-Cloud-Trace-Context: ${context_id}
+                            body: {{s.body_template}}
+                            timeout: 15
+                          result: r_{{s.name}}
+{%- elif s.kind == 'gcs' %}
+                      - gcs_{{s.name}}:
+                          call: googleapis.storage.v1.objects.insert
+                          args:
+                            bucket: ${text.split("{{s.target}}", "/")[2]}
+                            uploadType: media
+                            name: ${text.replace_all("{{s.target}}", "gs://" + text.split("{{s.target}}", "/")[2] + "/", "")}
+                            body: {{s.body_template}}
+                          result: r_{{s.name}}
+{%- endif %}
+                      - mark_ok_{{s.name}}:
+                          assign:
+                            - sink_results.{{s.name}}: "ok"
+                  except:
+                    as: e
+                    steps:
+                      - mark_fail_{{s.name}}:
+                          assign:
+                            - sink_results.{{s.name}}: "fail"
+                            - sink_failures: ${list.concat(sink_failures, {"name": "{{s.name}}", "error": e.message})}
+{%- endfor %}
+
+- evaluate_sink_outcome:
+    switch:
+      - condition: ${len(sink_failures) > 0 {% if require_all %}{% else %} and false{% endif %}}
+        steps:
+          - dlq_aggregate:
+              call: googleapis.pubsub.v1.projects.topics.publish
+              args:
+                topic: {{dlq_topic}}
+                body:
+                  messages:
+                    - attributes:
+                        context_id: ${context_id}
+                        reason: "sink-fanout-failure"
+                      data: ${base64.encode(json.encode({"failures": sink_failures, "results": sink_results}))}
+          - raise_aggregate:
+              raise:
+                code: "SinkFanoutFailure"
+                message: ${"Sink failures: " + json.encode(sink_failures)}

@@ -1,0 +1,47 @@
+{
+  "borrower_id": "DEMO-MFG-002",
+  "legal_name": "Lakeside Foundry & Fabrication Inc",
+  "dba": "Lakeside Foundry",
+  "entity_type": "C-Corp",
+  "state_of_incorporation": "MI",
+  "naics_code": "331",
+  "naics_description": "Primary Metal Manufacturing",
+  "industry_segment": "mid-market-manufacturing",
+  "employee_count": 320,
+  "annual_revenue_usd": 32000000,
+  "credit_rating": "BB",
+  "rating_agency": "S&P",
+  "bank_relationship_years": 3,
+  "relationship_start_year": 2022,
+  "primary_bank_contact": "REDACTED-RM-002",
+  "headquarters": {
+    "city": "Flint",
+    "state": "MI",
+    "region": "Midwest"
+  },
+  "products": [
+    "Gray iron castings",
+    "Ductile iron components",
+    "Aluminum die castings"
+  ],
+  "primary_markets": ["Automotive OEM", "Agricultural Equipment", "Municipal Infrastructure"],
+  "ownership_structure": "Private — PE-backed (majority stake acquired 2021)",
+  "key_customers_concentration": "Top-3 customers represent 61% of revenue — elevated concentration risk",
+  "existing_facilities": [
+    {
+      "facility_type": "Revolver",
+      "outstanding_balance_usd": 2100000,
+      "committed_usd": 3000000,
+      "maturity": "2025-12-31",
+      "rate_type": "floating",
+      "spread_bps": 350
+    }
+  ],
+  "risk_flags": [
+    "Short relationship duration (3 years)",
+    "PE leverage overhang from 2021 acquisition",
+    "Single-market exposure to automotive OEM cyclicality",
+    "Maturing revolver — refinance risk"
+  ],
+  "demo_note": "SYNTHETIC DATA — no real PII — stressed scenario for rated-substandard-decline test"
+}

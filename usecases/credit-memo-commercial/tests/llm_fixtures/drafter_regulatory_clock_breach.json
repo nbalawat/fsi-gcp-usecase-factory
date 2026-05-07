@@ -1,0 +1,26 @@
+{
+  "_fixture_meta": {
+    "agent": "drafter",
+    "scenario": "regulatory-clock-breach-alarm",
+    "borrower_id": "DEMO-HLT-002",
+    "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+    "input_hash": "hlt002_drafter_not_reached",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Drafter is never invoked in this scenario — pipeline stalled before drafter step; regulatory clock alarm fires instead"
+  },
+  "output_key": "drafter_skipped",
+  "output_value": {
+    "status": "NOT_REACHED",
+    "reason": "Pipeline stalled at agent-extractor step; regulatory clock alarm fired at T+5 business days",
+    "credit_memo": null,
+    "alarm": {
+      "severity": "P1",
+      "type": "regulatory_clock.breach",
+      "application_id": "DEMO-APP-HLT-002-2026",
+      "elapsed_business_days": 5,
+      "alarm_published_to": "credit-officer-queue",
+      "escalation_target": "compliance-team"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "application_id": "DEMO-APP-MFG-001-2026",
+  "borrower_id": "DEMO-MFG-001",
+  "submitted_at": "2026-04-15T09:00:00Z",
+  "application_type": "new_credit",
+  "facility": {
+    "type": "Term Loan",
+    "amount_requested_usd": 8000000,
+    "term_years": 5,
+    "amortization": "straight-line over 5 years",
+    "rate_type": "floating",
+    "index": "SOFR",
+    "spread_bps_requested": 225,
+    "purpose": "Equipment upgrade — CNC machining line replacement and capacity expansion (Plant 2, Dayton OH)",
+    "use_of_proceeds": {
+      "equipment_purchase_usd": 6800000,
+      "installation_and_commissioning_usd": 800000,
+      "working_capital_reserve_usd": 400000
+    },
+    "repayment_source": "Operating cash flow (FCF $9.35M FY2025)"
+  },
+  "collateral": [
+    {
+      "description": "New CNC machining centers (18 units, Mazak HCN-6800 series)",
+      "estimated_value_usd": 7200000,
+      "haircut_pct": 25,
+      "lendable_value_usd": 5400000,
+      "lien_position": "First"
+    },
+    {
+      "description": "Existing plant equipment (blanket lien)",
+      "estimated_value_usd": 15000000,
+      "haircut_pct": 50,
+      "lendable_value_usd": 7500000,
+      "lien_position": "First"
+    }
+  ],
+  "proposed_covenants": [
+    {
+      "covenant_type": "financial",
+      "name": "Minimum DSCR",
+      "threshold": 1.25,
+      "measurement": "trailing-12-month",
+      "frequency": "quarterly"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Maximum Leverage (Total Debt / EBITDA)",
+      "threshold": 4.0,
+      "measurement": "trailing-12-month",
+      "frequency": "quarterly"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Minimum Current Ratio",
+      "threshold": 1.5,
+      "measurement": "quarterly",
+      "frequency": "quarterly"
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Annual Audited Financials Delivery",
+      "deadline_days_after_fiscal_year_end": 120
+    },
+    {
+      "covenant_type": "negative",
+      "name": "No Additional Senior Debt",
+      "threshold_usd": 2000000,
+      "exception": "Purchase money financing for equipment up to $2M aggregate"
+    }
+  ],
+  "projected_post_close_ratios": {
+    "dscr_base": 2.94,
+    "dscr_stressed_minus_15pct_revenue": 2.10,
+    "leverage_total_debt_to_ebitda": 2.27,
+    "interest_coverage": 6.20
+  },
+  "approval_authority_sought": "Senior Credit Committee",
+  "expected_scenario": "happy-path-approve",
+  "demo_note": "SYNTHETIC DATA — no real PII — designed to produce approval recommendation"
+}

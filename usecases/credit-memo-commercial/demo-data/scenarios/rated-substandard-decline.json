@@ -1,0 +1,70 @@
+{
+  "scenario_id": "rated-substandard-decline",
+  "description": "Decline path: stressed primary-metal manufacturer with DSCR below 1.0 under stress, elevated leverage, PE overhang, and short bank relationship. Agent rates 3-substandard; rules drive decline recommendation.",
+  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_rated_substandard_decline.py",
+  "borrower_id": "DEMO-MFG-002",
+  "application_id": "DEMO-APP-MFG-002-2026",
+  "input_fixtures": {
+    "profile": "borrowers/DEMO-MFG-002/profile.json",
+    "financials": "borrowers/DEMO-MFG-002/financials/10k_2025.json",
+    "loan_application": "borrowers/DEMO-MFG-002/loan_application.json",
+    "peer_set": "peer_sets/manufacturing.json"
+  },
+  "pipeline_steps": [
+    {
+      "step": "svc-financial-spreader",
+      "expected": "Spread financials: dscr_base=1.09 (current), leverage=3.65"
+    },
+    {
+      "step": "svc-dscr-calculator",
+      "expected": "dscr_base=0.98 (post-close on proposed $5M revolver), dscr_stressed=0.72; min_dscr_breach=true"
+    },
+    {
+      "step": "svc-covenant-analyzer",
+      "expected": "DSCR covenant 1.10 already breached at close (0.98 < 1.10); leverage covenant 4.5 breached (4.95 > 4.5); violations_projected=true"
+    },
+    {
+      "step": "svc-peer-benchmarker",
+      "expected": "DEMO-MFG-002 at 15th percentile on DSCR (1.09 vs median 2.88), 20th percentile on leverage"
+    },
+    {
+      "step": "svc-industry-risk-scorer",
+      "expected": "industry_risk_band=3 (elevated); NAICS 331 primary metals — cyclical, China import exposure"
+    },
+    {
+      "step": "rule-approval-matrix-commercial",
+      "expected": "approval_authority_required=decline-recommended; risk_band=3, industry_risk_band=3"
+    },
+    {
+      "step": "agent-rater",
+      "expected": "risk_band=3-substandard; rationale cites DSCR breach, leverage, PE overhang, compiled (not audited) financials"
+    },
+    {
+      "step": "agent-drafter",
+      "expected": "Credit memo drafted with DECLINE recommendation; narrative cites each deficiency with atomic-service citation"
+    }
+  ],
+  "expected_outcome": {
+    "decision": "declined",
+    "risk_band": "3-substandard",
+    "decline_reasons": [
+      "Post-close DSCR 0.98 — below minimum covenant 1.10 at inception",
+      "Stressed DSCR 0.72 — insufficient debt service capacity under mild stress",
+      "Post-close leverage 4.95x — exceeds proposed covenant maximum 4.5x",
+      "Compiled (unaudited) financials — reliance caveat",
+      "PE leverage overhang not captured in bank debt; hidden leverage risk",
+      "Short 3-year bank relationship; limited credit history"
+    ],
+    "approval_authority": "decline-recommended",
+    "regulatory_clock_breach": false
+  },
+  "assertions": [
+    "CreditMemo.recommendation == 'DECLINE'",
+    "CreditMemo.risk_band == '3-substandard'",
+    "DSCRCalculator.dscr_base < 1.0",
+    "CovenantAnalyzer.violations_projected == true",
+    "CreditMemo.citation_density >= 0.8",
+    "len(CreditMemo.decline_reasons) >= 3"
+  ],
+  "demo_note": "SYNTHETIC SCENARIO — tests decline path triggered by risk rating 3-substandard and covenant breaches at inception"
+}

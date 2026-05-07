@@ -1,0 +1,45 @@
+{
+  "borrower_id": "DEMO-HLT-002",
+  "legal_name": "BlueStar Specialty Clinics LLC",
+  "dba": "BlueStar Clinics",
+  "entity_type": "LLC",
+  "state_of_incorporation": "TX",
+  "naics_code": "621",
+  "naics_description": "Ambulatory Health Care Services",
+  "industry_segment": "specialty-healthcare",
+  "employee_count": 180,
+  "annual_revenue_usd": 22000000,
+  "credit_rating": "BB+",
+  "rating_agency": "S&P",
+  "bank_relationship_years": 2,
+  "relationship_start_year": 2024,
+  "primary_bank_contact": "REDACTED-RM-005",
+  "headquarters": {
+    "city": "Austin",
+    "state": "TX",
+    "region": "South Central"
+  },
+  "specialties": [
+    "Orthopedics",
+    "Sports medicine",
+    "Physical therapy"
+  ],
+  "clinic_locations": 6,
+  "payor_mix": {
+    "commercial_pct": 58,
+    "medicare_pct": 22,
+    "medicaid_pct": 10,
+    "self_pay_pct": 10
+  },
+  "ownership_structure": "Private — physician-owned group practice, founded 2022",
+  "growth_profile": "Rapid expansion — revenue grew 38% YoY 2024→2025; adding 2 locations in 2026",
+  "existing_facilities": [],
+  "risk_flags": [
+    "Short operating history (3 years)",
+    "New banking relationship (2 years)",
+    "High growth — integration risk on new clinic additions",
+    "Physician concentration — 3 key physicians represent majority of revenue",
+    "No prior credit facility with this bank"
+  ],
+  "demo_note": "SYNTHETIC DATA — no real PII — newer borrower, limited history test scenario"
+}

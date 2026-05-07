@@ -1,0 +1,15 @@
+{
+  "name": "rules-service",
+  "version": "0.1.0",
+  "description": "Singleton GoRules Zen JDM evaluator for bank policy rules",
+  "inputs": ["context_id", "rule_set", "inputs"],
+  "outputs": ["context_id", "decision", "reason", "outputs"],
+  "endpoint": "https://fsi-rules-service-placeholder.run.app/evaluate",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 500,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "confidential",
+  "pii_fields": []
+}

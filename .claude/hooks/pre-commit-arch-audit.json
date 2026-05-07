@@ -1,0 +1,10 @@
+{
+  "event": "PreToolUse",
+  "matcher": {
+    "tool": "Bash",
+    "command_pattern": "git commit"
+  },
+  "command": "${CLAUDE_PLUGIN_DIR}/hooks/pre-commit-arch-audit.sh",
+  "description": "Run architecture audit before committing. Blocks commit if FAIL.",
+  "timeout_seconds": 60
+}

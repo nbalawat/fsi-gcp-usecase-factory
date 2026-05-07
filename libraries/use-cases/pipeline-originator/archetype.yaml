@@ -1,0 +1,58 @@
+# Use-case archetype: pipeline-originator
+# Whole-use-case template for multi-day origination flows that move through
+# discrete stages, hit a regulatory clock, and end at a human approval gate.
+
+name: pipeline-originator
+version: "1.0"
+
+description: >-
+  handler → fan-out atomic services → rules evaluation → multi-agent pattern
+  (specialists + supervisor) → approval gate → sink fanout, with a parallel
+  regulatory-clock branch and DLQ on every fallible step.
+
+# Wires — the canonical 5-step decomposition this archetype produces.
+wires:
+  - stage: handler
+    component: "services/handlers/{use_case_id}/main.py"
+  - stage: atomic-services
+    component: "fan-out-join@1.0"
+  - stage: rules
+    component: "rules-service (JDM rules from structure.rules)"
+  - stage: agent
+    component: "agent-call-with-retry@1.0 wrapping multi-agent supervisor"
+  - stage: approval
+    component: "approval-gate@1.0"
+  - stage: sinks
+    component: "sink-fanout@1.0"
+  - stage: cross-cutting
+    component: "regulatory-clock@1.0 (parallel) + dlq-on-failure@1.0 (per-step)"
+
+# Required libraries — fragments + agent archetypes typically composed by
+# this archetype. Mandatory ones must be present in the use case's
+# structure.workflow_fragments / structure.agent_archetypes.
+required_libraries:
+  workflow_fragments:
+    - {ref: "fan-out-join@1.0",          required: true}
+    - {ref: "agent-call-with-retry@1.0", required: true}
+    - {ref: "approval-gate@1.0",         required: true}
+    - {ref: "sink-fanout@1.0",           required: true}
+    - {ref: "regulatory-clock@1.0",      required: false}
+    - {ref: "dlq-on-failure@1.0",        required: true}
+  multi_agent_patterns:
+    - {ref: "extractor-spreader-rater-drafter@1.0", required: false}
+
+console_pattern: pipeline-console
+
+parameters:
+  - name: use_case_id
+    type: string
+    description: kebab-case ID, becomes the workflow + handler folder name.
+  - name: trigger_topic
+    type: string
+    description: Pub/Sub topic the handler subscribes to (Eventarc → Cloud Run push).
+  - name: sinks
+    type: list[object]
+    description: List of sink-fanout sink descriptors (see sink-fanout@1.0).
+
+last_verified: 2026-05-04
+used_by: []

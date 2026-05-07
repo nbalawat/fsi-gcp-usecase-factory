@@ -1,0 +1,15 @@
+{
+  "name": "document-store-gcs",
+  "version": "0.1.0",
+  "description": "Writes approved credit memo JSON and metadata to GCS and emits an audit event",
+  "inputs": ["context_id", "borrower_id", "agent_outcome"],
+  "outputs": ["context_id", "gcs_uri", "written_at", "size_bytes"],
+  "endpoint": "https://fsi-sink-document-store-gcs-placeholder.run.app/",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 3000,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "confidential",
+  "pii_fields": ["borrower_id"]
+}

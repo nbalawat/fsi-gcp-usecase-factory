@@ -1,0 +1,38 @@
+{
+  "_fixture_meta": {
+    "agent": "drafter",
+    "scenario": "happy-path-approve",
+    "borrower_id": "DEMO-MFG-001",
+    "context_id": "credit-memo-commercial-test-happy-path-approve-001",
+    "input_hash": "mfg001_rating1pass",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "credit_memo",
+  "output_value": {
+    "recommendation": "APPROVE",
+    "risk_band": "1-pass",
+    "approval_authority": "senior-credit-committee",
+    "word_count": 1240,
+    "citation_density": 0.91,
+    "sections": [
+      "Executive Summary",
+      "Borrower Overview",
+      "Financial Analysis",
+      "DSCR and Stress Testing",
+      "Collateral Assessment",
+      "Peer Benchmarking",
+      "Covenant Structure",
+      "Regulatory Compliance",
+      "Risk Rating",
+      "Recommendation"
+    ],
+    "decline_reasons": [],
+    "suggested_revisions": [],
+    "regulatory_citations": [],
+    "memo_status": "draft",
+    "pipeline_latency_hours": 3.2,
+    "regulatory_clock_elapsed_business_days": 0.5
+  }
+}

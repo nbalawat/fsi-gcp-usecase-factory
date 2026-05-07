@@ -1,0 +1,14 @@
+{
+  "description": "Small loan ($500K) with low risk band (2) routes to relationship_manager; no additional reviewers needed",
+  "input": {
+    "loan_amount": 500000,
+    "risk_band": 2,
+    "industry_risk_band": 2,
+    "single_borrower_pct": 0.03
+  },
+  "expected_output": {
+    "approval_authority_required": "relationship_manager",
+    "additional_reviewers": []
+  },
+  "regulatory_basis": "Internal approval matrix — loans ≤$1M with risk band 1-2 are within relationship manager delegated authority"
+}

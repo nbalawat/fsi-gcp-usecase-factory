@@ -1,0 +1,6 @@
+{
+  "message": {
+    "data": "eyJjb250ZXh0X2lkIjoidGVzdC1jdHgtMDAxIiwiYm9ycm93ZXJfaWQiOiJCUlctMTIzNDUiLCJhZ2VudF9vdXRjb21lIjp7ImxvYW5fYW1vdW50IjoxMDAwMDAwLCJyaXNrX3JhdGluZyI6IjItc3BlY2lhbC1tZW50aW9uIiwiZGVjaXNpb24iOiJhcHByb3ZlZCIsImJvcnJvd2VyX25hbWUiOiJBY21lIENvcnAifX0=",
+    "attributes": {"context_id": "test-ctx-001", "borrower_id": "BRW-12345"}
+  }
+}

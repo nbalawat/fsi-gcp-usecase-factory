@@ -1,0 +1,453 @@
+# Golden render: workflow-skeleton.yaml.j2 spliced with the six fragments,
+# parameterized from usecases/credit-memo-commercial/reasons.yaml.
+# Expected output of /fsi-build-parallel → workflows/credit-memo-commercial.yaml
+
+main:
+  params: [event]
+  steps:
+
+    - init:
+        assign:
+          - context_id: ${event.context_id}
+          - use_case: "credit-memo-commercial"
+          - enriched: {}
+          - rule_outcomes: {}
+          - agent_outcome: {}
+          - approver_decision: {}
+          - rejection_reason: {}
+          - final_payload: {}
+
+    - run_pipeline_with_clock:
+        parallel:
+          shared: [enriched, rule_outcomes, agent_outcome, approver_decision, rejection_reason, final_payload]
+          branches:
+
+            - regulatory_clock_branch:
+                steps:
+                  - regclock_init:
+                      assign:
+                        - regclock_start_ts: ${sys.now()}
+                        - regclock_deadline: "PT120H"
+                        - regclock_thresholds: [50, 75, 90]
+                        - regclock_fired: []
+                  - regclock_monitor:
+                      parallel:
+                        shared: [regclock_fired]
+                        branches:
+                          - clock_branch:
+                              steps:
+                                - clock_loop:
+                                    for:
+                                      value: pct
+                                      in: [50, 75, 90]
+                                      steps:
+                                        - sleep_until_pct:
+                                            call: sys.sleep_until
+                                            args:
+                                              time: ${time.format(regclock_start_ts + (time.parse(regclock_deadline) - regclock_start_ts) * pct / 100)}
+                                        - publish_threshold:
+                                            call: googleapis.pubsub.v1.projects.topics.publish
+                                            args:
+                                              topic: projects/bank-prod/topics/regclock-credit-memo
+                                              body:
+                                                messages:
+                                                  - attributes: {context_id: "${context_id}", kind: "regclock-threshold", pct: "${string(pct)}"}
+                                                    data: ${base64.encode(json.encode({"deadline": regclock_deadline, "pct": pct}))}
+                                        - record_fired:
+                                            assign:
+                                              - regclock_fired: ${list.concat(regclock_fired, pct)}
+                                - sleep_until_breach:
+                                    call: sys.sleep_until
+                                    args:
+                                      time: ${regclock_deadline}
+                                - publish_breach:
+                                    call: googleapis.pubsub.v1.projects.topics.publish
+                                    args:
+                                      topic: projects/bank-prod/topics/regclock-credit-memo
+                                      body:
+                                        messages:
+                                          - attributes: {context_id: "${context_id}", kind: "regclock-breach", action: "escalate"}
+                                            data: ${base64.encode(json.encode({"deadline": regclock_deadline}))}
+
+            - main_pipeline_branch:
+                steps:
+
+                  # ── Step 2: fan-out atomic services ─────────────────
+                  - atomic_services:
+                      try:
+                        steps:
+                          - fan_out_enriched:
+                              parallel:
+                                shared: [enriched]
+                                branches:
+                                  - call_financial_spreader:
+                                      steps:
+                                        - http_financial_spreader:
+                                            call: http.post
+                                            args:
+                                              url: https://financial-spreader.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry:
+                                              predicate: ${http.default_retry_predicate}
+                                              max_retries: 3
+                                              backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}
+                                            result: result_financial_spreader
+                                        - merge_financial_spreader:
+                                            assign:
+                                              - enriched.financial_spreader: ${result_financial_spreader.body}
+                                  - call_dscr_calculator:
+                                      steps:
+                                        - http_dscr_calculator:
+                                            call: http.post
+                                            args:
+                                              url: https://dscr-calculator.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry:
+                                              predicate: ${http.default_retry_predicate}
+                                              max_retries: 3
+                                              backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}
+                                            result: result_dscr_calculator
+                                        - merge_dscr_calculator:
+                                            assign:
+                                              - enriched.dscr_calculator: ${result_dscr_calculator.body}
+                                  - call_covenant_analyzer:
+                                      steps:
+                                        - http_covenant_analyzer:
+                                            call: http.post
+                                            args:
+                                              url: https://covenant-analyzer.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                                            result: result_covenant_analyzer
+                                        - merge_covenant_analyzer:
+                                            assign:
+                                              - enriched.covenant_analyzer: ${result_covenant_analyzer.body}
+                                  - call_peer_benchmarker:
+                                      steps:
+                                        - http_peer_benchmarker:
+                                            call: http.post
+                                            args:
+                                              url: https://peer-benchmarker.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                                            result: result_peer_benchmarker
+                                        - merge_peer_benchmarker:
+                                            assign:
+                                              - enriched.peer_benchmarker: ${result_peer_benchmarker.body}
+                                  - call_industry_risk_scorer:
+                                      steps:
+                                        - http_industry_risk_scorer:
+                                            call: http.post
+                                            args:
+                                              url: https://industry-risk-scorer.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                                            result: result_industry_risk_scorer
+                                        - merge_industry_risk_scorer:
+                                            assign:
+                                              - enriched.industry_risk_scorer: ${result_industry_risk_scorer.body}
+                                  - call_collateral_valuator:
+                                      steps:
+                                        - http_collateral_valuator:
+                                            call: http.post
+                                            args:
+                                              url: https://collateral-valuator.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                                            result: result_collateral_valuator
+                                        - merge_collateral_valuator:
+                                            assign:
+                                              - enriched.collateral_valuator: ${result_collateral_valuator.body}
+                                  - call_exposure_aggregator:
+                                      steps:
+                                        - http_exposure_aggregator:
+                                            call: http.post
+                                            args:
+                                              url: https://exposure-aggregator.run.app
+                                              headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                              body: ${event}
+                                              timeout: 10
+                                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                                            result: result_exposure_aggregator
+                                        - merge_exposure_aggregator:
+                                            assign:
+                                              - enriched.exposure_aggregator: ${result_exposure_aggregator.body}
+                      except:
+                        as: e
+                        steps:
+                          - dlq_publish_atomic_services:
+                              call: googleapis.pubsub.v1.projects.topics.publish
+                              args:
+                                topic: projects/bank-prod/topics/credit-memo-dlq
+                                body:
+                                  messages:
+                                    - attributes: {context_id: "${context_id}", failed_step: "atomic_services", use_case: "${use_case}"}
+                                      data: ${base64.encode(json.encode({"failed_step": "atomic_services", "error_code": e.code, "error_message": e.message, "error_tags": e.tags, "retry_count": default(map.get(e, "retry_count"), 0), "original_payload": event, "context_id": context_id, "ts": sys.now()}))}
+                              retry: {predicate: "${http.default_retry_predicate}", max_retries: 5, backoff: {initial_delay: 2, max_delay: 60, multiplier: 2}}
+                          - dlq_reraise_atomic_services:
+                              raise: ${e}
+
+                  # ── Step 3: rules ───────────────────────────────────
+                  - rules_evaluation:
+                      try:
+                        call: http.post
+                        args:
+                          url: https://rules-service.run.app/evaluate
+                          headers: {X-Cloud-Trace-Context: "${context_id}"}
+                          body:
+                            rules: ["regulatory_thresholds@2026-q2", "single_borrower_exposure@1.0", "approval_matrix_commercial@1.0"]
+                            context: ${enriched}
+                            context_id: ${context_id}
+                          timeout: 10
+                        result: rule_response
+                        retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 1, max_delay: 10, multiplier: 2}}
+                      except:
+                        as: e
+                        steps:
+                          - dlq_publish_rules_evaluation:
+                              call: googleapis.pubsub.v1.projects.topics.publish
+                              args:
+                                topic: projects/bank-prod/topics/credit-memo-dlq
+                                body:
+                                  messages:
+                                    - attributes: {context_id: "${context_id}", failed_step: "rules_evaluation", use_case: "${use_case}"}
+                                      data: ${base64.encode(json.encode({"failed_step": "rules_evaluation", "error_code": e.code, "error_message": e.message, "error_tags": e.tags, "retry_count": default(map.get(e, "retry_count"), 0), "original_payload": enriched, "context_id": context_id, "ts": sys.now()}))}
+                          - dlq_reraise_rules_evaluation:
+                              raise: ${e}
+                  - capture_rule_outcomes:
+                      assign:
+                        - rule_outcomes: ${rule_response.body}
+
+                  # ── Step 4: multi-agent supervisor ──────────────────
+                  - invoke_supervisor:
+                      try:
+                        steps:
+                          - agent_call_primary:
+                              try:
+                                call: http.post
+                                args:
+                                  url: https://credit-memo-supervisor.run.app/invoke
+                                  headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                  body:
+                                    model: "claude-opus-4-7"
+                                    input: ${{"case": enriched, "rule_outcomes": rule_outcomes, "context_id": context_id}}
+                                    context_id: ${context_id}
+                                  timeout: 60
+                                result: agent_outcome
+                              retry:
+                                predicate: ${http.default_retry_predicate}
+                                max_retries: 2
+                                backoff: {initial_delay: 4, max_delay: 60, multiplier: 2}
+                              except:
+                                as: e
+                                steps:
+                                  - agent_call_fallback:
+                                      call: http.post
+                                      args:
+                                        url: https://credit-memo-supervisor.run.app/invoke
+                                        headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                        body:
+                                          model: "gemini-3-1-flash"
+                                          input: ${{"case": enriched, "rule_outcomes": rule_outcomes, "context_id": context_id}}
+                                          context_id: ${context_id}
+                                          fallback_from: "claude-opus-4-7"
+                                          primary_error: ${e.message}
+                                        timeout: 90
+                                      result: agent_outcome
+                                      retry: {predicate: "${http.default_retry_predicate}", max_retries: 1, backoff: {initial_delay: 4, max_delay: 30, multiplier: 2}}
+                      except:
+                        as: e
+                        steps:
+                          - dlq_publish_invoke_supervisor:
+                              call: googleapis.pubsub.v1.projects.topics.publish
+                              args:
+                                topic: projects/bank-prod/topics/credit-memo-dlq
+                                body:
+                                  messages:
+                                    - attributes: {context_id: "${context_id}", failed_step: "invoke_supervisor", use_case: "${use_case}"}
+                                      data: ${base64.encode(json.encode({"failed_step": "invoke_supervisor", "error_code": e.code, "error_message": e.message, "error_tags": e.tags, "retry_count": default(map.get(e, "retry_count"), 0), "original_payload": enriched, "context_id": context_id, "ts": sys.now()}))}
+                          - dlq_reraise_invoke_supervisor:
+                              raise: ${e}
+
+                  # ── HITL: approval gate ─────────────────────────────
+                  - approval_gate:
+                      steps:
+                        - create_approval_callback:
+                            call: events.create_callback_endpoint
+                            args: {http_callback_method: POST}
+                            result: approval_callback
+                        - publish_to_approver_queue:
+                            call: googleapis.pubsub.v1.projects.topics.publish
+                            args:
+                              topic: projects/bank-prod/topics/credit-officer-queue
+                              body:
+                                messages:
+                                  - attributes: {context_id: "${context_id}", callback_url: "${approval_callback.url}"}
+                                    data: ${base64.encode(json.encode({"case": enriched, "memo": agent_outcome.body, "rule_outcomes": rule_outcomes, "use_case": use_case}))}
+                            retry: {predicate: "${http.default_retry_predicate}", max_retries: 3, backoff: {initial_delay: 2, max_delay: 30, multiplier: 2}}
+                        - await_human_decision:
+                            call: events.await_callback
+                            args:
+                              callback: ${approval_callback}
+                              timeout: 432000
+                            result: human_disposition
+                        - branch_on_disposition:
+                            switch:
+                              - condition: ${human_disposition.http_request.body.disposition == "approve"}
+                                steps:
+                                  - assign_approve:
+                                      assign:
+                                        - approver_decision: ${human_disposition.http_request.body}
+                              - condition: ${human_disposition.http_request.body.disposition == "reject"}
+                                steps:
+                                  - assign_reject:
+                                      assign:
+                                        - rejection_reason: ${human_disposition.http_request.body}
+                              - condition: true
+                                raise: {code: "ApprovalUnknownDisposition", message: "Unexpected disposition"}
+
+                  - branch_on_approval:
+                      switch:
+                        - condition: ${approver_decision != {}}
+                          next: assemble_final_payload
+                        - condition: true
+                          next: publish_rejection
+
+                  - assemble_final_payload:
+                      assign:
+                        - final_payload:
+                            case: ${enriched}
+                            memo: ${agent_outcome.body}
+                            approver: ${approver_decision}
+                            context_id: ${context_id}
+                      next: sink_dispatch
+
+                  - publish_rejection:
+                      call: googleapis.pubsub.v1.projects.topics.publish
+                      args:
+                        topic: projects/bank-prod/topics/credit-memo-rejections
+                        body:
+                          messages:
+                            - attributes: {context_id: "${context_id}"}
+                              data: ${base64.encode(json.encode({"rejection": rejection_reason, "case": enriched}))}
+                      next: end
+
+                  # ── Step 5: sink fanout ─────────────────────────────
+                  - sink_dispatch:
+                      try:
+                        steps:
+                          - init_sink_results:
+                              assign: [{sink_results: {}}, {sink_failures: []}]
+                          - fan_out_sinks:
+                              parallel:
+                                shared: [sink_results, sink_failures]
+                                branches:
+                                  - sink_credit_officer_queue:
+                                      steps:
+                                        - try_credit_officer_queue:
+                                            try:
+                                              steps:
+                                                - publish_credit_officer_queue:
+                                                    call: googleapis.pubsub.v1.projects.topics.publish
+                                                    args:
+                                                      topic: projects/bank-prod/topics/credit-officer-queue
+                                                      body:
+                                                        messages:
+                                                          - attributes: {context_id: "${context_id}"}
+                                                            data: ${base64.encode(json.encode(${final_payload}))}
+                                                    result: r_credit_officer_queue
+                                                - mark_ok_credit_officer_queue:
+                                                    assign: [{"sink_results.credit_officer_queue": "ok"}]
+                                            except:
+                                              as: e
+                                              steps:
+                                                - mark_fail_credit_officer_queue:
+                                                    assign:
+                                                      - sink_results.credit_officer_queue: "fail"
+                                                      - sink_failures: ${list.concat(sink_failures, {"name": "credit_officer_queue", "error": e.message})}
+                                  - sink_document_store_gcs:
+                                      steps:
+                                        - try_document_store_gcs:
+                                            try:
+                                              steps:
+                                                - gcs_document_store_gcs:
+                                                    call: googleapis.storage.v1.objects.insert
+                                                    args:
+                                                      bucket: bank-prod-credit-memos
+                                                      uploadType: media
+                                                      name: ${context_id + "/memo.json"}
+                                                      body: ${final_payload}
+                                                    result: r_document_store_gcs
+                                                - mark_ok_document_store_gcs:
+                                                    assign: [{"sink_results.document_store_gcs": "ok"}]
+                                            except:
+                                              as: e
+                                              steps:
+                                                - mark_fail_document_store_gcs:
+                                                    assign:
+                                                      - sink_results.document_store_gcs: "fail"
+                                                      - sink_failures: ${list.concat(sink_failures, {"name": "document_store_gcs", "error": e.message})}
+                                  - sink_gl_posting:
+                                      steps:
+                                        - try_gl_posting:
+                                            try:
+                                              steps:
+                                                - http_gl_posting:
+                                                    call: http.post
+                                                    args:
+                                                      url: https://gl-posting.run.app/post
+                                                      headers: {X-Cloud-Trace-Context: "${context_id}"}
+                                                      body: ${final_payload}
+                                                      timeout: 15
+                                                    result: r_gl_posting
+                                                - mark_ok_gl_posting:
+                                                    assign: [{"sink_results.gl_posting": "ok"}]
+                                            except:
+                                              as: e
+                                              steps:
+                                                - mark_fail_gl_posting:
+                                                    assign:
+                                                      - sink_results.gl_posting: "fail"
+                                                      - sink_failures: ${list.concat(sink_failures, {"name": "gl_posting", "error": e.message})}
+                          - evaluate_sink_outcome:
+                              switch:
+                                - condition: ${len(sink_failures) > 0 }
+                                  steps:
+                                    - dlq_aggregate:
+                                        call: googleapis.pubsub.v1.projects.topics.publish
+                                        args:
+                                          topic: projects/bank-prod/topics/credit-memo-dlq
+                                          body:
+                                            messages:
+                                              - attributes: {context_id: "${context_id}", reason: "sink-fanout-failure"}
+                                                data: ${base64.encode(json.encode({"failures": sink_failures, "results": sink_results}))}
+                                    - raise_aggregate:
+                                        raise: {code: "SinkFanoutFailure", message: "Sink failures"}
+                      except:
+                        as: e
+                        steps:
+                          - dlq_publish_sink_dispatch:
+                              call: googleapis.pubsub.v1.projects.topics.publish
+                              args:
+                                topic: projects/bank-prod/topics/credit-memo-dlq
+                                body:
+                                  messages:
+                                    - attributes: {context_id: "${context_id}", failed_step: "sink_dispatch", use_case: "${use_case}"}
+                                      data: ${base64.encode(json.encode({"failed_step": "sink_dispatch", "error_code": e.code, "error_message": e.message, "original_payload": final_payload, "context_id": context_id, "ts": sys.now()}))}
+                          - dlq_reraise_sink_dispatch:
+                              raise: ${e}
+
+                  - end:
+                      return: ${final_payload}

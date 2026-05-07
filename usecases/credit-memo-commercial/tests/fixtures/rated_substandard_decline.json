@@ -1,0 +1,44 @@
+{
+  "context_id": "credit-memo-commercial-test-rated-substandard-decline-001",
+  "scenario": "rated-substandard-decline",
+  "description": "Stressed primary-metal manufacturer (DEMO-MFG-002) with DSCR below 1.0 at close (0.98), stressed DSCR 0.72, leverage 4.95x exceeding covenant 4.5x, PE leverage overhang. Agent must rate 3-substandard and recommend DECLINE.",
+  "event_payload": {
+    "context_id": "credit-memo-commercial-test-rated-substandard-decline-001",
+    "borrower_id": "DEMO-MFG-002",
+    "application_id": "DEMO-APP-MFG-002-2026",
+    "loan_amount": 5000000,
+    "loan_type": "revolver",
+    "submitted_at": "2026-04-20T11:30:00Z",
+    "application_type": "new_credit",
+    "facility": {
+      "type": "Revolving Credit Facility",
+      "amount_requested_usd": 5000000,
+      "term_years": 3,
+      "rate_type": "floating",
+      "index": "SOFR",
+      "spread_bps_requested": 350,
+      "purpose": "General working capital and short-term liquidity"
+    },
+    "projected_post_close_ratios": {
+      "dscr_base": 0.98,
+      "dscr_stressed_minus_10pct_revenue": 0.72,
+      "leverage_total_debt_to_ebitda": 4.95
+    },
+    "demo_fixture": "demo-data-borrower-set"
+  },
+  "expected_outcome": {
+    "status": "declined",
+    "risk_band": "3-substandard",
+    "assertions": [
+      "response status code is 200",
+      "context_id echoed back in response",
+      "dscr-calculator dscr_base < 1.0",
+      "dscr-calculator min_dscr_breach == true",
+      "covenant-analyzer violations_projected == true",
+      "credit memo recommendation is DECLINE",
+      "risk_band is 3-substandard",
+      "decline_reasons length >= 3",
+      "citation_density >= 0.8"
+    ]
+  }
+}

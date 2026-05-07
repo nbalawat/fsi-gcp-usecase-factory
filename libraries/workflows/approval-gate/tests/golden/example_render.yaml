@@ -1,0 +1,54 @@
+# Rendered with:
+#   queue_topic: projects/bank-prod/topics/credit-officer-queue
+#   callback_timeout_seconds: 432000
+#   approval_payload_template: '${{"case": enriched, "memo": agent_outcome.body}}'
+#   on_approve_var: approver_decision
+#   on_reject_var: rejection_reason
+
+- create_approval_callback:
+    call: events.create_callback_endpoint
+    args:
+      http_callback_method: POST
+    result: approval_callback
+
+- publish_to_approver_queue:
+    call: googleapis.pubsub.v1.projects.topics.publish
+    args:
+      topic: projects/bank-prod/topics/credit-officer-queue
+      body:
+        messages:
+          - attributes:
+              context_id: ${context_id}
+              callback_url: ${approval_callback.url}
+            data: ${base64.encode(json.encode(${{"case": enriched, "memo": agent_outcome.body}}))}
+    retry:
+      predicate: ${http.default_retry_predicate}
+      max_retries: 3
+      backoff:
+        initial_delay: 2
+        max_delay: 30
+        multiplier: 2
+
+- await_human_decision:
+    call: events.await_callback
+    args:
+      callback: ${approval_callback}
+      timeout: 432000
+    result: human_disposition
+
+- branch_on_disposition:
+    switch:
+      - condition: ${human_disposition.http_request.body.disposition == "approve"}
+        steps:
+          - assign_approve:
+              assign:
+                - approver_decision: ${human_disposition.http_request.body}
+      - condition: ${human_disposition.http_request.body.disposition == "reject"}
+        steps:
+          - assign_reject:
+              assign:
+                - rejection_reason: ${human_disposition.http_request.body}
+      - condition: true
+        raise:
+          code: "ApprovalUnknownDisposition"
+          message: ${"Unexpected disposition: " + human_disposition.http_request.body.disposition}

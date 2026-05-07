@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JDM (JSON Decision Model) artifact",
+  "description": "Schema for the bank's GoRules Zen JDM rule files.",
+  "type": "object",
+  "required": ["name", "version", "effective_from", "regulatory_citation", "owner", "nodes", "edges"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "snake_case rule name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date",
+      "description": "When this version of the rule becomes effective"
+    },
+    "effective_to": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "When this version is superseded; null means current"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "description": "Team or role responsible for the rule"
+    },
+    "regulatory_citation": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Regulation reference (e.g., 'BSA 31 CFR 1010.310') or internal policy reference"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "name"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {
+            "type": "string",
+            "enum": ["inputNode", "outputNode", "decisionTableNode", "expressionNode", "functionNode", "switchNode"]
+          },
+          "name": {"type": "string"}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target"],
+        "properties": {
+          "source": {"type": "string"},
+          "target": {"type": "string"}
+        }
+      }
+    }
+  }
+}

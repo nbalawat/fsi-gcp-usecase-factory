@@ -1,0 +1,32 @@
+{
+  "_fixture_meta": {
+    "agent": "rater",
+    "scenario": "rated-substandard-decline",
+    "borrower_id": "DEMO-MFG-002",
+    "context_id": "credit-memo-commercial-test-rated-substandard-decline-001",
+    "input_hash": "mfg002_dscr_breach",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub — replay without calling real model"
+  },
+  "output_key": "risk_rating",
+  "output_value": {
+    "risk_band": "3-substandard",
+    "risk_band_numeric": 3,
+    "overall_rating": "Substandard",
+    "dscr_base": 0.98,
+    "dscr_stressed": 0.72,
+    "leverage": 4.95,
+    "industry_risk_band": 3,
+    "exposure_limit_flag": false,
+    "covenant_violation_flag": true,
+    "rationale_summary": "DEMO-MFG-002 rated 3-substandard. Post-close DSCR 0.98 is below covenant minimum 1.10 at inception. Stressed DSCR 0.72 indicates distress under mild revenue decline. Leverage 4.95x exceeds proposed covenant maximum 4.5x. Compiled (unaudited) financials limit reliance. PE leverage overhang from 2021 LBO constitutes hidden leverage risk. Short 3-year bank relationship.",
+    "citations": [
+      {"source": "dscr-calculator", "field": "dscr_base", "value": 0.98},
+      {"source": "dscr-calculator", "field": "dscr_stressed", "value": 0.72},
+      {"source": "covenant-analyzer", "field": "violations_projected", "value": true},
+      {"source": "financial-spreader", "field": "ratios.debt_to_ebitda", "value": 4.95}
+    ],
+    "citation_density": 0.93
+  }
+}

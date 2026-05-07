@@ -1,0 +1,24 @@
+{
+  "name": "{{SERVICE_NAME}}",
+  "version": "1.0.0",
+  "description": "{{DESCRIPTION}}",
+  "endpoint": "https://{{SERVICE_NAME}}-${PROJECT_HASH}.${REGION}.run.app/v1/compute",
+  "method": "POST",
+  "input_schema": {
+    "type": "object",
+    "required": ["context_id"],
+    "properties": {
+      "context_id": {"type": "string"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["context_id"],
+    "properties": {
+      "context_id": {"type": "string"}
+    }
+  },
+  "owner": "platform-team",
+  "category": "atomic-service",
+  "data_classification": "internal"
+}

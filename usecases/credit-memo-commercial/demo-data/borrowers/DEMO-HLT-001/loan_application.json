@@ -1,0 +1,94 @@
+{
+  "application_id": "DEMO-APP-HLT-001-2026",
+  "borrower_id": "DEMO-HLT-001",
+  "submitted_at": "2026-04-05T10:00:00Z",
+  "application_type": "new_credit",
+  "facility": {
+    "type": "Equipment Financing — Term Loan",
+    "amount_requested_usd": 15000000,
+    "term_years": 7,
+    "amortization": "straight-line over 7 years",
+    "rate_type": "fixed",
+    "rate_pct_requested": 4.75,
+    "purpose": "Medical equipment financing — MRI suite expansion (3 units), surgical robotics system (da Vinci Xi), and CT scanner replacement for main campus",
+    "use_of_proceeds": {
+      "mri_suite_expansion_usd": 6500000,
+      "surgical_robotics_usd": 5500000,
+      "ct_scanner_replacement_usd": 2500000,
+      "installation_and_training_usd": 500000
+    },
+    "repayment_source": "Operating cash flow (FCF $10.15M FY2025)"
+  },
+  "collateral": [
+    {
+      "description": "MRI systems (3 units — Siemens MAGNETOM Altea 1.5T)",
+      "estimated_value_usd": 6800000,
+      "haircut_pct": 30,
+      "lendable_value_usd": 4760000,
+      "lien_position": "First"
+    },
+    {
+      "description": "Surgical robotics system (da Vinci Xi)",
+      "estimated_value_usd": 5800000,
+      "haircut_pct": 35,
+      "lendable_value_usd": 3770000,
+      "lien_position": "First"
+    },
+    {
+      "description": "CT scanner (Siemens SOMATOM Force)",
+      "estimated_value_usd": 2800000,
+      "haircut_pct": 30,
+      "lendable_value_usd": 1960000,
+      "lien_position": "First"
+    }
+  ],
+  "proposed_covenants": [
+    {
+      "covenant_type": "financial",
+      "name": "Minimum Debt Service Coverage Ratio",
+      "threshold": 1.50,
+      "measurement": "trailing-12-month",
+      "frequency": "annual"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Maximum Leverage (Total Debt / Net Assets)",
+      "threshold": 0.65,
+      "frequency": "annual"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Minimum Days Cash on Hand",
+      "threshold": 40,
+      "frequency": "annual"
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Annual Audited Financial Statements",
+      "deadline_days_after_fiscal_year_end": 150
+    },
+    {
+      "covenant_type": "affirmative",
+      "name": "Maintenance of Joint Commission Accreditation"
+    }
+  ],
+  "projected_post_close_ratios": {
+    "dscr_base": 3.61,
+    "dscr_stressed_minus_10pct_revenue": 2.80,
+    "leverage_debt_to_net_assets": 0.51,
+    "days_cash_on_hand": 57.2
+  },
+  "exposure_aggregation": {
+    "existing_committed_exposure_usd": 58500000,
+    "proposed_new_exposure_usd": 15000000,
+    "total_committed_exposure_post_close_usd": 73500000,
+    "bank_tier1_capital_estimate_usd": 850000000,
+    "single_borrower_pct_post_close": 8.6,
+    "single_borrower_limit_pct": 8.0,
+    "limit_breach": true,
+    "breach_amount_usd": 5100000
+  },
+  "approval_authority_sought": "Senior Credit Committee + Board Risk Committee (exposure limit breach)",
+  "expected_scenario": "exposure-limit-decline",
+  "demo_note": "SYNTHETIC DATA — no real PII — strong credit metrics but exposure-limit-decline due to single-borrower concentration at 8.6% vs 8.0% limit"
+}

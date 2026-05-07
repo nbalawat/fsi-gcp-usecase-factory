@@ -1,0 +1,67 @@
+{
+  "application_id": "DEMO-APP-MFG-002-2026",
+  "borrower_id": "DEMO-MFG-002",
+  "submitted_at": "2026-04-20T11:30:00Z",
+  "application_type": "new_credit",
+  "facility": {
+    "type": "Revolving Credit Facility",
+    "amount_requested_usd": 5000000,
+    "term_years": 3,
+    "rate_type": "floating",
+    "index": "SOFR",
+    "spread_bps_requested": 350,
+    "purpose": "General working capital and short-term liquidity; partial refinance of maturing $3M revolver",
+    "use_of_proceeds": {
+      "refinance_existing_revolver_usd": 2100000,
+      "working_capital_buffer_usd": 2900000
+    },
+    "repayment_source": "Operating cash flow and borrowing base turnover"
+  },
+  "collateral": [
+    {
+      "description": "Accounts receivable (all business AR)",
+      "estimated_value_usd": 3360000,
+      "advance_rate_pct": 80,
+      "lendable_value_usd": 2688000,
+      "lien_position": "First"
+    },
+    {
+      "description": "Inventory (raw materials and WIP only)",
+      "estimated_value_usd": 2800000,
+      "advance_rate_pct": 50,
+      "lendable_value_usd": 1400000,
+      "lien_position": "First"
+    }
+  ],
+  "proposed_covenants": [
+    {
+      "covenant_type": "financial",
+      "name": "Minimum DSCR",
+      "threshold": 1.10,
+      "measurement": "trailing-12-month",
+      "frequency": "quarterly"
+    },
+    {
+      "covenant_type": "financial",
+      "name": "Maximum Leverage",
+      "threshold": 4.5,
+      "frequency": "quarterly"
+    }
+  ],
+  "projected_post_close_ratios": {
+    "dscr_base": 0.98,
+    "dscr_stressed_minus_10pct_revenue": 0.72,
+    "leverage_total_debt_to_ebitda": 4.95,
+    "interest_coverage": 1.65
+  },
+  "credit_concerns_noted_by_rm": [
+    "Post-close DSCR of 0.98 falls below proposed covenant floor of 1.10 immediately at close",
+    "Stressed DSCR 0.72 indicates distress under mild revenue decline",
+    "Leverage 4.95x post-close exceeds proposed maximum covenant of 4.5x",
+    "PE leverage overhang from 2021 LBO not reflected in bank debt — hidden leverage risk",
+    "Short 3-year relationship; limited credit history at this bank"
+  ],
+  "approval_authority_sought": "Relationship Manager — recommending decline",
+  "expected_scenario": "rated-substandard-decline",
+  "demo_note": "SYNTHETIC DATA — no real PII — designed to produce decline recommendation (rated substandard)"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "dscr-calculator",
+  "version": "0.1.0",
+  "description": "Computes debt service coverage ratio under base and stress scenarios.",
+  "inputs": [
+    "spread_income_statement",
+    "loan_terms",
+    "scenarios"
+  ],
+  "outputs": [
+    "dscr_base",
+    "dscr_stressed",
+    "min_dscr_breach"
+  ],
+  "endpoint": "https://fsi-atomic-dscr-calculator-v4uibzu6ga-uc.a.run.app",
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 500,
+    "error_rate_max": 0.001
+  },
+  "data_classification": "internal",
+  "pii_fields": [
+    "borrower_id"
+  ]
+}

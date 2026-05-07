@@ -1,0 +1,121 @@
+{
+  "peer_set_id": "retail-naics-44x",
+  "naics_prefix": "44",
+  "naics_description": "Retail Trade (Specialty Retail — Clothing, Accessories, Outdoor)",
+  "reference_date": "2025-01-31",
+  "size_band": "middle-market ($20M–$150M revenue)",
+  "source": "SYNTHETIC peer set — illustrative ratios derived from public industry benchmarks",
+  "peers": [
+    {
+      "peer_id": "PEER-RET-A",
+      "naics_code": "448",
+      "revenue_band_usd": "50M-80M",
+      "credit_rating_equivalent": "BBB",
+      "channel_mix": "brick-and-mortar dominant (>75%)",
+      "ratios": {
+        "dscr": 3.20,
+        "leverage_total_debt_to_ebitda": 0.80,
+        "ebitda_margin_pct": 14.5,
+        "current_ratio": 1.95,
+        "interest_coverage": 9.50,
+        "debt_to_equity": 0.22,
+        "days_inventory_outstanding": 115.0,
+        "return_on_assets_pct": 10.5
+      }
+    },
+    {
+      "peer_id": "PEER-RET-B",
+      "naics_code": "451",
+      "revenue_band_usd": "40M-60M",
+      "credit_rating_equivalent": "BBB-",
+      "channel_mix": "omnichannel (40% e-comm)",
+      "ratios": {
+        "dscr": 2.75,
+        "leverage_total_debt_to_ebitda": 1.20,
+        "ebitda_margin_pct": 13.0,
+        "current_ratio": 1.70,
+        "interest_coverage": 7.20,
+        "debt_to_equity": 0.35,
+        "days_inventory_outstanding": 98.0,
+        "return_on_assets_pct": 9.2
+      }
+    },
+    {
+      "peer_id": "PEER-RET-C",
+      "naics_code": "448",
+      "revenue_band_usd": "25M-45M",
+      "credit_rating_equivalent": "BB+",
+      "channel_mix": "brick-and-mortar dominant (>85%)",
+      "ratios": {
+        "dscr": 2.10,
+        "leverage_total_debt_to_ebitda": 1.65,
+        "ebitda_margin_pct": 11.8,
+        "current_ratio": 1.55,
+        "interest_coverage": 5.50,
+        "debt_to_equity": 0.50,
+        "days_inventory_outstanding": 128.0,
+        "return_on_assets_pct": 7.8
+      }
+    },
+    {
+      "peer_id": "PEER-RET-D",
+      "naics_code": "451",
+      "revenue_band_usd": "80M-120M",
+      "credit_rating_equivalent": "BBB",
+      "channel_mix": "omnichannel (55% e-comm)",
+      "ratios": {
+        "dscr": 4.00,
+        "leverage_total_debt_to_ebitda": 0.60,
+        "ebitda_margin_pct": 16.0,
+        "current_ratio": 2.20,
+        "interest_coverage": 12.00,
+        "debt_to_equity": 0.18,
+        "days_inventory_outstanding": 88.0,
+        "return_on_assets_pct": 13.5
+      }
+    },
+    {
+      "peer_id": "PEER-RET-E",
+      "naics_code": "448",
+      "revenue_band_usd": "20M-30M",
+      "credit_rating_equivalent": "BB",
+      "channel_mix": "brick-and-mortar only",
+      "ratios": {
+        "dscr": 1.55,
+        "leverage_total_debt_to_ebitda": 2.40,
+        "ebitda_margin_pct": 9.5,
+        "current_ratio": 1.30,
+        "interest_coverage": 3.80,
+        "debt_to_equity": 0.75,
+        "days_inventory_outstanding": 145.0,
+        "return_on_assets_pct": 5.5
+      }
+    }
+  ],
+  "median_ratios": {
+    "dscr": 2.75,
+    "leverage_total_debt_to_ebitda": 1.20,
+    "ebitda_margin_pct": 13.0,
+    "current_ratio": 1.70,
+    "interest_coverage": 7.20,
+    "debt_to_equity": 0.35,
+    "days_inventory_outstanding": 115.0,
+    "return_on_assets_pct": 9.2
+  },
+  "percentile_25": {
+    "dscr": 1.83,
+    "leverage_total_debt_to_ebitda": 0.70,
+    "ebitda_margin_pct": 10.7,
+    "current_ratio": 1.43,
+    "days_inventory_outstanding": 93.0
+  },
+  "percentile_75": {
+    "dscr": 3.60,
+    "leverage_total_debt_to_ebitda": 1.43,
+    "ebitda_margin_pct": 15.3,
+    "current_ratio": 2.08,
+    "days_inventory_outstanding": 136.5
+  },
+  "seasonality_note": "Retail peers show Q3 DSCR trough (inventory build) with Q4 cash conversion; calendar-year DSCR overstates mid-year coverage",
+  "demo_note": "SYNTHETIC DATA — illustrative peer ratios for testing peer-benchmarker atomic service"
+}

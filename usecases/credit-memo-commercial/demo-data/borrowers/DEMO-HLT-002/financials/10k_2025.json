@@ -1,0 +1,60 @@
+{
+  "borrower_id": "DEMO-HLT-002",
+  "filing_type": "Reviewed Annual Financial Statements (GAAP)",
+  "fiscal_year_end": "2025-12-31",
+  "currency": "USD",
+  "auditor": "REDACTED-REVIEW-FIRM",
+  "audit_opinion": "Review — no audit opinion expressed",
+  "income_statement": {
+    "net_patient_service_revenue": 20900000,
+    "other_operating_revenue": 1100000,
+    "total_operating_revenue": 22000000,
+    "total_operating_expenses": 19360000,
+    "operating_income": 2640000,
+    "operating_margin_pct": 12.0,
+    "ebitda": 3520000,
+    "ebitda_margin_pct": 16.0,
+    "depreciation_and_amortization": 880000,
+    "interest_expense": 0,
+    "net_income": 2640000,
+    "net_income_margin_pct": 12.0
+  },
+  "balance_sheet": {
+    "total_assets": 12400000,
+    "current_assets": 5580000,
+    "cash_and_equivalents": 2480000,
+    "accounts_receivable": 2480000,
+    "prepaid_and_other": 620000,
+    "non_current_assets": 6820000,
+    "net_ppe": 5580000,
+    "other_non_current": 1240000,
+    "total_liabilities": 4960000,
+    "current_liabilities": 3720000,
+    "accounts_payable": 992000,
+    "accrued_liabilities": 1240000,
+    "deferred_revenue": 1488000,
+    "long_term_debt": 1240000,
+    "total_debt": 1240000,
+    "total_equity": 7440000,
+    "retained_earnings": 4960000
+  },
+  "cash_flow": {
+    "operating_cash_flow": 3080000,
+    "capital_expenditures": -1100000,
+    "free_cash_flow": 1980000,
+    "investing_activities": -1100000,
+    "financing_activities": -440000,
+    "net_change_in_cash": 1540000
+  },
+  "derived_ratios": {
+    "dscr_base": 3.52,
+    "leverage_total_debt_to_ebitda": 0.35,
+    "interest_coverage": null,
+    "current_ratio": 1.50,
+    "debt_to_equity": 0.17,
+    "days_in_accounts_receivable": 43.3,
+    "return_on_equity_pct": 35.5
+  },
+  "limited_history_note": "Company founded 2022; only 3 years of operating history. Revenue grew 38% YoY. High growth masks potential earnings volatility. Reviewed (not audited) financials.",
+  "demo_note": "SYNTHETIC DATA — no real PII — newer specialty clinic, limited history test scenario"
+}

@@ -1,0 +1,72 @@
+{
+  "scenario_id": "regulatory-clock-breach-alarm",
+  "description": "Regulatory clock breach simulation: a loan application is submitted but the pipeline stalls (simulated processing failure / missing documents) causing the application to sit in a pending state past 5 business days without an initial credit decision communicated to the borrower. The regulatory-clock workflow fragment must fire an alarm to the credit officer queue and escalate to the compliance team.",
+  "e2e_test_id": "tests/e2e/credit-memo-commercial/test_regulatory_clock_breach_alarm.py",
+  "borrower_id": "DEMO-HLT-002",
+  "application_id": "DEMO-APP-HLT-002-2026",
+  "input_fixtures": {
+    "profile": "borrowers/DEMO-HLT-002/profile.json",
+    "financials": "borrowers/DEMO-HLT-002/financials/10k_2025.json",
+    "loan_application": "borrowers/DEMO-HLT-002/loan_application.json",
+    "peer_set": "peer_sets/healthcare.json"
+  },
+  "clock_simulation": {
+    "application_submitted_at": "2026-04-22T14:15:00Z",
+    "simulated_clock_breach_at": "2026-04-29T17:00:00Z",
+    "business_days_elapsed_at_breach": 5,
+    "decision_communicated": false,
+    "stall_reason": "Simulated: document-extraction agent timed out on reviewed financial statements; retries exhausted; DLQ entry created but not acknowledged",
+    "stall_step": "agent-extractor"
+  },
+  "pipeline_steps": [
+    {
+      "step": "handler",
+      "expected": "Application ingested; regulatory-clock fragment started; deadline calculated as 5 business days from submission"
+    },
+    {
+      "step": "agent-extractor",
+      "expected": "SIMULATED FAILURE: timeout on financial statement parsing; retries exhausted after 3 attempts; DLQ entry created"
+    },
+    {
+      "step": "regulatory-clock-fragment",
+      "expected": "Clock monitoring active; at T+5 business days with no decision, ALARM fires"
+    },
+    {
+      "step": "regulatory-clock-breach-alarm",
+      "expected": "ALARM published to credit-officer-queue with severity=P1; escalation notification to compliance@bank.example.com; pipeline console shows RED clock icon; SLA breach logged to Cloud Logging audit trail"
+    }
+  ],
+  "expected_outcome": {
+    "pipeline_status": "STALLED",
+    "regulatory_clock_breach": true,
+    "alarm_severity": "P1",
+    "alarm_targets": [
+      "credit-officer-queue (pipeline console notification)",
+      "REDACTED-COMPLIANCE-TEAM (escalation notification)"
+    ],
+    "audit_log_entries_required": [
+      "regulatory_clock.breach — application_id, borrower_id, elapsed_business_days, deadline",
+      "dlq.entry — stall_reason, last_retry_at, retry_count"
+    ],
+    "recovery_action": "Compliance team must manually communicate status to borrower within 1 business day; RM must resolve DLQ item and resubmit to pipeline"
+  },
+  "assertions": [
+    "RegulatoryClock.elapsed_business_days >= 5",
+    "RegulatoryClock.breach == true",
+    "Alarm.severity == 'P1'",
+    "AuditLog.contains('regulatory_clock.breach')",
+    "CreditOfficerQueue.contains_alarm(application_id='DEMO-APP-HLT-002-2026')",
+    "DLQ.contains_entry(step='agent-extractor')"
+  ],
+  "test_setup": {
+    "inject_failure": {
+      "target_step": "agent-extractor",
+      "failure_type": "timeout",
+      "retry_count": 3,
+      "dlq_entry": true
+    },
+    "advance_clock_to_breach": true,
+    "clock_advance_business_days": 5
+  },
+  "demo_note": "SYNTHETIC SCENARIO — simulates regulatory clock breach; tests monitoring, alarm, escalation, and audit trail paths. Does not test credit quality — borrower is incidental."
+}

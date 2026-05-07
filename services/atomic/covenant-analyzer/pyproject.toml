@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "covenant-analyzer"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "functions-framework>=3.5",
+    "sqlalchemy>=2.0",
+    "pg8000>=1.31",
+    "cloud-sql-python-connector[pg8000]>=1.9",
+    "opentelemetry-sdk>=1.24",
+    "opentelemetry-exporter-gcp-trace>=1.6",
+    "google-cloud-logging>=3.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4", "mypy>=1.10"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true

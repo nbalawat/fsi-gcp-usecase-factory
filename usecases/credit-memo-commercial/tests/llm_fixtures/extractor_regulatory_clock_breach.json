@@ -1,0 +1,29 @@
+{
+  "_fixture_meta": {
+    "agent": "extractor",
+    "scenario": "regulatory-clock-breach-alarm",
+    "borrower_id": "DEMO-HLT-002",
+    "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+    "input_hash": "hlt002_extractor_timeout",
+    "model": "claude-opus-4-7",
+    "recorded_at": "2026-05-06T00:00:00Z",
+    "note": "Pinned stub simulating extractor timeout — agent fails to produce output, triggering DLQ"
+  },
+  "output_key": "extractor_failure",
+  "output_value": {
+    "status": "FAILED",
+    "error_type": "timeout",
+    "retry_count": 3,
+    "retries_exhausted": true,
+    "dlq_entry": {
+      "step": "agent-extractor",
+      "context_id": "credit-memo-commercial-test-regulatory-clock-breach-001",
+      "application_id": "DEMO-APP-HLT-002-2026",
+      "failure_reason": "Document extraction timed out on reviewed financial statements after 3 retries",
+      "last_retry_at": "2026-04-22T15:45:00Z",
+      "dlq_topic": "credit-memo-commercial.dlq"
+    },
+    "pipeline_status": "STALLED",
+    "extracted_financials": null
+  }
+}

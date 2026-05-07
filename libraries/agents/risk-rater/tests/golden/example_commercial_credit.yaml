@@ -1,0 +1,97 @@
+# Golden test case for the risk-rater archetype.
+# Instance-agnostic shape assertions: any instantiation that targets a 5-band
+# credit-style rubric and wires tools providing DSCR + covenant + peer evidence
+# must pass this.
+#
+# Test runner: the use case's tests/golden harness substitutes archetype params
+# and replays this case against the instantiated agent. See adk-agent-design
+# SKILL.md.
+
+id: example_commercial_credit_minimal
+description: >-
+  Synthetic mid-market borrower with mixed-signal evidence (DSCR borderline,
+  covenant headroom thin, peer percentile mid). Verifies the rater returns a
+  single band, factor-cited evidence, calibrated confidence, and no straddle.
+
+archetype_params:
+  rubric: commercial-credit-rubric-v1
+  bands: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+  input_schema: commercial-credit-case-v1
+  tools:
+    - dscr-calculator
+    - covenant-analyzer
+    - peer-benchmarker
+    - industry-risk-scorer
+    - collateral-valuator
+    - exposure-aggregator
+    - regulatory-thresholds
+  confidence_floor: 0.6
+
+input:
+  case_bundle:
+    borrower_id: "ACME-CORP-001"
+    loan_amount: 25000000
+    naics_code: "3361"
+    spread_income_statement:
+      ebitda_ttm: 8200000
+      interest_expense_ttm: 2100000
+    proposed_covenants:
+      - { name: "min_dscr", threshold: 1.25 }
+      - { name: "max_leverage", threshold: 4.0 }
+    collateral:
+      - { kind: "real-estate", appraised_value: 18000000 }
+
+# Expected shape — values are exact where the fixture is deterministic; otherwise
+# the assertion block below uses tolerances.
+expected_shape:
+  band: "2-special-mention"
+  factors: "<non-empty array>"
+  confidence: ">= 0.6"
+  requires_human_review: false
+  warnings: []
+
+assertions:
+  - id: band_is_allowed_value
+    description: Returned band is exactly one of the configured band strings.
+    check: output.band in ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+
+  - id: no_straddle
+    description: Band is a single string, not a compound / range / slash answer.
+    check: |
+      "/" not in output.band and
+      " to " not in output.band and
+      " or " not in output.band
+
+  - id: every_factor_has_tool_source
+    description: Every factor cites a tool from the configured tools list.
+    check: |
+      all(
+        f.source.tool in [
+          "dscr-calculator", "covenant-analyzer", "peer-benchmarker",
+          "industry-risk-scorer", "collateral-valuator", "exposure-aggregator",
+          "regulatory-thresholds"
+        ]
+        for f in output.factors
+      )
+
+  - id: factor_band_in_allowed_set
+    description: Each factor_band is also one of the configured bands.
+    check: |
+      all(
+        f.factor_band in ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+        for f in output.factors
+      )
+
+  - id: confidence_in_range
+    description: Confidence is a float in [0, 1].
+    check: 0.0 <= output.confidence <= 1.0
+
+  - id: human_review_when_below_floor
+    description: requires_human_review is true iff confidence < confidence_floor or worst band.
+    check: |
+      output.requires_human_review == (
+        output.confidence < 0.6 or output.band == "5-loss"
+      )
+
+# TODO (platform team): confirm the assertion DSL above matches the harness in
+# adk-agent-design/eval — the snippet syntax is illustrative.

@@ -1,0 +1,91 @@
+# Golden test case for the document-extractor archetype.
+# Instance-agnostic shape assertions: any instantiation that targets a financial-
+# statement schema and accepts "10-K" as a document_type must pass this.
+#
+# Test runner: the use case's tests/golden harness substitutes archetype params and
+# replays this case against the instantiated agent. See adk-agent-design SKILL.md.
+
+id: example_10k_minimal
+description: >-
+  Synthetic short-form 10-K. Verifies the extractor returns normalized currency,
+  page-cited fields, and a balance-sheet that closes within tolerance.
+
+archetype_params:
+  document_types: ["10-K", "10-Q", "audited-financials", "board-minutes"]
+  target_schema: commercial-financial-statement-v1
+  language: en
+
+input:
+  document_uri: "gs://fsi-test-fixtures/synthetic/acme-corp-10k-2025.pdf"
+  document_type: "10-K"
+  # Inline placeholder of the document content the fixture renders to. The fixture
+  # PDF carries this text on labeled pages; bbox values come from the rendered PDF.
+  fixture_text: |
+    Page 1 — ACME CORPORATION, Annual Report (Form 10-K), Fiscal Year 2025.
+    Page 12 — Consolidated Statements of Operations
+      Total revenue ................................. $ 500,000,000
+      Cost of revenue ............................... $ 300,000,000
+      Operating income .............................. $  80,000,000
+    Page 42 — Consolidated Balance Sheets (in USD)
+      Total assets .................................. $ 1,200,000,000
+      Total liabilities ............................. $   700,000,000
+      Total stockholders' equity .................... $   500,000,000
+    All amounts are reported in U.S. dollars.
+
+# Expected shape — values are exact where the fixture is deterministic; otherwise
+# the assertion block below uses tolerances.
+expected_shape:
+  revenue:
+    value: 500000000
+    currency_code: USD
+    source: { page: 12, bbox: "<non-null>" }
+    confidence: ">= 0.6"
+  total_assets:
+    value: 1200000000
+    currency_code: USD
+    source: { page: 42, bbox: "<non-null>" }
+  total_liabilities:
+    value: 700000000
+    currency_code: USD
+    source: { page: 42, bbox: "<non-null>" }
+  total_equity:
+    value: 500000000
+    currency_code: USD
+    source: { page: 42, bbox: "<non-null>" }
+  requires_human_review: false
+
+assertions:
+  - id: revenue_present
+    description: Revenue field is populated and non-null.
+    check: output.revenue.value != null
+
+  - id: currency_normalized_usd
+    description: All monetary fields carry currency_code USD (source declares USD).
+    check: |
+      output.revenue.currency_code == "USD" and
+      output.total_assets.currency_code == "USD" and
+      output.total_liabilities.currency_code == "USD" and
+      output.total_equity.currency_code == "USD"
+
+  - id: balance_sheet_closes
+    description: assets == liabilities + equity within ±0.5% tolerance.
+    check: |
+      abs(output.total_assets.value - (output.total_liabilities.value + output.total_equity.value))
+        / output.total_assets.value <= 0.005
+
+  - id: page_citations_present
+    description: Every non-null field cites a page number.
+    check: |
+      all(field.source.page is int for field in output.values()
+          if field is dict and field.value is not null)
+
+  - id: no_extra_fields
+    description: Output contains only fields defined in commercial-financial-statement-v1.
+    check: output.keys() <= schema("commercial-financial-statement-v1").fields()
+
+  - id: no_human_review_on_clean_doc
+    description: Clean synthetic doc must not trigger human review.
+    check: output.requires_human_review == false
+
+# TODO (platform team): confirm the assertion DSL above matches the harness in
+# adk-agent-design/eval — the snippet syntax is illustrative.

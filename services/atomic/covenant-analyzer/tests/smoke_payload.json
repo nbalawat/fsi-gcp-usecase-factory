@@ -1,0 +1,52 @@
+{
+  "context_id": "smoke-cov-001",
+  "borrower_id": "DEMO-MFG-007",
+  "proposed_covenants": [
+    {"covenant_type": "dscr_minimum",              "threshold": 1.25},
+    {"covenant_type": "leverage_maximum",           "threshold": 4.50},
+    {"covenant_type": "current_ratio_minimum",      "threshold": 1.20},
+    {"covenant_type": "interest_coverage_minimum",  "threshold": 3.00},
+    {"covenant_type": "debt_to_equity_maximum",     "threshold": 2.00}
+  ],
+  "spread_financials": {
+    "dscr":               1.38,
+    "leverage_ratio":     3.75,
+    "current_ratio":      1.55,
+    "interest_coverage":  4.10,
+    "debt_to_equity":     0.72
+  },
+  "trailing_quarters": [
+    {
+      "quarter": "2024-Q1",
+      "dscr":              1.55,
+      "leverage_ratio":    3.30,
+      "current_ratio":     1.70,
+      "interest_coverage": 4.50,
+      "debt_to_equity":    0.65
+    },
+    {
+      "quarter": "2024-Q2",
+      "dscr":              1.52,
+      "leverage_ratio":    3.40,
+      "current_ratio":     1.68,
+      "interest_coverage": 4.40,
+      "debt_to_equity":    0.67
+    },
+    {
+      "quarter": "2024-Q3",
+      "dscr":              1.47,
+      "leverage_ratio":    3.55,
+      "current_ratio":     1.63,
+      "interest_coverage": 4.25,
+      "debt_to_equity":    0.69
+    },
+    {
+      "quarter": "2024-Q4",
+      "dscr":              1.38,
+      "leverage_ratio":    3.75,
+      "current_ratio":     1.55,
+      "interest_coverage": 4.10,
+      "debt_to_equity":    0.72
+    }
+  ]
+}

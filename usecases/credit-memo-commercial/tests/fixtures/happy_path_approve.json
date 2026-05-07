@@ -1,0 +1,46 @@
+{
+  "context_id": "credit-memo-commercial-test-happy-path-approve-001",
+  "scenario": "happy-path-approve",
+  "description": "Healthy mid-market manufacturer (DEMO-MFG-001), DSCR 3.82, leverage 1.76, equipment term loan $8M well within single-borrower exposure limit. Expects full approval recommendation.",
+  "event_payload": {
+    "context_id": "credit-memo-commercial-test-happy-path-approve-001",
+    "borrower_id": "DEMO-MFG-001",
+    "application_id": "DEMO-APP-MFG-001-2026",
+    "loan_amount": 8000000,
+    "loan_type": "term",
+    "submitted_at": "2026-04-15T09:00:00Z",
+    "application_type": "new_credit",
+    "facility": {
+      "type": "Term Loan",
+      "amount_requested_usd": 8000000,
+      "term_years": 5,
+      "rate_type": "floating",
+      "index": "SOFR",
+      "spread_bps_requested": 225,
+      "purpose": "Equipment upgrade — CNC machining line replacement"
+    },
+    "projected_post_close_ratios": {
+      "dscr_base": 2.94,
+      "dscr_stressed_minus_15pct_revenue": 2.10,
+      "leverage_total_debt_to_ebitda": 2.27
+    },
+    "demo_fixture": "demo-data-borrower-set"
+  },
+  "expected_outcome": {
+    "status": "approved",
+    "risk_band": "1-pass",
+    "approval_authority": "senior-credit-committee",
+    "assertions": [
+      "response status code is 200",
+      "context_id echoed back in response",
+      "handler publishes to enriched topic without error",
+      "financial-spreader returns dscr_base >= 1.25",
+      "exposure-aggregator single_borrower_pct < 0.08",
+      "credit memo recommendation is APPROVE",
+      "risk_band is 1-pass",
+      "word_count <= 1500",
+      "citation_density >= 0.8",
+      "regulatory_clock elapsed_business_days < 5"
+    ]
+  }
+}
