@@ -1,0 +1,52 @@
+# Reusable agent archetype: insider-screener
+
+name: insider-screener
+version: "1.0"
+description: >-
+  Detect insider relationships (Reg O 12 CFR 215 / OCC 12 CFR 31). Required
+  for any commercial credit decision: officers, directors, principal
+  shareholders, and their related interests have specific lending limits
+  + board-approval requirements distinct from general LLL (12 CFR 32).
+
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5
+
+memory_scope_default: borrower
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: input_schema
+    type: string
+    required: true
+    description: >-
+      Pydantic schema for the borrower bundle (legal name, EIN, ownership,
+      cap-table references, applicant/guarantor identities).
+  - name: tools
+    type: list[string]
+    required: true
+    description: >-
+      MCP tools the screener calls. At minimum:
+      ["officer-director-registry", "principal-shareholder-lookup",
+      "related-interests-graph"]. Add bank-internal HRIS pull if officers
+      may overlap with bank employees.
+  - name: insider_definition_doc
+    type: string
+    required: true
+    description: >-
+      Reference to the bank's specific Reg O insider definition (which can be
+      stricter than statutory). Example:
+      "policies/reg-o-insider-definition-2024-q4.md".
+  - name: confidence_floor
+    type: float
+    required: false
+    default: 0.85
+    description: >-
+      Below this confidence the screener returns "indeterminate — needs
+      manual review" rather than a false-negative. Insider misclassification
+      is a regulatory citation; err toward review.
+
+last_verified: 2026-05-04
+used_by: []

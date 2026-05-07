@@ -1,0 +1,54 @@
+name: classifier-extractor-decider
+version: "1.0"
+
+description: >-
+  Cheap classifier filters → deep extractor parses qualifying documents →
+  decider judges with rubric. Used when document volume is high and only a
+  fraction need deep processing (mortgage origination, complaint triage,
+  KYC onboarding).
+
+composes:
+  - role: classifier
+    archetype: document-classifier@1.0
+  - role: extractor
+    archetype: document-extractor@1.0
+  - role: decider
+    archetype: risk-rater@1.0    # or eligibility-checker, depending on instance
+
+# How the agents are wired together
+sequence:
+  - id: classify
+    agent: classifier
+    on_low_confidence: route_to_human   # below classifier.confidence_floor
+    on_label_skip: skip_extractor        # if label is not in extract_labels
+  - id: extract
+    agent: extractor
+    runs_when: "classifier.label in extract_labels"
+  - id: decide
+    agent: decider
+    inputs_from: [extractor, service_results]
+
+# What flows out of each step into the next
+state_flow:
+  classifier.output: { label: string, confidence: float }
+  extractor.output: <instance-supplied schema>
+  decider.output: { band: string, factors: list, confidence: float }
+
+# Pattern-level parameters
+parameters:
+  - name: extract_labels
+    type: list[string]
+    required: true
+    description: >-
+      Subset of classifier vocabulary that warrants extraction. Other labels
+      route directly to a non-extract path (return early or human queue).
+  - name: human_queue_topic
+    type: string
+    required: false
+    default: ""
+    description: >-
+      Pub/Sub topic for low-confidence cases. Empty = drop to DLQ.
+
+# Used at scale to track adoption + drive promotion to higher versions.
+used_by: []
+last_verified: 2026-05-04

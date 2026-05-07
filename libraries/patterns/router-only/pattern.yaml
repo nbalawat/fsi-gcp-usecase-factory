@@ -1,0 +1,38 @@
+name: router-only
+version: "1.0"
+
+description: >-
+  Single classifier sends to one of N downstream paths. The simplest pattern.
+  Use when there's no investigation or narration needed, just a route decision.
+
+composes:
+  - role: router
+    archetype: complaint-categorizer@1.0   # or document-classifier — depends on input shape
+
+sequence:
+  - id: route
+    agent: router
+    on_label: dispatch_to_topic           # each label maps to a Pub/Sub topic
+
+state_flow:
+  router.output: { label: string, confidence: float, routing_tags: list }
+
+parameters:
+  - name: route_table
+    type: map
+    required: true
+    description: >-
+      Map of label → Pub/Sub topic ID. Example for complaint routing:
+      {
+        "fraud": "complaints.fraud-team.v1",
+        "fair_lending": "complaints.compliance.v1",
+        "general_servicing": "complaints.servicing.v1"
+      }
+  - name: default_topic
+    type: string
+    required: true
+    description: >-
+      Topic used when label has no entry in route_table or confidence is low.
+
+used_by: []
+last_verified: 2026-05-04

@@ -1,0 +1,54 @@
+name: surveillance-evaluator
+version: "1.0"
+
+description: >-
+  Continuous re-evaluation of a portfolio (positions, properties, vendors).
+  Each position has state; agent flags drift / outliers; humans investigate
+  flags. 2D state grid in the console.
+
+console_pattern: surveillance-console
+
+wires:
+  - stage: handler
+    component: "usecases/{use_case_id}/handler/main.py (scheduled or event-driven re-eval trigger)"
+  - stage: atomic-services
+    component: "fan-out-join@1.0 (per-position metrics)"
+  - stage: rules
+    component: "rules-service (threshold-based flagging)"
+  - stage: agent
+    component: "risk-rater@1.0 (flag interpretation, severity assignment)"
+  - stage: sinks
+    component: "state-grid-sink (updates per-position state in surveillance store)"
+  - stage: cross-cutting
+    component: "drift-detector (alerts on systemic drift across positions)"
+
+required_libraries:
+  workflow_fragments:
+    - fan-out-join@1.0
+    - dlq-on-failure@1.0
+  agent_archetypes:
+    - risk-rater@1.0
+  use_case_archetype_does_not_use:
+    - approval-gate     # surveillance is continuous; no per-position approval
+    - regulatory-clock  # surveillance triggers investigations which carry their own clocks
+
+reasons_skeleton:
+  requirements:
+    latency_budget: "minutes per re-evaluation cycle"
+    primary_user: "portfolio analyst / risk officer"
+    console_pattern: surveillance-console
+  norms:
+    re_eval_cadence: "hourly | daily | weekly"
+  safeguards:
+    - "every flag carries an explanation that cites the originating service output"
+    - "surveillance store retains 18 months of state for trend analysis"
+    - "drift alarms route to risk-officer-on-call"
+
+fits:
+  - cre-portfolio-monitoring   # commercial real estate
+  - vendor-tprm                # third-party risk management
+  - reconciliation-monitoring  # ops reconciliations
+  - deposit-pricing-surveillance
+
+used_by: []
+last_verified: 2026-05-04

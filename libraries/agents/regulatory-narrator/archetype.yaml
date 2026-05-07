@@ -1,0 +1,56 @@
+# Reusable agent archetype: regulatory-narrator
+
+name: regulatory-narrator
+version: "1.0"
+description: >-
+  Draft text matching a regulator's accepted format. Used for SAR narratives,
+  CTR additional information sections, breach-notification letters, regulator
+  responses. Output is style-bound (matches the regulator's expected structure).
+
+model: claude-opus-4-7    # narrative discipline + format adherence
+fallback_model: claude-opus-4-7  # no fallback — narrative quality is critical
+
+memory_scope_default: case
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: target_regulator
+    type: string
+    required: true
+    description: >-
+      Which regulator's format to match. Example: "FinCEN-SAR", "FinCEN-CTR",
+      "OCC-MRA-response", "state-breach-notification-CA".
+  - name: format_template
+    type: string
+    required: true
+    description: >-
+      Reference to the registered format template. Example:
+      "templates/sar-narrative-fincen-2024.md".
+  - name: max_words
+    type: int
+    required: false
+    default: 1500
+    description: >-
+      Hard cap on narrative length. Most regulator formats have explicit limits.
+  - name: required_sections
+    type: list[string]
+    required: true
+    description: >-
+      Sections the narrative MUST include. SAR example:
+      ["who", "what", "where", "when", "why", "how"].
+  - name: input_schema
+    type: string
+    required: true
+  - name: citation_density_min
+    type: float
+    required: false
+    default: 0.8
+    description: >-
+      Minimum fraction of factual claims that must cite a specific upstream
+      tool/agent output. Computed by an eval-time scorer. Below floor = warning.
+
+last_verified: 2026-05-04
+used_by: []

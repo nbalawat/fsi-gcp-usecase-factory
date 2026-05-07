@@ -1,0 +1,44 @@
+# Reusable agent archetype: complaint-categorizer
+
+name: complaint-categorizer
+version: "1.0"
+description: >-
+  Classify a complaint into routing categories (CFPB taxonomy + bank-internal
+  routing tags). Drives downstream investigation queue assignment.
+
+model: gemini-3-1-flash    # high-volume classification
+fallback_model: claude-opus-4-7
+
+memory_scope_default: case
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: cfpb_taxonomy_version
+    type: string
+    required: true
+    description: >-
+      Which CFPB issue/sub-issue taxonomy revision to apply. The bank tracks
+      the active version centrally. Example: "cfpb-issues-2024-q4".
+  - name: routing_tags
+    type: list[string]
+    required: true
+    description: >-
+      Bank-internal routing tags this categorizer may emit (drives downstream
+      queue assignment). Example: ["dispute_team", "fraud_team", "compliance_team",
+      "executive_complaints", "fair_lending"].
+  - name: input_schema
+    type: string
+    required: true
+  - name: severity_tagging
+    type: bool
+    required: false
+    default: true
+    description: >-
+      If true, emit a severity (low/medium/high/critical) based on signals
+      like "regulatory complaint mentioned", "lawsuit threatened", "media inquiry".
+
+last_verified: 2026-05-04
+used_by: []

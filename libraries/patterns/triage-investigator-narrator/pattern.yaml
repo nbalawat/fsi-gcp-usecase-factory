@@ -1,0 +1,52 @@
+name: triage-investigator-narrator
+version: "1.0"
+
+description: >-
+  Categorize → tool-using investigator → regulator-format narrator. Used for
+  case-based investigations (SAR, dispute, breach). Each step has a different
+  cognitive shape: triage = classification, investigation = tool use, narration
+  = regulator-format drafting.
+
+composes:
+  - role: triage
+    archetype: complaint-categorizer@1.0  # or other domain-specific categorizer
+  - role: investigator
+    archetype: document-extractor@1.0     # actually a multi-tool investigator;
+                                          # archetype catalog needs investigator
+                                          # archetype if this pattern is reused
+                                          # (rule of three).
+  - role: narrator
+    archetype: regulatory-narrator@1.0
+
+sequence:
+  - id: triage
+    agent: triage
+  - id: investigate
+    agent: investigator
+    inputs_from: [triage, case_bundle]
+    on_evidence_insufficient: pause_for_human
+  - id: narrate
+    agent: narrator
+    inputs_from: [investigator]
+
+state_flow:
+  triage.output: { issue: string, severity: string, routing_tags: list }
+  investigator.output: <instance-supplied; rich evidence bundle>
+  narrator.output: { narrative: string, citations: list }
+
+parameters:
+  - name: regulator_format
+    type: string
+    required: true
+    description: >-
+      Which regulator's format the narrator emits. Example: "FinCEN-SAR",
+      "Reg-E-dispute-response".
+  - name: investigation_max_seconds
+    type: int
+    required: false
+    default: 300
+    description: >-
+      Per-case investigation budget. Beyond this, pause for human.
+
+used_by: []
+last_verified: 2026-05-04

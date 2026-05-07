@@ -1,0 +1,56 @@
+name: investigation-initiator
+version: "1.0"
+
+description: >-
+  Case-level investigation. Handler creates a case → fan-out atomic services
+  gather context → rules emit threshold flags → triage-investigator-narrator
+  pattern produces a regulator-ready narrative → human reviewer accepts/edits/
+  rejects → file-with-regulator sink. Carries a regulatory clock.
+
+console_pattern: investigations-console
+
+wires:
+  - stage: handler
+    component: "usecases/{use_case_id}/handler/main.py (creates case from upstream surveillance flag or external referral)"
+  - stage: atomic-services
+    component: "fan-out-join@1.0 (counterparty / transaction / customer context)"
+  - stage: rules
+    component: "rules-service (BSA / Reg E / state thresholds)"
+  - stage: agent
+    component: "triage-investigator-narrator@1.0 (multi-agent pattern)"
+  - stage: approval
+    component: "approval-gate@1.0 (BSA officer / dispute lead)"
+  - stage: sinks
+    component: "regulator-filing-sink (FinCEN, state portals); customer-notification-sink"
+  - stage: cross-cutting
+    component: "regulatory-clock@1.0 (BSA = 30 days; Reg E = 10 business days; varies)"
+
+required_libraries:
+  workflow_fragments:
+    - fan-out-join@1.0
+    - approval-gate@1.0
+    - regulatory-clock@1.0
+    - dlq-on-failure@1.0
+    - sink-fanout@1.0
+  multi_agent_patterns:
+    - triage-investigator-narrator@1.0
+
+reasons_skeleton:
+  requirements:
+    latency_budget: "days (regulatory clock)"
+    primary_user: "BSA officer / dispute analyst / compliance investigator"
+    console_pattern: investigations-console
+  safeguards:
+    - "regulatory clock alarms at 50%, 75%, 90% of deadline"
+    - "auto-extend filing rejected — human signs off"
+    - "case audit trail captures every tool call + every reviewer action"
+    - "narrative citation density ≥ 0.85"
+
+fits:
+  - sar-investigation         # BSA suspicious activity
+  - reg-e-dispute-investigation
+  - breach-notification        # state-level
+  - trade-finance-lc           # letters of credit fact-of-shipment investigation
+
+used_by: []
+last_verified: 2026-05-04

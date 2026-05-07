@@ -1,0 +1,48 @@
+# Reusable agent archetype: document-classifier
+
+name: document-classifier
+version: "1.0"
+description: >-
+  Classify an uploaded document into one of a controlled vocabulary
+  (e.g. 10-K, 10-Q, board-minutes, loan-agreement). Cheap classifier
+  filters before deep extraction.
+
+model: gemini-3-1-flash    # cheap, high-volume; fallback to opus only if confidence low
+fallback_model: claude-opus-4-7
+
+memory_scope_default: none  # stateless per-doc classification
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: vocabulary
+    type: list[string]
+    required: true
+    description: >-
+      Controlled vocabulary of allowed document types. Example for credit memo:
+      ["10-K", "10-Q", "board_minutes", "loan_agreement", "tax_return", "cap_table"].
+      Returning anything outside this list = fail validation.
+  - name: input_schema
+    type: string
+    required: true
+    description: >-
+      Pydantic schema for the document bundle (uri, mime_type, sha256, page_count).
+  - name: confidence_floor
+    type: float
+    required: false
+    default: 0.75
+    description: >-
+      Below this confidence the classifier returns "unknown" and routes for
+      human review. Range [0, 1].
+  - name: tools
+    type: list[string]
+    required: false
+    default: []
+    description: >-
+      MCP tools the classifier can call (e.g. document-ai-mcp for OCR pre-pass).
+      Empty default = pure-text classification.
+
+last_verified: 2026-05-04
+used_by: []

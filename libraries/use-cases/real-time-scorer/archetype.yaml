@@ -1,0 +1,58 @@
+# Use-case archetype: real-time-scorer
+
+name: real-time-scorer
+version: "1.0"
+
+description: >-
+  Sub-second decisions, throughput-dominant. Handler → fan-out atomic services
+  (≤200ms) → rules evaluation → gray-zone-fraud-scorer agent (only on REFER) →
+  decision sink. No human approval; latency-critical.
+
+console_pattern: realtime-console
+
+wires:
+  - stage: handler
+    component: "usecases/{use_case_id}/handler/main.py (Pub/Sub push, OIDC auth)"
+  - stage: atomic-services
+    component: "fan-out-join@1.0 (max wait 200ms; degraded path on partial returns)"
+  - stage: rules
+    component: "rules-service (deterministic gate; sub-50ms p99)"
+  - stage: agent
+    component: "gray-zone-fraud-scorer (only invoked on rules.decision=REFER)"
+  - stage: sinks
+    component: "scoring-sink (write to decisioning system + audit)"
+  - stage: cross-cutting
+    component: "latency-budget-monitor (alerts at p99 breach)"
+
+required_libraries:
+  workflow_fragments:
+    - fan-out-join@1.0
+    - dlq-on-failure@1.0
+  agent_archetypes:
+    - gray-zone-fraud-scorer@1.0
+  use_case_archetype_does_not_use:
+    - approval-gate     # real-time means no human in the loop
+    - regulatory-clock  # decisions complete in ms, not days
+
+reasons_skeleton:
+  requirements:
+    latency_budget: "sub-second"
+    primary_user: "automated-decisioning system"
+    console_pattern: realtime-console
+  norms:
+    p99_latency_ms_max: 300
+    error_rate_max: 0.0005
+  safeguards:
+    - "fail-open path: rules-engine outage = step-up, never auto-decline"
+    - "no agent call within rules-service path (would blow latency budget)"
+    - "no PII in decision logs"
+
+# Fits: payment fraud (card auth, ACH, RTP/FedNow), account takeover detection,
+# real-time AML score for transaction monitoring.
+fits:
+  - real-time-payment-fraud
+  - account-takeover-detection
+  - real-time-aml-score
+
+used_by: []
+last_verified: 2026-05-04

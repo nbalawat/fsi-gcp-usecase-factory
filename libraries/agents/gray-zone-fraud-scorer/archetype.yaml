@@ -1,0 +1,48 @@
+# Reusable agent archetype: gray-zone-fraud-scorer
+
+name: gray-zone-fraud-scorer
+version: "1.0"
+description: >-
+  Sub-second classifier for ambiguous fraud cases the rules engine couldn't
+  decide. Returns a score + brief reason; downstream routes to allow/decline/
+  step-up based on configurable thresholds.
+
+model: gemini-3-1-flash    # latency-critical; ≤300ms p99
+fallback_model: claude-haiku-4-5
+
+memory_scope_default: cardholder
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: input_schema
+    type: string
+    required: true
+    description: >-
+      Pydantic schema for the gray-zone case bundle (transaction, history,
+      device, geolocation, prior decisions in window).
+  - name: tools
+    type: list[string]
+    required: true
+    description: >-
+      MCP tools the scorer may call. Examples:
+      ["velocity-check", "device-fingerprint", "geo-anomaly-detector",
+      "merchant-risk", "watchlist-screen"].
+  - name: latency_budget_ms
+    type: int
+    required: false
+    default: 300
+    description: >-
+      Total wall-clock budget. Beyond this, scorer returns "step-up" with
+      a timeout reason — never blocks the auth flow.
+  - name: score_range
+    type: list[int]
+    required: false
+    default: [0, 100]
+    description: >-
+      Output score range. Most fraud platforms use 0-100 or 0-1000.
+
+last_verified: 2026-05-04
+used_by: []

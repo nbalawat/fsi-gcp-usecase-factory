@@ -1,0 +1,58 @@
+name: reflection-loop
+version: "1.0"
+
+description: >-
+  Drafter → critic → drafter. Used only for high-stakes regulator-facing
+  narratives where the cost of a poor first draft (rework, rejection)
+  justifies a deliberate critique pass. Tightly governed; arch review
+  required for any new instance.
+
+composes:
+  - role: drafter
+    archetype: regulatory-narrator@1.0
+  - role: critic
+    archetype: regulatory-narrator@1.0   # different prompt; same archetype
+
+sequence:
+  - id: initial_draft
+    agent: drafter
+  - id: critique
+    agent: critic
+    inputs_from: [initial_draft]
+    on_acceptable: emit
+    on_revisions_needed: revise
+  - id: revise
+    agent: drafter
+    inputs_from: [initial_draft, critique]
+    max_loops: 2     # hard cap; never an unbounded loop
+  - id: emit
+    output: drafter
+
+state_flow:
+  drafter.output: { narrative: string, citations: list, citation_density: float }
+  critic.output:  { acceptable: bool, revisions_required: list, blocking_issues: list }
+
+parameters:
+  - name: max_loops
+    type: int
+    required: false
+    default: 2
+    description: >-
+      Maximum drafter↔critic round-trips. Hard cap = 3 even if instance
+      requests more. Unbounded loops are refused.
+  - name: critic_blocking_thresholds
+    type: map
+    required: false
+    default:
+      citation_density_min: 0.85
+      max_words: 1500
+    description: >-
+      Quantitative gates the critic enforces. Below these, critic rejects.
+
+# Architecture-review required for any new instance — flag in cross-impact-analyzer.
+governance:
+  arch_review_required: true
+  reason: "Reflection loops can produce unbounded cost or oscillation. Each new instance must justify why a single-pass narrator + human review isn't sufficient."
+
+used_by: []
+last_verified: 2026-05-04

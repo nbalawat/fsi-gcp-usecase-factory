@@ -1,0 +1,45 @@
+# Reusable agent archetype: eligibility-checker
+
+name: eligibility-checker
+version: "1.0"
+description: >-
+  Apply rules + nuanced judgment over policy edge cases. Returns
+  eligible / not-eligible / refer-for-exception with cited policy clauses.
+
+model: claude-opus-4-7
+fallback_model: claude-haiku-4-5
+
+memory_scope_default: customer
+
+tools_required: <instance-supplied via `tools` parameter>
+
+output_schema: <instance-supplied>
+
+parameters:
+  - name: policy_doc_refs
+    type: list[string]
+    required: true
+    description: >-
+      Pointers to bank policy documents the checker may cite. Example:
+      ["policies/loan-eligibility-2024-q4.md", "policies/account-opening-v3.md"].
+  - name: rules_applied
+    type: list[string]
+    required: true
+    description: >-
+      Names of JDM rules (in rules-service) the checker uses as the
+      deterministic gate. The agent supplements rules with edge-case judgment;
+      it does NOT override a clean DECLINE.
+  - name: input_schema
+    type: string
+    required: true
+  - name: edge_cases_handled
+    type: list[string]
+    required: false
+    default: []
+    description: >-
+      Documented edge cases the agent is authorised to interpret beyond the
+      rules engine. Example: ["military-reservist-deployment", "natural-disaster-deferral",
+      "cosigner-deceased"]. Anything outside this list → refer for exception.
+
+last_verified: 2026-05-04
+used_by: []

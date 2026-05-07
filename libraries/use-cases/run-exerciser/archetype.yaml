@@ -1,0 +1,53 @@
+name: run-exerciser
+version: "1.0"
+
+description: >-
+  Periodic exercise toward a deadline. CECL run, regulatory reporting cycle,
+  model validation cycle, ATM forecasting. Multi-stage progress with segment
+  completions, qualitative-factor authoring, and a board-ready output.
+
+console_pattern: run-console
+
+wires:
+  - stage: handler
+    component: "usecases/{use_case_id}/handler/main.py (kicks off the run; usually scheduled)"
+  - stage: atomic-services
+    component: "fan-out-join@1.0 (per-segment computations)"
+  - stage: rules
+    component: "rules-service (regulatory threshold checks)"
+  - stage: agent
+    component: "regulatory-narrator@1.0 (qualitative factors + executive summary)"
+  - stage: approval
+    component: "approval-gate@1.0 (model owner; chief credit officer)"
+  - stage: sinks
+    component: "regulatory-filing-sink (CECL = SEC 10-K; reporting = FFIEC); board-output-sink"
+  - stage: cross-cutting
+    component: "regulatory-clock@1.0 (run deadline)"
+
+required_libraries:
+  workflow_fragments:
+    - fan-out-join@1.0
+    - approval-gate@1.0
+    - regulatory-clock@1.0
+  agent_archetypes:
+    - regulatory-narrator@1.0
+
+reasons_skeleton:
+  requirements:
+    latency_budget: "weeks (full run cycle)"
+    primary_user: "model owner / risk officer / CFO"
+    console_pattern: run-console
+  safeguards:
+    - "every segment's input data has a vintage + lineage record"
+    - "qualitative factors are sourced from documented bank decisions, never invented"
+    - "board-ready output is read-only after approval (immutable; new run = new version)"
+
+fits:
+  - cecl-run                  # quarterly current expected credit loss
+  - regulatory-reporting      # 10-Q / 10-K / FFIEC filings
+  - model-risk-validation     # MRM annual cycle
+  - atm-forecasting           # cash-replenishment cycle (daily/weekly)
+  - rcsa-quarterly            # risk control self-assessment cycle
+
+used_by: []
+last_verified: 2026-05-04

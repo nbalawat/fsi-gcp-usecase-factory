@@ -1,0 +1,54 @@
+name: recommendation-generator
+version: "1.0"
+
+description: >-
+  Agent generates suggestions queued for human disposition (accept / edit /
+  defer / reject). Used for wealth rebalancing, next-best-action, syndicated
+  loan waterfall, RCSA recommendations. NOT auto-actuated — every
+  recommendation goes to a human.
+
+console_pattern: recommendations-console
+
+wires:
+  - stage: handler
+    component: "usecases/{use_case_id}/handler/main.py (scheduled or event-driven recommendation generation)"
+  - stage: atomic-services
+    component: "fan-out-join@1.0 (current state + signals)"
+  - stage: rules
+    component: "rules-service (eligibility filter; reject upfront if not allowed)"
+  - stage: agent
+    component: "eligibility-checker or risk-rater (depending on domain)"
+  - stage: approval
+    component: "approval-gate@1.0 (human reviewer)"
+  - stage: sinks
+    component: "actuation-sink (only on accepted recommendations)"
+
+required_libraries:
+  workflow_fragments:
+    - fan-out-join@1.0
+    - approval-gate@1.0
+    - dlq-on-failure@1.0
+  agent_archetypes:
+    - eligibility-checker@1.0
+    - risk-rater@1.0
+
+reasons_skeleton:
+  requirements:
+    latency_budget: "hours (recommendation generation) + days (human disposition)"
+    primary_user: "advisor / portfolio manager / risk officer"
+    console_pattern: recommendations-console
+  safeguards:
+    - "no auto-actuation — every recommendation is human-disposition"
+    - "rejected recommendations feed back into eval set"
+    - "recommendation reasoning is auditable + reviewable"
+    - "expiry: recommendations time out after N days if not actioned"
+
+fits:
+  - wealth-rebalancing
+  - next-best-action
+  - syndicated-loan-waterfall
+  - rcsa-recommendations          # risk control self-assessment
+  - product-cross-sell
+
+used_by: []
+last_verified: 2026-05-04
