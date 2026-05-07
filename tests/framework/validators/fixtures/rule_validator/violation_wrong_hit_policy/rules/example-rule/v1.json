@@ -1,0 +1,10 @@
+{
+  "name": "example-rule",
+  "version": "1.0.0",
+  "nodes": [
+    {"id": "i", "type": "inputNode"},
+    {"id": "d", "type": "decisionTableNode", "content": {"hitPolicy": "any", "inputs": [], "outputs": [], "rules": []}},
+    {"id": "o", "type": "outputNode"}
+  ],
+  "edges": [{"sourceId": "i", "targetId": "d"}, {"sourceId": "d", "targetId": "o"}]
+}

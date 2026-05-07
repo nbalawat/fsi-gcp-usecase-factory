@@ -1,0 +1,10 @@
+{
+  "name": "example-service",
+  "version": "0.1.0",
+  "description": "Example atomic service used in validator tests.",
+  "inputs": ["borrower_id", "amount"],
+  "outputs": ["score", "band"],
+  "endpoint": "https://example-service-PLACEHOLDER.run.app/",
+  "auth": "google-id-token",
+  "data_classification": "confidential"
+}

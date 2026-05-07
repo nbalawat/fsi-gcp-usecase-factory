@@ -1,0 +1,11 @@
+validator: rule-validator
+description: "Valid JDM decision table with hitPolicy=first and golden tests directory."
+spec:
+  use_case_id: example-uc
+  operation_id: example-rule
+  operation_path: rules/example-rule/v1.json
+  inputs: [dscr]
+  outputs: [decision, reason]
+expects:
+  verdict: PASS
+  findings_count_max: 0

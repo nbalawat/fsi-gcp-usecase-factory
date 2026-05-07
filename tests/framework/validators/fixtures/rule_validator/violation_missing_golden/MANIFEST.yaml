@@ -1,0 +1,13 @@
+validator: rule-validator
+description: "Rule has no tests/golden/ directory — golden tests are mandatory."
+spec:
+  use_case_id: example-uc
+  operation_id: example-rule
+  operation_path: rules/example-rule/v1.json
+  inputs: [dscr]
+  outputs: [decision]
+expects:
+  verdict: FAIL
+  failing_check: missing_golden_tests
+  cite_file: rules/example-rule/tests/golden
+  message_contains: "golden"

@@ -1,0 +1,10 @@
+validator: agent-validator
+description: "Agent uses gpt-4o — not in the approved-models list."
+spec:
+  use_case_id: uc-x
+  operation_id: rater
+expects:
+  verdict: FAIL
+  failing_check: unapproved_model
+  cite_file: usecases/uc-x/agents/rater.py
+  message_contains: "gpt-4o"

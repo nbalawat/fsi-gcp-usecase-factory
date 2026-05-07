@@ -1,0 +1,14 @@
+validator: service-validator
+description: "Service has fewer than the minimum 10 tests — service-validator must FAIL."
+spec:
+  use_case_id: example-uc
+  operation_id: example-service
+  operation_path: services/atomic/example-service
+  service_type: atomic-service
+  inputs: [borrower_id, amount]
+  outputs: [score, band]
+expects:
+  verdict: FAIL
+  failing_check: tests_minimum_count
+  cite_file: services/atomic/example-service/tests/test_main.py
+  message_contains: "minimum"

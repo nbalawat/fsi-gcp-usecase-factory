@@ -9,15 +9,22 @@ The factory's job is to produce a working use case from a REASONS canvas. These 
 ```
 tests/framework/
 ├── harness/                 # shared utilities
-│   ├── claude_runner.py     # invoke a Claude agent against a fixture; parse findings
+│   ├── claude_runner.py     # invoke a Claude agent / validator; parse findings
 │   ├── findings_parser.py   # canonical findings shape (severity + file + line + rule)
 │   └── tree_snapshot.py     # byte-stable directory tree diff for golden tests
-├── gatekeepers/             # L4 — gatekeeper agents (architecture/security/compliance)
+├── gatekeepers/             # L4 — gatekeepers (architecture/security/compliance)
 │   ├── fixtures/            # one subdir per fixture (clean + violation_<kind>/)
 │   ├── test_architecture_auditor.py
 │   ├── test_security_reviewer.py
 │   └── test_compliance_reviewer.py
-├── validators/              # L3 — service/rule/agent validators (pending)
+├── validators/              # L3 — service / rule / agent validators
+│   ├── fixtures/
+│   │   ├── service_validator/    # clean + 3 violations
+│   │   ├── rule_validator/       # clean + 3 violations
+│   │   └── agent_validator/      # clean + 3 violations
+│   ├── test_service_validator.py
+│   ├── test_rule_validator.py
+│   └── test_agent_validator.py
 ├── builders/                # L2 — builder agents (pending)
 └── skills/                  # L1 — skill behavior tests (pending)
 ```

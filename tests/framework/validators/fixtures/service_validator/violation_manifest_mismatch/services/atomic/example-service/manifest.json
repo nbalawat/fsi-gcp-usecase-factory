@@ -1,0 +1,10 @@
+{
+  "name": "example-service",
+  "version": "0.1.0",
+  "description": "Service whose manifest contradicts the operation spec.",
+  "inputs": ["borrower_id", "amount"],
+  "outputs": ["risk_score", "band"],
+  "endpoint": "https://example-service-PLACEHOLDER.run.app/",
+  "auth": "google-id-token",
+  "data_classification": "confidential"
+}

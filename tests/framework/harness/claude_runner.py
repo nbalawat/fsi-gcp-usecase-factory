@@ -329,18 +329,314 @@ def _compliance_reviewer(fixture: Path) -> FindingSet:
     return fs
 
 
+# ── Validator runners (Layer 1 join-point gatekeepers) ────────────────────
+
+def _service_validator(fixture: Path, spec: dict | None = None) -> FindingSet:
+    """Re-implements the deterministic checks in service-validator.md."""
+    import json as _json
+    fs = FindingSet()
+    spec = spec or {}
+    op_path = spec.get("operation_path") or ""
+    expected_inputs = set(spec.get("inputs", []))
+    expected_outputs = set(spec.get("outputs", []))
+
+    if op_path:
+        svc_dir = fixture / op_path
+    else:
+        candidates = list(fixture.glob("services/atomic/*"))
+        svc_dir = candidates[0] if candidates else fixture
+
+    if not svc_dir.is_dir():
+        fs.add(Finding(
+            severity=Severity.BLOCKER,
+            rule="missing_service_dir",
+            file=op_path or "services/atomic/...",
+            message=f"service directory not found at {op_path!r}",
+        ))
+        return fs
+
+    def _rel(p: Path) -> str:
+        return str(p.relative_to(fixture))
+
+    for f in ["main.py", "manifest.json", "Dockerfile", "pyproject.toml", "Procfile", "tests/smoke_payload.json"]:
+        if not (svc_dir / f).is_file():
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="required_file_missing",
+                file=_rel(svc_dir / f),
+                message=f"required file missing: {f}",
+            ))
+
+    tests_dir = svc_dir / "tests"
+    if tests_dir.is_dir():
+        test_count = 0
+        for tf in tests_dir.glob("test_*.py"):
+            for line in tf.read_text(errors="replace").splitlines():
+                if re.match(r"^\s*def\s+test_\w+", line):
+                    test_count += 1
+        if test_count < 10:
+            test_main = tests_dir / "test_main.py"
+            cite = test_main if test_main.is_file() else next(tests_dir.glob("test_*.py"), tests_dir)
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="tests_minimum_count",
+                file=_rel(cite),
+                message=f"only {test_count} tests found; minimum for atomic-service is 10",
+            ))
+
+    manifest_path = svc_dir / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            manifest = _json.loads(manifest_path.read_text())
+        except _json.JSONDecodeError as e:
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="manifest_invalid_json",
+                file=_rel(manifest_path),
+                message=f"manifest.json is not valid JSON: {e}",
+            ))
+            manifest = {}
+        actual_inputs = set(manifest.get("inputs", []))
+        actual_outputs = set(manifest.get("outputs", []))
+        if expected_inputs and not expected_inputs.issubset(actual_inputs):
+            missing = expected_inputs - actual_inputs
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="manifest_contract_matches_spec",
+                file=_rel(manifest_path),
+                message=f"manifest inputs missing fields from spec: {sorted(missing)}",
+            ))
+        if expected_outputs and not expected_outputs.issubset(actual_outputs):
+            missing = expected_outputs - actual_outputs
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="manifest_contract_matches_spec",
+                file=_rel(manifest_path),
+                message=f"manifest outputs missing fields from spec: {sorted(missing)}",
+            ))
+
+    main_py = svc_dir / "main.py"
+    if main_py.is_file():
+        # AST-based import check — comments mentioning otel don't fool us.
+        import ast as _ast
+        src = main_py.read_text(errors="replace")
+        try:
+            tree = _ast.parse(src)
+        except SyntaxError:
+            tree = None
+        otel_imported = False
+        if tree is not None:
+            for node in _ast.walk(tree):
+                if isinstance(node, _ast.Import):
+                    for alias in node.names:
+                        if alias.name.startswith("opentelemetry") or alias.name == "google.cloud.logging":
+                            otel_imported = True
+                elif isinstance(node, _ast.ImportFrom):
+                    mod = node.module or ""
+                    if mod.startswith("opentelemetry") or mod == "google.cloud.logging":
+                        otel_imported = True
+        if not otel_imported:
+            fs.add(Finding(
+                severity=Severity.WARNING,
+                rule="otel_instrumentation",
+                file=_rel(main_py),
+                message="OTel / structured logging not imported in main.py",
+            ))
+        procfile = svc_dir / "Procfile"
+        if procfile.is_file():
+            pf_src = procfile.read_text(errors="replace")
+            if "functions-framework" in pf_src and "--target=main" not in pf_src:
+                fs.add(Finding(
+                    severity=Severity.BLOCKER,
+                    rule="procfile_wrong_target",
+                    file=_rel(procfile),
+                    message="Procfile must use functions-framework --target=main",
+                ))
+
+    smoke = svc_dir / "tests" / "smoke_payload.json"
+    if smoke.is_file():
+        try:
+            _json.loads(smoke.read_text())
+        except _json.JSONDecodeError as e:
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="smoke_payload_invalid_json",
+                file=_rel(smoke),
+                message=f"smoke_payload.json invalid JSON: {e}",
+            ))
+
+    return fs
+
+
+def _rule_validator(fixture: Path, spec: dict | None = None) -> FindingSet:
+    """Re-implements the deterministic checks in rule-validator.md."""
+    import json as _json
+    fs = FindingSet()
+    spec = spec or {}
+    rule_path_in_spec = spec.get("operation_path", "")
+    if rule_path_in_spec:
+        rule_path = fixture / rule_path_in_spec
+    else:
+        candidates = [c for c in fixture.glob("rules/**/*.json") if "tests" not in c.parts]
+        rule_path = candidates[0] if candidates else fixture
+
+    if not rule_path.is_file():
+        fs.add(Finding(
+            severity=Severity.BLOCKER,
+            rule="rule_file_missing",
+            file=str(rule_path_in_spec or "rules/?.json"),
+            message="JDM rule JSON not found",
+        ))
+        return fs
+
+    def _rel(p: Path) -> str:
+        return str(p.relative_to(fixture))
+
+    try:
+        rule = _json.loads(rule_path.read_text())
+    except _json.JSONDecodeError as e:
+        fs.add(Finding(
+            severity=Severity.BLOCKER,
+            rule="invalid_jdm_schema",
+            file=_rel(rule_path),
+            message=f"rule JSON invalid: {e}",
+        ))
+        return fs
+
+    if not isinstance(rule, dict) or "nodes" not in rule or "edges" not in rule:
+        fs.add(Finding(
+            severity=Severity.BLOCKER,
+            rule="invalid_jdm_schema",
+            file=_rel(rule_path),
+            message="rule must have top-level 'nodes' and 'edges' arrays (Zen schema)",
+        ))
+
+    golden_dir = rule_path.parent / "tests" / "golden"
+    if not golden_dir.is_dir():
+        alt = rule_path.parent.parent / "tests" / "golden"
+        if not alt.is_dir():
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="missing_golden_tests",
+                file=_rel(rule_path.parent / "tests" / "golden"),
+                message="golden tests directory missing — every rule requires golden tests",
+            ))
+
+    if isinstance(rule, dict):
+        for node in rule.get("nodes", []) or []:
+            if isinstance(node, dict) and node.get("type") == "decisionTableNode":
+                content = node.get("content", {})
+                hp = content.get("hitPolicy")
+                if hp not in {"first", "collect"}:
+                    fs.add(Finding(
+                        severity=Severity.BLOCKER,
+                        rule="wrong_hit_policy",
+                        file=_rel(rule_path),
+                        message=f"decisionTable hitPolicy must be 'first' or 'collect', got {hp!r}",
+                    ))
+
+    return fs
+
+
+def _agent_validator(fixture: Path, spec: dict | None = None) -> FindingSet:
+    """Re-implements the deterministic checks in agent-validator.md."""
+    import ast as _ast
+    fs = FindingSet()
+
+    candidates = [c for c in fixture.glob("usecases/*/agents/*.py") if c.name != "__init__.py"]
+    if not candidates:
+        fs.add(Finding(
+            severity=Severity.BLOCKER,
+            rule="missing_agent_file",
+            file="usecases/<uc>/agents/<role>.py",
+            message="no agent .py file found",
+        ))
+        return fs
+
+    def _rel(p: Path) -> str:
+        return str(p.relative_to(fixture))
+
+    APPROVED_MODELS = {"claude-opus-4-7", "claude-opus-4-6", "gemini-3-1-flash"}
+
+    for agent_py in candidates:
+        src = agent_py.read_text(errors="replace")
+        try:
+            tree = _ast.parse(src)
+        except SyntaxError as e:
+            fs.add(Finding(
+                severity=Severity.BLOCKER,
+                rule="agent_syntax_error",
+                file=_rel(agent_py),
+                message=f"syntax error: {e}",
+            ))
+            continue
+        for node in _ast.walk(tree):
+            if isinstance(node, _ast.Call):
+                func_name = ""
+                if isinstance(node.func, _ast.Name):
+                    func_name = node.func.id
+                elif isinstance(node.func, _ast.Attribute):
+                    func_name = node.func.attr
+                if func_name in {"LlmAgent", "Agent"}:
+                    kwargs = {kw.arg: kw.value for kw in node.keywords}
+                    model_node = kwargs.get("model")
+                    if isinstance(model_node, _ast.Constant) and model_node.value not in APPROVED_MODELS:
+                        fs.add(Finding(
+                            severity=Severity.BLOCKER,
+                            rule="unapproved_model",
+                            file=_rel(agent_py),
+                            line=getattr(model_node, "lineno", None),
+                            message=f"model={model_node.value!r} not in approved set {sorted(APPROVED_MODELS)}",
+                        ))
+
+    pii_re = re.compile(
+        r"(SSN|EIN|tax\s*id|passport|date\s*of\s*birth)\s*[:=]\s*[\dA-Z\-]{4,}",
+        re.IGNORECASE,
+    )
+    for pf in fixture.glob("usecases/*/agents/prompts/*.md"):
+        for i, line in enumerate(pf.read_text(errors="replace").splitlines(), 1):
+            if pii_re.search(line):
+                fs.add(Finding(
+                    severity=Severity.BLOCKER,
+                    rule="pii_in_prompt",
+                    file=_rel(pf),
+                    line=i,
+                    message=f"prompt contains PII-shaped value: {line.strip()[:80]}",
+                ))
+
+    for m in fixture.glob("usecases/*/agents/manifest.yaml"):
+        if "memory_scope" not in m.read_text(errors="replace"):
+            fs.add(Finding(
+                severity=Severity.WARNING,
+                rule="no_memory_scope",
+                file=_rel(m),
+                message="agent manifest does not declare memory_scope — required if agent uses Memory Bank",
+            ))
+
+    return fs
+
+
 _DETERMINISTIC_RUNNERS = {
     "architecture-auditor": _arch_auditor,
     "security-reviewer": _security_reviewer,
     "compliance-reviewer": _compliance_reviewer,
+    "service-validator": _service_validator,
+    "rule-validator": _rule_validator,
+    "agent-validator": _agent_validator,
 }
 
 
-def run_gatekeeper_deterministic(name: str, fixture: Path) -> FindingSet:
-    """Run a gatekeeper's deterministic checks against a fixture directory."""
+def run_gatekeeper_deterministic(name: str, fixture: Path, spec: dict | None = None) -> FindingSet:
+    """Run a gatekeeper or validator's deterministic checks against a fixture directory.
+
+    The optional `spec` carries the validator's operation spec (inputs/outputs/path)
+    when invoking a validator. Gatekeepers ignore it.
+    """
     runner = _DETERMINISTIC_RUNNERS.get(name)
     if runner is None:
-        raise ValueError(f"no deterministic runner for gatekeeper {name!r}")
+        raise ValueError(f"no deterministic runner for {name!r}")
+    if name in {"service-validator", "rule-validator", "agent-validator"}:
+        return runner(fixture, spec or {})
     return runner(fixture)
 
 

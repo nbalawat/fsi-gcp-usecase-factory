@@ -1,0 +1,10 @@
+validator: agent-validator
+description: "Prompt example contains an SSN-shaped string — must use synthetic placeholders."
+spec:
+  use_case_id: uc-x
+  operation_id: rater
+expects:
+  verdict: FAIL
+  failing_check: pii_in_prompt
+  cite_file: usecases/uc-x/agents/prompts/rater.md
+  message_contains: "PII"

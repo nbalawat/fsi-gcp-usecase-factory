@@ -1,0 +1,13 @@
+validator: rule-validator
+description: "decisionTable hitPolicy='any' — must be 'first' or 'collect'."
+spec:
+  use_case_id: example-uc
+  operation_id: example-rule
+  operation_path: rules/example-rule/v1.json
+  inputs: [dscr]
+  outputs: [decision]
+expects:
+  verdict: FAIL
+  failing_check: wrong_hit_policy
+  cite_file: rules/example-rule/v1.json
+  message_contains: "hitPolicy"

@@ -1,0 +1,3 @@
+agents:
+  - name: uc_x_rater
+    memory_scope: borrower_id

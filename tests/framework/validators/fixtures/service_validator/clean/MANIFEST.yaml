@@ -1,0 +1,12 @@
+validator: service-validator
+description: "Complete atomic service: all required files, manifest matches spec, no forbidden patterns, OTel present, smoke payload valid JSON."
+spec:
+  use_case_id: example-uc
+  operation_id: example-service
+  operation_path: services/atomic/example-service
+  service_type: atomic-service
+  inputs: [borrower_id, amount]
+  outputs: [score, band]
+expects:
+  verdict: PASS
+  findings_count_max: 0

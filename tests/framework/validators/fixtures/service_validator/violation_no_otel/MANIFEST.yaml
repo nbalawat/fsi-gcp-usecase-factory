@@ -1,0 +1,14 @@
+validator: service-validator
+description: "Atomic service main.py has no opentelemetry import or structured-logging hook — observability missing."
+spec:
+  use_case_id: example-uc
+  operation_id: example-service
+  operation_path: services/atomic/example-service
+  service_type: atomic-service
+  inputs: [borrower_id, amount]
+  outputs: [score, band]
+expects:
+  verdict: WARN
+  failing_check: otel_instrumentation
+  cite_file: services/atomic/example-service/main.py
+  message_contains: "OTel"

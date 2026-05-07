@@ -1,0 +1,30 @@
+{
+  "name": "example-rule",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "inputNode",
+      "name": "request"
+    },
+    {
+      "id": "decision",
+      "type": "decisionTableNode",
+      "name": "decision",
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [{"id": "i1", "name": "DSCR", "field": "dscr"}],
+        "outputs": [{"id": "o1", "name": "decision", "field": "decision"}],
+        "rules": [
+          {"i1": ">= 1.25", "o1": "\"APPROVE\""},
+          {"i1": "< 1.0", "o1": "\"DECLINE\""}
+        ]
+      }
+    },
+    {"id": "output", "type": "outputNode"}
+  ],
+  "edges": [
+    {"sourceId": "input", "targetId": "decision"},
+    {"sourceId": "decision", "targetId": "output"}
+  ]
+}

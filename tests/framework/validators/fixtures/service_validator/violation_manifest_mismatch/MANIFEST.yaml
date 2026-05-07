@@ -1,0 +1,14 @@
+validator: service-validator
+description: "manifest.json declares output 'risk_score' but spec says 'score' — manifest contract mismatch."
+spec:
+  use_case_id: example-uc
+  operation_id: example-service
+  operation_path: services/atomic/example-service
+  service_type: atomic-service
+  inputs: [borrower_id, amount]
+  outputs: [score, band]
+expects:
+  verdict: FAIL
+  failing_check: manifest_contract_matches_spec
+  cite_file: services/atomic/example-service/manifest.json
+  message_contains: "score"

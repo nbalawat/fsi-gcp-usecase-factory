@@ -1,0 +1,5 @@
+agents:
+  - name: uc_x_rater
+    model: claude-opus-4-7
+    memory_scope: borrower_id
+    data_classification: confidential

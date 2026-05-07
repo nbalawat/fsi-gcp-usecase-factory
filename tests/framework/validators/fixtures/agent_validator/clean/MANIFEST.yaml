@@ -1,0 +1,8 @@
+validator: agent-validator
+description: "ADK agent with approved model, memory_scope set, prompt clean of PII."
+spec:
+  use_case_id: uc-x
+  operation_id: rater
+expects:
+  verdict: PASS
+  findings_count_max: 0

@@ -1,0 +1,10 @@
+validator: agent-validator
+description: "Agent manifest does not declare memory_scope — required for Memory-Bank-using agents."
+spec:
+  use_case_id: uc-x
+  operation_id: rater
+expects:
+  verdict: WARN
+  failing_check: no_memory_scope
+  cite_file: usecases/uc-x/agents/manifest.yaml
+  message_contains: "memory_scope"
