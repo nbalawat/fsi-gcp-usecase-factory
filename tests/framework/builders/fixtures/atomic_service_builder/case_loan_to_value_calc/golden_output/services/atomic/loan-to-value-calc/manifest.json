@@ -1,0 +1,11 @@
+{
+  "name": "loan-to-value-calc",
+  "version": "0.1.0",
+  "description": "Compute LTV ratio from loan_amount and collateral_value; classify with Cloud SQL band thresholds.",
+  "inputs": ["loan_amount", "collateral_value"],
+  "outputs": ["ltv", "ltv_band"],
+  "endpoint": "https://loan-to-value-calc-PLACEHOLDER.run.app/",
+  "auth": "google-id-token",
+  "data_classification": "confidential",
+  "pii_fields": []
+}

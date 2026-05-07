@@ -1,0 +1,1 @@
+{"input": {"dscr": 0.95}, "expected": {"decision": "DECLINE", "reason": "dscr_below_minimum"}}

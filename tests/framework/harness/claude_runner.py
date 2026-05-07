@@ -707,3 +707,81 @@ def run_gatekeeper_llm(name: str, fixture: Path) -> FindingSet:
     )
     response_text = "\n".join(block.text for block in msg.content if hasattr(block, "text"))
     return parse_llm_response(response_text)
+
+
+# ── Builder runners ────────────────────────────────────────────────────────
+#
+# Builders generate files from a spec (rather than analyzing an existing tree).
+# Tests follow a contract pattern:
+#   - Each fixture has SPEC.yaml + golden_output/ (the expected produced tree).
+#   - Deterministic-tier test runs the gating VALIDATOR on golden_output.
+#     Proves: "what the builder must produce passes its own QA gate."
+#   - LLM-tier test invokes the actual builder, captures output, runs the
+#     validator on it, and diffs against golden_output via tree_snapshot.
+
+_BUILDER_TO_VALIDATOR = {
+    "atomic-service-builder": "service-validator",
+    "handler-builder": "service-validator",
+    "jdm-rule-builder": "rule-validator",
+    "agent-specialist-builder": "agent-validator",
+    "agent-supervisor-builder": "agent-validator",
+}
+
+
+def run_builder_contract(builder_name: str, golden_root: Path, spec: dict) -> FindingSet:
+    """Run the validator that gates a builder's output, against the golden tree.
+
+    This is the deterministic-tier test for builders.
+    """
+    validator = _BUILDER_TO_VALIDATOR.get(builder_name)
+    if validator is None:
+        raise ValueError(f"no validator mapped for builder {builder_name!r}")
+    return run_gatekeeper_deterministic(validator, golden_root, spec)
+
+
+def run_builder_llm(builder_name: str, spec: dict, work_dir: Path) -> Path:
+    """Invoke the builder agent via Anthropic API; write produced files into
+    work_dir; return work_dir. Gated by RUN_LLM_TESTS=1.
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise RuntimeError("ANTHROPIC_API_KEY required for LLM-mode tests")
+
+    agent_md = REPO_ROOT / ".claude" / "agents" / f"{builder_name}.md"
+    if not agent_md.is_file():
+        raise FileNotFoundError(f"builder agent definition not found: {agent_md}")
+
+    body = agent_md.read_text()
+    if body.startswith("---"):
+        _, _, after = body.partition("---")
+        _, _, body = after.partition("---")
+    system_prompt = body.strip()
+
+    import yaml  # local import to keep top-level deps minimal
+    spec_yaml = yaml.safe_dump(spec, default_flow_style=False)
+    user_prompt = (
+        "Build the artifact for the following spec. Return each produced file "
+        "as a fenced code block preceded by `--- <repo-relative-path> ---`.\n\n"
+        f"Spec:\n```yaml\n{spec_yaml}```\n"
+    )
+
+    try:
+        import anthropic  # type: ignore
+    except ImportError as e:
+        raise RuntimeError("anthropic SDK required for LLM-mode tests") from e
+
+    client = anthropic.Anthropic()
+    msg = client.messages.create(
+        model=os.environ.get("CLAUDE_TEST_MODEL", "claude-sonnet-4-6"),
+        max_tokens=8000,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    response = "\n".join(b.text for b in msg.content if hasattr(b, "text"))
+
+    section_re = re.compile(r"---\s+([\w./_-]+)\s+---\s*\n```[\w]*\n(.*?)```", re.DOTALL)
+    work_dir.mkdir(parents=True, exist_ok=True)
+    for path_str, content in section_re.findall(response):
+        target = work_dir / path_str
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content)
+    return work_dir

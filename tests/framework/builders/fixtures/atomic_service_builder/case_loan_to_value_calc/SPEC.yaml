@@ -1,0 +1,8 @@
+operation_id: loan-to-value-calc
+operation_path: services/atomic/loan-to-value-calc
+use_case_id: example-uc
+service_type: atomic-service
+spec:
+  description: "Compute LTV ratio from loan_amount and collateral_value; classify with Cloud SQL band thresholds."
+  inputs: [loan_amount, collateral_value]
+  outputs: [ltv, ltv_band]

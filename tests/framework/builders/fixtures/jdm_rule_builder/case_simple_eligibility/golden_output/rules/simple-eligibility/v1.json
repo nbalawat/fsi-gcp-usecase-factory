@@ -1,0 +1,30 @@
+{
+  "name": "simple-eligibility",
+  "version": "1.0.0",
+  "nodes": [
+    {"id": "input",    "type": "inputNode",   "name": "request"},
+    {
+      "id": "decision",
+      "type": "decisionTableNode",
+      "name": "decision",
+      "content": {
+        "hitPolicy": "first",
+        "inputs":  [{"id": "i1", "name": "DSCR",     "field": "dscr"}],
+        "outputs": [
+          {"id": "o1", "name": "decision", "field": "decision"},
+          {"id": "o2", "name": "reason",   "field": "reason"}
+        ],
+        "rules": [
+          {"i1": ">= 1.25", "o1": "\"APPROVE\"", "o2": "\"dscr_above_pass_threshold\""},
+          {"i1": "< 1.0",   "o1": "\"DECLINE\"", "o2": "\"dscr_below_minimum\""},
+          {"i1": "",        "o1": "\"REFER\"",   "o2": "\"requires_human_review\""}
+        ]
+      }
+    },
+    {"id": "output",   "type": "outputNode"}
+  ],
+  "edges": [
+    {"sourceId": "input",    "targetId": "decision"},
+    {"sourceId": "decision", "targetId": "output"}
+  ]
+}

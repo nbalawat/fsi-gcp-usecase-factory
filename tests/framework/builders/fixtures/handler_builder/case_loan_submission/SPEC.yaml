@@ -1,0 +1,8 @@
+operation_id: loan-submission-handler
+operation_path: services/atomic/loan-submission-handler
+use_case_id: example-uc
+service_type: handler
+spec:
+  description: "Pub/Sub push handler — validates loan-submission events, enriches, publishes to credit-memo-commercial.enriched."
+  inputs: [borrower_id, loan_amount, loan_type, application_id]
+  outputs: [context_id, status]

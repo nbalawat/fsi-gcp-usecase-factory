@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loan-submission-handler"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "functions-framework>=3.5",
+  "google-cloud-pubsub>=2.21",
+  "opentelemetry-sdk>=1.24",
+]

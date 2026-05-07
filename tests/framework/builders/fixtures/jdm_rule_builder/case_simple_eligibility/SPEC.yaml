@@ -1,0 +1,15 @@
+# Spec passed by /fsi-build-parallel orchestrator to jdm-rule-builder.
+operation_id: simple-eligibility
+operation_path: rules/simple-eligibility/v1.json
+use_case_id: example-uc
+spec:
+  inputs: [dscr]
+  outputs: [decision, reason]
+  hit_policy: first
+  rules:
+    - condition: "dscr >= 1.25"
+      decision: APPROVE
+    - condition: "dscr < 1.0"
+      decision: DECLINE
+    - condition: "true"
+      decision: REFER
