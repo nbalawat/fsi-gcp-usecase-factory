@@ -42,20 +42,39 @@ rules/                        # SHARED JDM rules (regulatory thresholds, single-
 ```
 usecases/<use_case>/
   reasons.yaml                # the REASONS canvas — the spec, the contract
+  schemas/                    # use-case-specific JSON schemas (artifacts, events)
   handler/                    # step 1: Cloud Run + Pub/Sub push
   agents/                     # step 4: ADK supervisor + specialists + prompts/
   sinks/<destination>/        # step 5: one folder per use-case-specific sink
   rules/                      # step 3: use-case-specific JDM rules (eligibility etc.)
   workflow.yaml               # Cloud Workflows orchestration for this use case
   infra/<use_case>.tf         # Terraform — Cloud Run services, Pub/Sub, IAM
-  ui/console.yaml             # console pattern config (no custom UI code)
+  ui/                         # step 4 UI — UC-OWNED React components + lib + config
+    console.yaml              #   console-pattern config (drives the shared shell)
+    tsconfig.json             #   path-alias stub: @/* → console, @uc/* → here
+    components/               #   USE-CASE-OWNED React components
+      <feature>/              #     credit-memo/, agent-audit/, cco/, rm/, …
+    lib/                      #   USE-CASE-OWNED data adapters, fixtures, types
   tests/                      # end-to-end + adversarial tests for this use case
   docs/                       # spec, runbook, dependencies, SLOs
   compliance/                 # SR 11-7 model card, risk assessment, audit trail spec
   demo-data/                  # synthetic data for demos
 ```
 
-**Rule:** never put use-case-specific code anywhere except under `usecases/<use_case>/`. If you're tempted to drop a credit-memo file into `agents/` or `workflows/` at the root — stop. That's the framework, not your use case.
+**Rule:** never put use-case-specific code anywhere except under
+`usecases/<use_case>/`. This INCLUDES UI: every UC-specific React
+component / data adapter / fixture / type lives at
+`usecases/<uc>/ui/components/` or `usecases/<uc>/ui/lib/`.
+
+The shared `ui/apps/<console-pattern>/` (e.g. `pipeline-console`) is the
+**framework shell** — AppShell, persona switcher, route hosts, generic
+primitives. It mounts the UC bundle via the `@uc/*` TypeScript path
+alias. CI gate `scripts/lint_uc_in_console.mjs` blocks any UC-specific
+file from landing in `ui/apps/<console>/`.
+
+If you're tempted to drop a credit-memo file into `agents/`,
+`ui/apps/pipeline-console/components/`, or `workflows/` at the root —
+stop. That's the framework, not your use case.
 
 ## Approved models (only these in production)
 
@@ -63,6 +82,23 @@ usecases/<use_case>/
 - `gemini-3-1-flash` for real-time scoring, high-volume classification, sub-second decisions
 
 Never call any other model without an explicit `EXCEPTION:` comment citing the architecture review that approved it.
+
+### Model-provider prerequisites (codified)
+
+Each model brings hard prerequisites. Skipping any of them produces the
+"I thought we were using ADK" pivot we paid for on credit-memo-commercial
+(Rule 1 of `docs/methodology/product-build-discipline.md`). At
+`/new-use-case` Step 2B, every UC declares:
+
+| Provider | Required prerequisites |
+|---|---|
+| **Vertex Gemini** (`gemini-3-1-flash`, `gemini-2.5-pro`) | (1) GCP project with Vertex AI API enabled in the use case's region; (2) ADC available to the service account (Cloud Run sets it; local dev needs `gcloud auth application-default login`); (3) `roles/aiplatform.user` on the runtime SA; (4) region pinned in `discipline_gates.model_provider.region`; (5) for structured output, `response_schema` set per Rule 2; (6) SDK is `google-genai` `Client(vertexai=True, project=, location=)`. |
+| **Anthropic API** (`claude-opus-4-7`, `claude-sonnet-4-6`) | (1) API key in Secret Manager (NOT env var checked into source); (2) key starts with `sk-ant-api` — OAuth/`sk-ant-oat` is rejected by the SDK; (3) Cloud Run mounts via `--set-secrets ANTHROPIC_API_KEY=...:latest`; (4) network egress allowed to `api.anthropic.com` (VPC connector + private-egress: check); (5) for structured output, prompt-only constraint; consider adopting Anthropic's "tool use" / structured-output features as they mature. |
+| **Both (hybrid)** | All of the above. Gate via env flag `USE_GEMINI=1` for Vertex; falls back to Anthropic if key present. Document the routing in the orchestrator's call site. |
+
+The full prerequisites + decision walkthrough lives at
+`docs/methodology/model-prerequisites.md`. The `model-selection` skill
+auto-loads it whenever you author or edit agent code.
 
 ## The six console patterns (UI shape)
 
@@ -75,7 +111,10 @@ Every use case's UI fits one of:
 5. **Run console** — periodic exercise toward a deadline
 6. **Recommendations console** — agent suggestions queued for human disposition
 
-Pick one; configure it via `usecases/<uc>/ui/console.yaml`. Do not build custom UI. See `docs/methodology/console_reference.md` for full details.
+Pick a pattern; the UC owns its components/lib at `usecases/<uc>/ui/`,
+and `ui/console.yaml` configures the shared shell. UC components are
+imported via the `@uc/*` path alias from `ui/apps/<pattern>-console/`.
+See `docs/methodology/console_reference.md` and `docs/methodology/ui-standards.md`.
 
 ## Data layer (Cloud SQL, portable)
 
@@ -126,6 +165,7 @@ The plugin includes auto-invoked skills that will guide you. If you're building 
 - `docs/methodology/console_reference.md` — the six console patterns in detail
 - `docs/methodology/methodology.md` — how the plugin executes the methodology
 - `docs/methodology/ui-standards.md` — **UI standards** (the contract for every console; tokens, primitives, layout, behavior gates, a11y; auto-loaded by the `ui-standards` skill on any UI edit)
+- `docs/methodology/model-prerequisites.md` — **provider prerequisites** (Vertex Gemini ADC vs Anthropic API: auth, region, IAM, network, SDK, structured output, common failures; auto-loaded by the `model-selection` skill)
 - `docs/methodology/product-build-discipline.md` — **the don't-repeat list** (28 rules paid for in real incidents on credit-memo-commercial; every `/new-use-case` and `/review-uc` enforces them)
 - `docs/methodology/ui-authoring.md` — *deprecated, see ui-standards.md*
 - `AUTHORING.md` — skill / agent authoring conventions

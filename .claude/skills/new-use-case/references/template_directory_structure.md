@@ -45,9 +45,53 @@ docs/use_cases/{use_case_id}/
     audit_trail_spec.md
     sr_11_7_documentation.md
 
-ui/use_cases/{use_case_id}/
-  config.json              (configures the chosen console pattern)
+usecases/{use_case_id}/ui/
+  console.yaml             (console-pattern config — drives the shared shell)
+  tsconfig.json            (path-alias stub: @/* → console; @uc/* → here)
+  components/              (USE-CASE-OWNED React components — see ui-standards skill)
+    README.md              (notes which features live here)
+  lib/                     (USE-CASE-OWNED data adapters, fixtures, types)
+
+usecases/{use_case_id}/schemas/
+  {artifact}.schema.json   (one per regulator-visible artifact — memo, decision, etc.)
 ```
 
 For each file generated, populate from the appropriate skill's template directory (e.g., `${CLAUDE_PLUGIN_DIR}/skills/handler-design/template/`).
+
+### UI tree — IMPORTANT
+
+`usecases/{use_case_id}/ui/components/` and `lib/` are where this use
+case's UI lives. The shared shell at `ui/apps/<console-pattern>-console/`
+mounts them via the `@uc/*` TypeScript path alias. **Never** put a
+use-case-specific React component or data adapter in `ui/apps/<console>/`.
+The CI gate `scripts/lint_uc_in_console.mjs` blocks any drift.
+
+The `tsconfig.json` stub at `usecases/{use_case_id}/ui/tsconfig.json`
+should look like:
+
+```json
+{
+  "extends": "../../../ui/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@fsi-bank/components": ["../../../ui/packages/components/src/index.ts"],
+      "@fsi-bank/components/*": ["../../../ui/packages/components/src/*"],
+      "@fsi-bank/theme": ["../../../ui/packages/theme/src/index.ts"],
+      "@/*": ["../../../ui/apps/<console>-console/*"],
+      "@uc/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}
+```
+
+The shell's tsconfig at `ui/apps/<console>-console/tsconfig.json` adds
+the reciprocal `@uc/*` alias and includes the use case's `ui/**` files
+in its `include` array. See `ui/apps/pipeline-console/tsconfig.json` for
+the canonical example.
 
