@@ -7,13 +7,24 @@
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowJs": true
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@fsi-bank/components": ["../../packages/components/src/index.ts"],
+      "@fsi-bank/components/*": ["../../packages/components/src/*"],
+      "@fsi-bank/theme": ["../../packages/theme/src/index.ts"],
+      "@fsi-bank/api-client": ["../../packages/api-client/src/index.ts"],
+      "@/*": ["./*"],
+      "@uc/*": ["../../../usecases/credit-memo-commercial/ui/*"]
+    }
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "../../../usecases/credit-memo-commercial/ui/**/*.ts",
+    "../../../usecases/credit-memo-commercial/ui/**/*.tsx"
   ],
   "exclude": ["node_modules"]
 }

@@ -35,6 +35,7 @@ tokens, and gates apply.
 |---|---|
 | `/ui-standards onboard <console>` | Scaffold a new console end-to-end against the standards. |
 | `/ui-standards check [path]` | Run all gate scripts against the path (default: every `ui/apps/`). Reports pass/fail per rule. |
+| `/ui-standards check-uc-boundary` | Run `lint_uc_in_console.mjs` to confirm no use-case-specific files leaked into `ui/apps/<console>/`. |
 | `/ui-standards primitive <need>` | Answer "which primitive for X?" from the catalog. |
 | `/ui-standards token <category>` | Show the canonical token list for color / type / spacing / motion / shadows / layout. |
 | `/ui-standards walk <route>` | Walk a route as a user (click every button, follow every link, run a11y scan, snapshot four states). |

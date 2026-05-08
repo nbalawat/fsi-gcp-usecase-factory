@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Pipeline console — FSI banking",
+  title: "Atrium · pipeline console",
   description:
-    "Pipeline console pattern. One frontend codebase, configured per use case via console.yaml.",
+    "Atrium pipeline console — one frontend codebase, configured per use case via console.yaml.",
 };
 
 export default function RootLayout({
@@ -14,9 +14,7 @@ export default function RootLayout({
 }): JSX.Element {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-surface-canvas text-text-primary">
-        {children}
-      </body>
+      <body className="min-h-screen bg-paper text-ink-1">{children}</body>
     </html>
   );
 }
