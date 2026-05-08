@@ -30,6 +30,103 @@ The full schema lives at `policies/reasons_schema.json`. Detailed authoring guid
 
 For section-by-section authoring (Operations layering, Structure version pins, library references) read `references/section_specs.md`.
 
+## Discipline gates section (MANDATORY)
+
+Every `reasons.yaml` MUST include a top-level `discipline_gates:` block.
+This is where the Step 2B answers from `/new-use-case` land — the
+decisions that prevent the bugs documented in
+`docs/methodology/product-build-discipline.md`. The block is read by
+`/review-uc` to enforce the gates.
+
+```yaml
+discipline_gates:
+  # Rule 1 — model & provider lockdown
+  model_provider:
+    default: vertex-gemini-adc                # | anthropic-api-key | hybrid
+    region: us-central1
+    auth: adc                                  # | secret-manager-key
+    overrides_per_role:
+      memo_drafter: vertex-gemini-adc          # explicit override (one per agent role)
+
+  # Rule 2 — structured-output agents need response_schema
+  structured_output_agents:
+    - memo_drafter
+    - risk_rater
+    - regulatory_checker
+  # Each is enforced by scripts/lint_agent_calls.py
+
+  # Rule 3 — stub-mode UX
+  stub_mode:
+    banner_component: DegradedBanner
+    e2e_fails_on_stub: true
+
+  # Rule 4 — data layer at scaffold
+  data_source:
+    mode: simulator                            # | live-source | fixtures-poc
+    fixture_removal_date: null                 # required if mode=fixtures-poc
+
+  # Rule 7 — idempotency keys
+  idempotency:
+    key_field: application_id
+    not_idempotent_stages: [intake]            # if current_stage in this list, re-run; else skip
+
+  # Rule 13 — long-running services
+  long_running_services:
+    - name: orchestrator-credit-memo
+      p99_seconds: 271
+      cloud_run_timeout: 3600s
+
+  # Rule 15 — required env vars (per service)
+  required_env:
+    orchestrator-credit-memo:
+      - GCP_PROJECT
+      - GCP_REGION
+      - INSTANCE_CONNECTION_NAME
+      - DB_USER
+      - DB_NAME
+
+  # Rule 16 — banker-readable schema fields (must NOT contain JSON)
+  banker_readable_fields:
+    credit_memo:
+      - executive_summary.text
+      - risk_factors.factors[*].evidence
+      - recommendation.narrative
+      - financial_analysis.narrative
+
+  # Rule 17 — demo simulator
+  demo_simulator:
+    script: scripts/demo_live_simulator.py
+    fixture_count: 12
+    cadence_seconds: 60
+
+  # Rule 18 — UX checklist
+  ux_checklist_committed: true                 # PR #1 ships all four states
+
+  # Rule 12 — personas
+  personas:
+    - underwriter
+    - cco
+    - rm
+
+  # Rule 25 — canonical enums
+  enums:
+    risk_band: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+    decision: ["APPROVE", "DECLINE", "RETURN"]
+    recommendation_action: ["approve", "approve_conditional", "decline", "return_for_revision"]
+```
+
+**Validation.** `python3 scripts/resolve_reasons_refs.py` checks that:
+
+- Every `structured_output_agents` entry exists as an Operation with a
+  `response_schema` declared.
+- Every `long_running_services` entry has a matching `--timeout` flag in
+  the deploy script.
+- Every `banker_readable_fields` path resolves to a real schema field.
+- Every `enums` value matches the schema's `enum` declaration.
+
+Missing or stale `discipline_gates` blocks fail
+`scripts/validate_use_case.sh` and block `/promote`.
+
 ## Authoring workflow
 
 1. **Read the diagnostic answers** the user provided in `/new-use-case` (or copy them from the conversation if invoked standalone).

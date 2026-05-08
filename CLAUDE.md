@@ -125,7 +125,48 @@ The plugin includes auto-invoked skills that will guide you. If you're building 
 - `docs/methodology/architecture.md` — the 5-step paradigm and platform architecture
 - `docs/methodology/console_reference.md` — the six console patterns in detail
 - `docs/methodology/methodology.md` — how the plugin executes the methodology
+- `docs/methodology/ui-authoring.md` — **UI authoring discipline** (must-read before any console work)
+- `docs/methodology/product-build-discipline.md` — **the don't-repeat list** (28 rules paid for in real incidents on credit-memo-commercial; every `/new-use-case` and `/review-uc` enforces them)
 - `AUTHORING.md` — skill / agent authoring conventions
+
+## Product-build discipline — hard gates
+
+Every new use case MUST satisfy the 28 rules in
+`docs/methodology/product-build-discipline.md`. The rules are organized
+into themes (model & provider, data & state, UX, deploy & ops, contracts,
+process); each rule has a paired CI gate enforced by `/review-uc`.
+
+The most expensive rules to skip — confirmed by incidents on
+credit-memo-commercial:
+
+- **Rule 2** — structured-output agents need `response_schema` (prompt
+  rules don't hold).
+- **Rule 4** — no static demo data past day 1.
+- **Rules 8–10** — never dump intermediate state into user-facing fields;
+  never truncate forensics.
+- **Rule 7** — idempotency guard on every async handler (Pub/Sub WILL
+  redeliver).
+- **Rule 13** — live > polled > static (SSE for in-flight work).
+- **Rule 14** — defensive UI everywhere (schema drift is real).
+- **Rule 20** — required env vars hard-fail at boot.
+- **Rule 21** — Cloud Run timeout sized to measured P99.
+
+`/new-use-case` Step 2B asks the team to make these decisions at scaffold
+time; skipping them creates the bugs we already paid for.
+
+## UI work — hard gates
+
+Anything under `ui/apps/` or `ui/packages/` MUST satisfy the seven rules in
+`docs/methodology/ui-authoring.md`. The pre-commit hook runs `scripts/test_ui_smoke.mjs`
+when UI files change and a dev server is running; the same script runs in CI.
+
+Mistakes already paid for (do not repeat):
+- Buttons without onClick or href → use Link or remove the affordance
+- `<div>` styled as a search box → use real `<input type="search">`
+- Only one cell of a row clickable → wrap in `<CaseRow href="…">`
+- Wide components (`ProcessFlow`, `AgentChain`) inside narrow drawers → use the `*Mini` variant
+- Inline functions passed from Server pages to Server components → move boundary into a Client child
+- Bare `<button>` for nav → every nav item has `href`
 
 ## What the factory ships
 

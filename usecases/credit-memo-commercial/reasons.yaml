@@ -359,3 +359,73 @@ safeguards:
     - "Memory Bank scope strictly borrower_id; cross-borrower retrieval forbidden"
     - "Approval queue access restricted to credit-officer role; auditable via Cloud Logging"
     - "GL posting MUST go through approval gate; never auto-fire"
+
+# ─── Discipline gates (don't-repeat list) ──────────────────────────
+# See docs/methodology/product-build-discipline.md. Each entry maps a
+# decision made at scaffold time to a CI gate enforced by /review-uc.
+discipline_gates:
+  # Rule 1 — model & provider lockdown
+  model_provider:
+    default: vertex-gemini-adc
+    region: us-central1
+    auth: adc
+
+  # Rule 2 — structured-output agents must set response_schema server-side.
+  # `drafter` covers the alias `memo_drafter` because the orchestrator
+  # treats them as the same role.
+  structured_output_agents:
+    - drafter
+
+  # Rule 3 — stub fallback must be loud
+  stub_mode:
+    banner_component: DegradedBanner
+    e2e_fails_on_stub: true
+
+  # Rule 4 — data layer
+  data_source:
+    mode: simulator
+    fixture_removal_date: null
+
+  # Rule 7 — idempotency
+  idempotency:
+    key_field: application_id
+    not_idempotent_stages: [intake]
+
+  # Rule 12 — personas
+  personas: [underwriter, cco, rm]
+
+  # Rule 13 — long-running services
+  long_running_services:
+    - name: orchestrator-credit-memo
+      p99_seconds: 271
+      cloud_run_timeout: 3600s
+
+  # Rule 16 — banker-readable schema fields
+  banker_readable_fields:
+    credit_memo:
+      - executive_summary.text
+      - risk_factors.factors[*].evidence
+      - recommendation.narrative
+      - financial_analysis.narrative
+      - covenant_package.maintenance_covenants[*].rationale
+
+  # Rule 17 — demo simulator
+  demo_simulator:
+    script: scripts/demo_live_simulator.py
+    fixture_count: 12
+    cadence_seconds: 60
+
+  # Rule 18 — UX checklist commitment
+  ux_checklist_committed: true
+
+  # Rule 20 — required env vars (per service)
+  required_env:
+    orchestrator-credit-memo: [GCP_PROJECT, GCP_REGION]
+    credit-memo-commercial: [GCP_PROJECT, PUBSUB_TOPIC_CREDIT_MEMO_ENRICHED]
+
+  # Rule 25 — canonical enums
+  enums:
+    risk_band: ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"]
+    decision: ["APPROVE", "DECLINE", "RETURN"]
+    recommendation_action: ["approve", "approve_conditional", "decline", "return_for_revision"]
+

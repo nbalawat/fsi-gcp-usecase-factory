@@ -38,6 +38,68 @@ conftest test --policy ${CLAUDE_PLUGIN_DIR}/policies/ usecases/{uc}/infra/{uc}.t
 
 If any fail, stop and report. Don't proceed to subagent reviews until static checks are clean.
 
+## Step 2A — Discipline gates (don't-repeat list)
+
+Run every gate from `docs/methodology/product-build-discipline.md`. Each
+maps to an incident on a prior use case; failing one means the same bug
+is being shipped again.
+
+```bash
+# Rule 2 — structured-output agents must set response_schema
+python3 scripts/lint_agent_calls.py usecases/{uc}/
+
+# Rule 3 — stub fallbacks must be loud
+grep -rn "synthesized.*=.*True" services/orchestrator-* | \
+    xargs -I{} sh -c 'grep -L "_write_event.*synthesized" {} && exit 1 || exit 0'
+
+# Rule 4 — no static demo data past day 1
+if [[ "$(yq '.discipline_gates.data_source_at_committed' usecases/{uc}/reasons.yaml)" == "true" ]]; then
+    grep -r "demo-data/scenarios" usecases/{uc}/ui/ && echo "FAIL: rule 4" && exit 1
+fi
+
+# Rules 8, 9 — no json.dumps into user-facing fields
+python3 scripts/lint_no_json_in_prose.py usecases/{uc}/
+
+# Rule 10 — no truncation on forensic writes
+grep -rnE '\[\:[0-9]{3,}\]' services/orchestrator-*/main.py | \
+    grep -E "narrative|text|summary|description" && echo "FAIL: rule 10" && exit 1 || true
+
+# Rule 7 — idempotency guard present
+python3 scripts/lint_idempotency_guard.py services/orchestrator-* usecases/{uc}/handler/
+
+# Rule 13 — no setInterval on case-state queries
+grep -rnE "setInterval.*fetch.*(/api/cases|/api/audit)" ui/apps/ \
+    && echo "FAIL: rule 13" && exit 1 || true
+
+# Rule 14 — defensive UI checks
+node scripts/lint_ui_defensive.mjs ui/apps/
+
+# Rule 16 — no Intl.NumberFormat outside lib/format.ts
+grep -rnE "new Intl\.NumberFormat" ui/packages/components/ ui/apps/*/components/ \
+    && echo "FAIL: rule 16" && exit 1 || true
+
+# Rule 17 — no platform jargon in UI strings
+node scripts/test_ui_smoke.mjs --use-case={uc} --check=banned-terms
+
+# Rule 20 — required env vars hard-fail at boot
+python3 scripts/lint_assert_env.py services/orchestrator-* usecases/{uc}/handler/
+
+# Rule 21 — long-running services have explicit timeout
+python3 scripts/lint_cloud_run_timeout.py usecases/{uc}/
+
+# Rule 24 — orchestrator request-builder is contract-tested against atomic services
+pytest services/orchestrator-credit-memo/tests/test_atomic_contracts.py -x  # adapt per-uc
+
+# Rule 25 — enum coercion at boundary
+python3 scripts/lint_enum_coercion.py usecases/{uc}/
+
+# Rule 28 — every rule has a gate (self-test on the doc itself)
+python3 scripts/lint_lessons_have_gates.py docs/methodology/product-build-discipline.md
+```
+
+Failures here BLOCK promotion. If a gate is "aspirational" (the lessons
+doc lists it as such), it's tracked but doesn't block.
+
 ## Step 3 — Architecture audit
 
 ```

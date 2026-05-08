@@ -9,9 +9,15 @@ You are scaffolding a new use case end-to-end. Output goes to `usecases/{use_cas
 
 ## Step 1 — Read the project context
 
-Read `CLAUDE.md`, `portfolio.yaml`, `docs/methodology/architecture.md`. Confirm the directory layout (framework at root, use cases under `usecases/<id>/`).
+Read `CLAUDE.md`, `portfolio.yaml`, `docs/methodology/architecture.md`,
+and **`docs/methodology/product-build-discipline.md`** (the don't-repeat
+list — every Step 2 question below traces to a specific rule in that
+doc). Confirm the directory layout (framework at root, use cases under
+`usecases/<id>/`).
 
 ## Step 2 — Diagnostic questions
+
+### 2A. Business framing
 
 1. **Use case name** — kebab-case
 2. **One-sentence description** — what business problem does this solve?
@@ -20,6 +26,79 @@ Read `CLAUDE.md`, `portfolio.yaml`, `docs/methodology/architecture.md`. Confirm 
 5. **Primary user** — who reviews / acts on the output?
 6. **Regulatory regime** — OCC / BSA / Reg E / CECL / SR 11-7 / etc.
 7. **Latency budget** — sub-second, hours, or days?
+
+### 2B. Discipline gates (each maps to a rule in product-build-discipline.md)
+
+These are **mandatory** at scaffold time. Answers go into
+`reasons.yaml#discipline_gates`. Skipping these creates the bugs we
+already paid for on credit-memo-commercial.
+
+8. **Model provider per agent role** — Vertex Gemini ADC (recommended for
+   GCP-native), Anthropic API key, or both with a feature flag? What auth
+   mechanism (ADC, key from Secret Manager)? What region for co-location?
+   *(Rule 1 — locks the provider; prevents "I thought we were using ADK"
+   pivots mid-build.)*
+
+9. **Structured-output agents** — list every agent that emits JSON
+   consumed by downstream code. Each one MUST set `response_schema` on
+   its provider call.
+   *(Rule 2 — prevents the `credit_memorandum_draft` wrapper class of bug;
+   prompt-only constraint demonstrably does not hold.)*
+
+10. **Stub-mode UX** — when an agent or service is unavailable, what does
+    the user see? (Required: degraded banner + `synthesized: true` flag +
+    e2e smoke fails on any stub.)
+    *(Rule 3 — silent stubs are worse than failures.)*
+
+11. **Data layer** — at scaffold time:
+    - **(a) Simulator publishing to deployed pipeline** (recommended for
+      demo-grade), or
+    - **(b) Live source adapter**, or
+    - **(c) Fixtures (PoC only)** — if c, what date does the
+      fixture-removal commit ship?
+    *(Rule 4 — no mock data past day 1.)*
+
+12. **Persona count** — how many user roles (RM, analyst, underwriter,
+    CCO, compliance)? List them now; the persona switcher and home views
+    are scaffolded from the first PR.
+    *(Rule 18 — retrofitting personas costs 3×.)*
+
+13. **Long-running services** — does any service in the critical path
+    take >60s P99? List them; their `--timeout` will be set to P99 × 1.5
+    in `scripts/deploy_service.sh`.
+    *(Rule 21 — default 540s timeout kills multi-LLM pipelines.)*
+
+14. **Idempotency keys** — what's the idempotency key for this use case
+    (typically `application_id` or equivalent)? What stage value
+    indicates "already running, do not restart"?
+    *(Rule 7 — Pub/Sub WILL redeliver; without the guard, the full
+    pipeline runs twice.)*
+
+15. **Required env vars** — list every env var the services require to
+    boot (project, region, secrets). Each will get an `_assert_env([...])`
+    call before main initialization.
+    *(Rule 20 — silent skip on missing project produced an hour-long
+    "page is hung at Application Received" debugging session.)*
+
+16. **Banker-readable schema fields** — list every schema field whose
+    value is rendered as prose to a user (`executive_summary.text`,
+    `recommendation.narrative`, etc.). Each gets a `banker_readable: true`
+    flag in the schema; the validator rejects values that look like JSON.
+    *(Rules 8, 9, 10 — never dump intermediate state into user-facing
+    fields; never truncate forensics.)*
+
+17. **Demo simulator** — does this use case need a demo simulator? If
+    yes, how many fixture profiles, what cadence, what scenario tags?
+    *(Rule 22 — click-driven demos rarely impress; simulators double as
+    regression load-shape tests.)*
+
+18. **UX checklist commitment** — confirm every UI page in this use case
+    will satisfy `docs/demo/ux-acceptance-checklist.md` (loading / empty
+    / error / populated states + motion + keyboard nav + density modes).
+    *(Rule 12, 26 — UX retrofit cost is 3× build-in cost.)*
+
+If the team cannot answer questions 8–18, do NOT proceed to Step 3 —
+those decisions belong at scaffold time, not retrofit time.
 
 ## Step 3 — Pick the console pattern
 
@@ -104,8 +183,63 @@ DONE usecases/{use_case_id}/
 
 ## Anti-patterns to refuse
 
+Each pattern below has cost real time on a prior use case; the rule
+number references `docs/methodology/product-build-discipline.md`.
+
+### Architectural (refuse outright)
+
 - Use-case files anywhere except `usecases/{id}/` — root layers are framework only.
 - Custom UI code — every UC configures one of the six consoles via `ui/console.yaml`.
 - Models other than `claude-opus-4-7` / `gemini-3-1-flash`.
 - Rules without regulatory citations or golden tests.
 - Skipping reuse inventory — `/new-use-case` is meaningless without it.
+
+### Data-flow (block at scaffold)
+
+- **Static demo data past day 1** — `demo-data/scenarios/*.json` as a
+  runtime data source. (Rule 4)
+- **`json.dumps()` into user-facing tables** — banker-readable fields
+  must be banker prose, never serialized internal state. (Rules 8, 9)
+- **Truncation `[:NNNN]` on forensic outputs** — destroys the artifact
+  you'd need to debug. (Rule 10)
+- **Synthesizer fallbacks that don't validate** — an unvalidated
+  fallback puts the user in a half-broken state with no recovery path.
+  (Rule 11)
+
+### Agent / LLM (block at scaffold)
+
+- **Structured-output agents without `response_schema`** — prompt-only
+  constraint demonstrably does not hold for wrapper / alt-key drift.
+  (Rule 2)
+- **Silent stub fallbacks** — agents falling back to stubs without
+  surfacing `synthesized: true` and a degraded banner. (Rule 3)
+- **Risk-band / decision enums coerced ad-hoc** — every enum has one
+  canonical form, coerced at the boundary. (Rule 25)
+
+### Deploy / ops (block at scaffold)
+
+- **Default 540s Cloud Run timeout** for any service that calls multiple
+  LLMs or long-running atomic services. (Rule 21)
+- **Async handlers without idempotency guard** — Pub/Sub redelivery
+  will double-run the pipeline. (Rule 7)
+- **Silent skip on missing required env vars** — every service must
+  hard-fail at boot. (Rule 20)
+
+### UI (block at scaffold)
+
+- **Polling on case-state queries** — use SSE; `setInterval(fetch)` is a
+  load amplifier and a staleness source. (Rule 13)
+- **Server Components that don't subscribe to SSE invalidation** — the
+  page will get stuck on stale state. (Rule 15)
+- **`Intl.NumberFormat` for SSR-rendered numbers** — ICU divergence
+  produces hydration errors; use a hand-rolled shared formatter.
+  (Rule 16)
+- **Sections without `<SectionErrorBoundary>` / null-safe defaults** —
+  schema drift will crash the page. (Rule 14)
+- **Platform jargon ("5-step paradigm", "atomic services") in user
+  text** — UI strings are linted against a per-use-case banned-terms
+  list. (Rule 17)
+- **Personas retrofitted later** — scaffold the persona switcher in
+  PR #1. (Rule 18)
+- **Loading / empty / error / populated states "to add later"** — all
+  four states ship with PR #1 of every UI page. (Rules 12, 26)

@@ -48,6 +48,29 @@ logger = redacting_logger(__name__)
 
 SERVICE_NAME = "orchestrator-credit-memo"
 
+
+def _assert_env(required: list[str]) -> None:
+    """Rule 20 — required env vars hard-fail at boot.
+
+    See `docs/methodology/product-build-discipline.md#20`. The page-hung-at-
+    Application-Received incident traced to a missing GCP_PROJECT being
+    silently no-op'd inside `_publish()`. The fix is to validate all
+    required env at module import; the program fails fast with a clear
+    message rather than serving traffic that does nothing.
+    """
+    missing = [v for v in required if not os.environ.get(v)]
+    if missing:
+        raise SystemExit(
+            f"FATAL: required env vars unset for {SERVICE_NAME}: {missing}. "
+            f"Set them in dev.env or via gcloud --set-env-vars / --set-secrets."
+        )
+
+
+# Skip the assertion when running under pytest so unit tests don't need
+# the full GCP env. Production / Cloud Run always have these set.
+if "PYTEST_CURRENT_TEST" not in os.environ and "CI_SKIP_ASSERT_ENV" not in os.environ:
+    _assert_env(["GCP_PROJECT", "GCP_REGION"])
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 PROMPT_DIR = REPO_ROOT / "usecases" / "credit-memo-commercial" / "agents" / "prompts"
 SCHEMA_PATH = (
