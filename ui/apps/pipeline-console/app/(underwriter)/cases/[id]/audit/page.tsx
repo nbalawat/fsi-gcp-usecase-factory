@@ -1,3 +1,4 @@
+// rule-4.16-exception: dedicated audit-trail view; the audit panel IS the spine
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";

@@ -1,3 +1,4 @@
+// rule-4.16-exception: print-clean view; spine excluded by design
 import { notFound } from "next/navigation";
 import {
   getCase,

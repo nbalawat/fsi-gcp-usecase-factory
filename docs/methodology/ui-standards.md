@@ -493,6 +493,53 @@ citations. UI surfaces them on hover/click.
 **CI gate.** Schema validation enforces citation density ≥0.80 for every
 artifact tagged `regulator_visible: true` in `reasons.yaml`.
 
+### 4.16 Live event spine is visible by default
+
+Every page that displays in-flight work has a visible event-spine
+panel — `<PipelineActivity>` or equivalent — showing the live stream
+of `application_events` as services and agents fire. Hidden-by-default
+event panels (collapsed in a settings drawer) violate this rule;
+the user must SEE the system processing work to trust it.
+
+Per-event row shows: timestamp, banker label, service or agent name,
+latency, optional cost. Agent rows render as agent-activity tiles
+(Rule 4.17).
+
+Why: a console where the work is happening but invisible feels
+broken. Multiple "the page is hung" exchanges trace to this. The
+fix is structural, not cosmetic.
+
+**CI gate.** Lint rule: every case-detail page (`app/cases/[id]/...`)
+that imports `live-data.ts` must also include `<PipelineActivity>`
+or carry a comment justifying the omission. See the `event-spine-ui`
+skill for the canonical implementation.
+
+### 4.17 Agent activity tiles surface state, not spinners
+
+Every UI region that shows agent output renders the four-state tile
+(pending / running / completed / failed-or-stubbed) per the
+`agent-activity-ui` skill. Generic spinners labeled "Loading…" are a
+violation — when the agent is running, show its tokens-in count, its
+elapsed time, and which model it's using.
+
+**CI gate.** Lint rule: any `<Spinner>` or `<Loader>` component used
+inside an agent-output region must be replaced with the
+`<AgentActivityTile>` four-state pattern.
+
+### 4.18 Audit trail is the SOP — same panel, same exports across UCs
+
+Every regulator-visible artifact has an `/audit/<id>` route. The audit
+panel uses the SHARED layout (totals strip + view toggle + filter bar
++ chronological list + drill-in). Exports validate against
+`infra/shared/schemas/audit-trail.schema.json`. Custom one-off audit
+panels per use case are forbidden — every UC's audit panel must look
+the same so an examiner who learns it once uses it on every UC.
+
+**CI gate.** `scripts/lint_audit_panel_shape.mjs` (placeholder; flags
+any `audit-trail.tsx` whose top-level structure deviates from the
+shared `<AuditPanel>` layout). The shared primitive lives at
+`@fsi-bank/components` once promoted (Rule of Three).
+
 ---
 
 ## 5. Accessibility — the floor
@@ -616,6 +663,9 @@ configured-UI contract).
 | 4.13 | No platform jargon in UI strings | `scripts/test_ui_smoke.mjs --check=banned-terms` |
 | 4.14 | Personas scaffolded in PR #1 | `scripts/lint_ui_personas.mjs` |
 | 4.15 | Citation density ≥80% on regulator artifacts | schema validator |
+| 4.16 | Live event spine visible on case-detail pages | `scripts/lint_event_spine_present.mjs` |
+| 4.17 | Agent tiles surface state (no plain spinners) | `scripts/lint_agent_tiles.mjs` |
+| 4.18 | Audit panel uses shared layout + shared exports | `scripts/lint_audit_panel_shape.mjs` |
 | 5 | A11y floor (axe-core) | `scripts/test_ui_smoke.mjs --check=a11y` |
 
 A rule without a gate is a recommendation. Recommendations are ignored

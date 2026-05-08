@@ -1,3 +1,4 @@
+// rule-4.16-exception: memo-focused view; spine lives on the parent /cases/[id]
 import { AppShell } from "@fsi-bank/components";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
