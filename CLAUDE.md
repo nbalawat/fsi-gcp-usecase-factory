@@ -125,8 +125,9 @@ The plugin includes auto-invoked skills that will guide you. If you're building 
 - `docs/methodology/architecture.md` — the 5-step paradigm and platform architecture
 - `docs/methodology/console_reference.md` — the six console patterns in detail
 - `docs/methodology/methodology.md` — how the plugin executes the methodology
-- `docs/methodology/ui-authoring.md` — **UI authoring discipline** (must-read before any console work)
+- `docs/methodology/ui-standards.md` — **UI standards** (the contract for every console; tokens, primitives, layout, behavior gates, a11y; auto-loaded by the `ui-standards` skill on any UI edit)
 - `docs/methodology/product-build-discipline.md` — **the don't-repeat list** (28 rules paid for in real incidents on credit-memo-commercial; every `/new-use-case` and `/review-uc` enforces them)
+- `docs/methodology/ui-authoring.md` — *deprecated, see ui-standards.md*
 - `AUTHORING.md` — skill / agent authoring conventions
 
 ## Product-build discipline — hard gates
