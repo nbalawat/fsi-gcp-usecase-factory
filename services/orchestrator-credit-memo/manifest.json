@@ -1,0 +1,48 @@
+{
+  "service_name": "orchestrator-credit-memo",
+  "role": "orchestrator",
+  "owner": "credit-risk-platform",
+  "cost_center": "FSI-CREDIT-1001",
+  "data_classification": "internal",
+  "description": "Imperative driver for the credit-memo-commercial 5-step pipeline. Consumes credit-memo-commercial.enriched, fans out to atomic services, rules-service, and 13 specialist agents, then publishes credit-memo-commercial.decided.",
+  "consumes": [
+    "credit-memo-commercial.enriched"
+  ],
+  "produces": [
+    "application_state_changed",
+    "credit-memo-commercial.decided"
+  ],
+  "depends_on_atomic": [
+    "financial-spreader",
+    "dscr-calculator",
+    "covenant-analyzer",
+    "peer-benchmarker",
+    "industry-risk-scorer",
+    "collateral-valuator",
+    "exposure-aggregator",
+    "insider-screening"
+  ],
+  "depends_on_rules": [
+    "regulatory_thresholds",
+    "single_borrower_exposure",
+    "dscr_threshold_by_industry",
+    "leverage_threshold_by_industry",
+    "sector_concentration_limit",
+    "geographic_concentration_limit",
+    "cre_concentration_limit",
+    "insider_aggregate_limit",
+    "reg_o_individual_limit",
+    "credit-memo-eligibility",
+    "approval_matrix_commercial",
+    "collateral_coverage_minimum",
+    "covenant_headroom_minimum",
+    "customer_concentration_check",
+    "fair_lending_pricing_check",
+    "management_continuity_check"
+  ],
+  "auth": "google-id-token",
+  "slo": {
+    "latency_p99_ms": 60000,
+    "error_rate_max": 0.01
+  }
+}
