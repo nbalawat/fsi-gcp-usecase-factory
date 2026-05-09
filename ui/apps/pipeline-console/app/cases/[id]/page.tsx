@@ -214,9 +214,18 @@ export default async function CaseDetailPage({
       />
 
       {/* ── Document layout: TOC | memo | action rail ── */}
-      <div className="grid gap-0 lg:grid-cols-[220px_1fr_300px]">
-        {/* Left rail: TOC scrolls with the page like the rest of the document */}
-        <aside className="hidden lg:block border-r border-rule bg-paper px-5 py-8">
+      <div className="grid gap-0 items-start lg:grid-cols-[220px_1fr_300px]">
+        {/* Left rail: sticky TOC. Scrolls with the page; pinned beneath the
+         * 48px topbar; scroll inside the aside if the TOC overflows. */}
+        <aside
+          className="hidden lg:block border-r border-rule bg-paper px-5 py-8 self-start"
+          style={{
+            position: "sticky",
+            top: 48,
+            maxHeight: "calc(100vh - 48px)",
+            overflowY: "auto",
+          }}
+        >
           {memoToRender && (
             <MemoToc
               status={Object.fromEntries(
@@ -236,11 +245,7 @@ export default async function CaseDetailPage({
         </aside>
 
         <main className="min-w-0 px-8 py-10 lg:px-12 lg:py-12">
-          {/* Pipeline activity: what each stage did, received, produced. */}
-          <div className="mb-8">
-            <PipelineActivity events={events} />
-          </div>
-
+          {/* Memo first — it's the artifact the user came for. */}
           {memoToRender ? (
             <CreditMemoDocument
               applicationId={c.application_id}
@@ -250,6 +255,22 @@ export default async function CaseDetailPage({
           ) : (
             <MemoEmpty />
           )}
+
+          {/* Pipeline activity below the memo — secondary content, the
+           * "how this was built" trail, not the headline artifact. */}
+          <details className="mt-16 group" open>
+            <summary className="cursor-pointer list-none flex items-baseline justify-between gap-3 border-t border-rule pt-6 pb-2 select-none">
+              <h3 className="font-serif text-h3 font-semi tracking-tight text-ink-1">
+                How this memo was built
+              </h3>
+              <span className="font-mono text-mono-sm text-ink-3">
+                {events.length} events · click to collapse
+              </span>
+            </summary>
+            <div className="mt-4">
+              <PipelineActivity events={events} />
+            </div>
+          </details>
         </main>
 
         {/* ── Right rail: action panel + supporting facts. Sticky. ── */}
