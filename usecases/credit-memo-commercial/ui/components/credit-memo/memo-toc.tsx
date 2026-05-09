@@ -85,9 +85,12 @@ export const MemoToc: React.FC<Props> = ({
     e.preventDefault();
     const el = document.getElementById(id);
     if (!el) return;
-    const top =
-      el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET_PX;
-    window.scrollTo({ top, behavior: "smooth" });
+    // The AppShell's <main> has `overflow-auto`, so the scrolling
+    // container is <main>, not <window>. scrollIntoView walks up to the
+    // nearest scrollable ancestor automatically. Sections set
+    // scroll-mt-[120px] which compensates for the sticky topbar +
+    // section header.
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
     // Update history without firing a navigation.
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `#${id}`);
@@ -132,6 +135,14 @@ export const MemoToc: React.FC<Props> = ({
       {hasAppendices && (
         <a
           href="#appendices"
+          onClick={(e) => {
+            e.preventDefault();
+            const el = document.getElementById("appendices");
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+            if (typeof window !== "undefined") {
+              window.history.replaceState(null, "", "#appendices");
+            }
+          }}
           className="mt-3 flex items-center gap-2.5 border-l-2 border-transparent pl-3 py-1.5 text-body-sm text-muted-foreground hover:text-foreground hover:border-ink-4"
         >
           <StatusDot status="complete" />

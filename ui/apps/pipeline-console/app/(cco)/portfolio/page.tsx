@@ -83,7 +83,7 @@ export default async function PortfolioPage(): Promise<JSX.Element> {
 
   return (
     <AppShell
-      brand="atrium"
+      brand="Commercial Credit"
       context="dev · us-central1"
       nav={personaNav(persona)}
       active="portfolio"

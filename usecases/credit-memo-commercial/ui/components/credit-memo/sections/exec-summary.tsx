@@ -15,9 +15,9 @@ import { MemoSection } from "../memo-section";
 import {
   decisionLabel,
   fmtUsdMillions,
-  riskBandLabel,
   titleCase,
 } from "../format";
+import { riskBandLabel as riskBandDisplay } from "@uc/lib/risk-band";
 import type { ExecutiveSummary } from "../types";
 
 interface Props {
@@ -84,40 +84,82 @@ export const ExecSummarySection: React.FC<Props> = ({ data }) => {
       prefillCitations={cites}
       kicker={
         <div className="flex items-center gap-2">
-          <Badge tone={bandTone(data.risk_rating)} dot>
-            {riskBandLabel(data.risk_rating)}
-          </Badge>
+          {(() => {
+            const r = riskBandDisplay(data.risk_rating);
+            return (
+              <Badge tone={r.tone} dot>
+                {r.label}
+                {r.code !== "—" && (
+                  <span className="ml-1 font-mono text-mono-sm opacity-70">
+                    · {r.code}
+                  </span>
+                )}
+              </Badge>
+            );
+          })()}
           <Badge tone={decisionTone(data.recommendation_action)} dot>
             {decisionLabel(data.recommendation_action)}
           </Badge>
         </div>
       }
     >
-      {/* Header card with the big numbers */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-md border border-border bg-muted p-5 md:grid-cols-4">
-        <Stat label="Borrower" value={data.borrower_name} />
-        <Stat
-          label="Industry"
-          value={data.industry}
-          mono={false}
-          small
-        />
-        <Stat
-          label="Loan request"
-          value={fmtUsdMillions(data.loan_request?.amount_usd)}
-          sub={
-            data.loan_request?.term_years != null
-              ? `${Number(data.loan_request.term_years).toFixed(1)}y · ${titleCase(data.loan_request.facility_type)}`
-              : titleCase(data.loan_request?.facility_type) || "—"
-          }
-        />
-        <Stat
-          label="Pricing"
-          value={data.loan_request?.pricing ?? "—"}
-          mono={true}
-          small
-        />
-      </div>
+      {/* Header card with the big numbers — only stats with real values
+       * render. Showing "—" everywhere when fields are missing reads as
+       * defective; better to omit and render a single footnote. */}
+      {(() => {
+        const hasBorrower = !!(data.borrower_name && data.borrower_name.trim());
+        const hasIndustry = !!(data.industry && data.industry.trim() && data.industry !== "NAICS —");
+        const lr = data.loan_request;
+        const loanAmount = lr?.amount_usd != null && Number.isFinite(Number(lr.amount_usd)) && Number(lr.amount_usd) > 0;
+        const loanSub =
+          lr?.term_years != null
+            ? `${Number(lr.term_years).toFixed(1)}y${lr.facility_type ? ` · ${titleCase(lr.facility_type)}` : ""}`
+            : lr?.facility_type
+              ? titleCase(lr.facility_type)
+              : null;
+        const hasPricing = !!(lr?.pricing && String(lr.pricing).trim());
+
+        const stats: React.ReactNode[] = [];
+        if (hasBorrower) stats.push(<Stat key="b" label="Borrower" value={data.borrower_name} />);
+        if (hasIndustry) stats.push(<Stat key="i" label="Industry" value={data.industry} mono={false} small />);
+        if (loanAmount)
+          stats.push(
+            <Stat key="l" label="Loan request" value={fmtUsdMillions(lr!.amount_usd)} sub={loanSub ?? undefined} />,
+          );
+        if (hasPricing) stats.push(<Stat key="p" label="Pricing" value={lr!.pricing} mono small />);
+
+        if (stats.length === 0) return null;
+
+        const missingFields = [
+          !hasBorrower && "borrower",
+          !hasIndustry && "industry",
+          !loanAmount && "loan request",
+          !hasPricing && "pricing",
+        ].filter(Boolean);
+
+        const gridCols =
+          stats.length === 1
+            ? "md:grid-cols-1"
+            : stats.length === 2
+              ? "md:grid-cols-2"
+              : stats.length === 3
+                ? "md:grid-cols-3"
+                : "md:grid-cols-4";
+        return (
+          <>
+            <div
+              className={`${missingFields.length > 0 ? "mb-3" : "mb-6"} grid grid-cols-2 gap-4 rounded-md border border-border bg-muted p-5 ${gridCols}`}
+            >
+              {stats}
+            </div>
+            {missingFields.length > 0 && (
+              <p className="mb-6 font-mono text-[12.5px] text-muted-foreground">
+                Note: {missingFields.join(", ")} not yet populated by the drafter.
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       {/* Narrative */}
       <p>

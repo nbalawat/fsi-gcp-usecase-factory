@@ -194,7 +194,10 @@ export const CreditMemoDocument: React.FC<Props> = ({
                 Drafted {fmtDate(memo.drafted_at)}
               </span>
             )}
-            {memo.citation_density != null && (
+            {/* Show density badge only when there ARE citations — agents
+                haven't emitted citations yet for most memos, so showing
+                "0%" on every page is meaningless. */}
+            {memo.citation_density != null && memo.citation_density > 0 && (
               <Badge
                 tone={memo.citation_density >= 0.8 ? "success" : "warning"}
                 dot
@@ -363,7 +366,17 @@ function memoValidationIssues(
   if (memo.review_status === "revise") {
     issues.push("The memo-reviewer flagged this draft for revision.");
   }
-  if (memo.citation_density != null && memo.citation_density < 0.8) {
+  // Citation density check: only fire when there ARE some citations but
+  // not enough — i.e. > 0 and < 0.8. A density of 0 (or null/undefined)
+  // means agents haven't emitted citations yet — that's a known platform
+  // gap, not a per-memo defect, and shouldn't slap a yellow banner on
+  // every memo. When agents start emitting citations, this gate flips on
+  // automatically.
+  if (
+    memo.citation_density != null &&
+    memo.citation_density > 0 &&
+    memo.citation_density < 0.8
+  ) {
     issues.push(
       `Citation density ${(memo.citation_density * 100).toFixed(0)}% — below the 80% sign-off threshold.`,
     );

@@ -15,7 +15,7 @@ export default async function OriginationPage(): Promise<JSX.Element> {
 
   return (
     <AppShell
-      brand="atrium"
+      brand="Commercial Credit"
       context="dev · us-central1"
       nav={personaNav(persona)}
       active="origination"

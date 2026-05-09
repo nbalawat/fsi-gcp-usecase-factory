@@ -51,7 +51,7 @@ export default async function StandaloneAuditPage({
 
   return (
     <AppShell
-      brand="atrium"
+      brand="Commercial Credit"
       context="dev · us-central1"
       nav={navItems(queueCount)}
       active="queue"

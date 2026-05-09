@@ -22,6 +22,7 @@ import { MemoEmpty } from "@uc/components/credit-memo/memo-empty";
 import { MemoExportButtons } from "@uc/components/credit-memo/memo-export-buttons";
 import { MemoToc } from "@uc/components/credit-memo/memo-toc";
 import { LECO_MEMO_FIXTURE } from "@uc/lib/memo-fixtures";
+import { riskBandLabel } from "@uc/lib/risk-band";
 import type {
   CreditMemoBody,
   SectionKey,
@@ -126,7 +127,7 @@ export default async function CaseDetailPage({
 
   return (
     <AppShell
-      brand="atrium"
+      brand="Commercial Credit"
       context="dev · us-central1"
       nav={navItems(queueLength)}
       active="queue"
@@ -280,9 +281,21 @@ export default async function CaseDetailPage({
         >
           {/* At-a-glance chips: risk · recommendation · clock */}
           <div className="mb-5 flex flex-wrap gap-1.5">
-            <Badge tone={riskTone(c.risk_band)} dot>
-              <span className="whitespace-nowrap">Risk {c.risk_band}</span>
-            </Badge>
+            {(() => {
+              const r = riskBandLabel(c.risk_band);
+              return (
+                <Badge tone={r.tone} dot>
+                  <span className="whitespace-nowrap">
+                    {r.label}
+                    {r.code !== "—" && (
+                      <span className="ml-1 font-mono text-mono-sm opacity-70">
+                        · {r.code}
+                      </span>
+                    )}
+                  </span>
+                </Badge>
+              );
+            })()}
             <Badge tone={decisionTone(c.decision)} dot>
               <span className="whitespace-nowrap">{decisionLabel(c.decision)}</span>
             </Badge>

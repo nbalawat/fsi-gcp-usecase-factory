@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Atrium · pipeline console",
+  title: "Commercial Credit · Underwriter",
   description:
-    "Atrium pipeline console — one frontend codebase, configured per use case via console.yaml.",
+    "Commercial credit underwriting console — pipeline view of in-flight loan applications.",
 };
 
 export default function RootLayout({

@@ -102,7 +102,7 @@ export default async function HomePage(): Promise<JSX.Element> {
 
   return (
     <AppShell
-      brand="atrium"
+      brand="Commercial Credit"
       context="dev · us-central1"
       nav={personaNav(persona, cases.length)}
       active="queue"
