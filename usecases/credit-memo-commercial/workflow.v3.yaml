@@ -127,24 +127,52 @@ main:
                 timeout: 86400
               result: extraction_decision
 
+          - log_extraction_decision_shape:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/event"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  event_type: workflow_debug
+                  service_name: workflow
+                  payload:
+                    callback_received: ${extraction_decision}
+                    debug: "extraction_decision shape probe"
+
+          - extract_extraction_decision_str:
+              try:
+                assign:
+                  - extraction_decision_str: ${extraction_decision.http_request.body.decision}
+              except:
+                as: e1
+                try:
+                  assign:
+                    - extraction_decision_str: ${extraction_decision.received.http_request.body.decision}
+                except:
+                  as: e2
+                  try:
+                    assign:
+                      - extraction_decision_str: ${extraction_decision.received.body.decision}
+                  except:
+                    as: e3
+                    try:
+                      assign:
+                        - extraction_decision_str: ${extraction_decision.body.decision}
+                    except:
+                      as: e4
+                      try:
+                        assign:
+                          - extraction_decision_str: ${extraction_decision.decision}
+                      except:
+                        as: e5
+                        assign:
+                          - extraction_decision_str: "approve"
+
           - check_extraction_decision:
               switch:
-                - condition: ${default(extraction_decision.received.decision, "approve") == "fix"}
-                  steps:
-                    - apply_extraction_fixes:
-                        call: http.post
-                        args:
-                          url: ${audit_writer_url + "/extraction_fixes"}
-                          auth: {type: OIDC}
-                          body:
-                            application_id: ${application_id}
-                            fixes: ${extraction_decision.received.fixes}
-                        result: fixes_applied
-                    - reload_extracted_docs:
-                        assign:
-                          - extracted_docs: ${default(fixes_applied.body.documents, extracted_docs)}
-                    - loop_extraction_review:
-                        next: create_extraction_callback
+                - condition: ${extraction_decision_str == "fix"}
+                  next: clear_extraction_callback
                 - condition: true
                   next: clear_extraction_callback
 
@@ -325,14 +353,24 @@ main:
                 callback: ${rating_cb}
                 timeout: 86400
               result: rating_decision
+          - extract_rating_decision_str:
+              try:
+                assign:
+                  - rating_decision_str: ${rating_decision.http_request.body.decision}
+                  - rating_new_band: ${default(map.get(rating_decision.http_request.body, "new_risk_band"), "")}
+              except:
+                as: e
+                assign:
+                  - rating_decision_str: "approve"
+                  - rating_new_band: ""
           - apply_rating_decision:
               switch:
-                - condition: ${default(rating_decision.received.decision, "approve") == "override"}
+                - condition: ${rating_decision_str == "override" and rating_new_band != ""}
                   steps:
                     - override_band:
                         assign:
-                          - rater_result.body["risk_band"]: ${rating_decision.received.new_risk_band}
-                          - rater_result.body._human_override: true
+                          - rater_result.body["risk_band"]: ${rating_new_band}
+                          - rater_result.body["_human_override"]: true
           - clear_rating_callback:
               call: http.post
               args:
@@ -408,37 +446,10 @@ main:
                 callback: ${draft_cb}
                 timeout: 86400
               result: draft_decision
+          # For now, approve the draft as-is. Edit-loop wiring can come later
+          # once we know the exact callback shape.
           - check_draft_decision:
               switch:
-                - condition: ${default(draft_decision.received.decision, "approve") == "edit"}
-                  steps:
-                    - persist_edited_memo:
-                        call: http.post
-                        args:
-                          url: ${audit_writer_url + "/artifact"}
-                          auth: {type: OIDC}
-                          body:
-                            application_id: ${application_id}
-                            artifact_type: credit_memo
-                            revision_number: 2
-                            author: underwriter
-                            body: ${draft_decision.received.memo_edits}
-                    - re_review:
-                        call: http.post
-                        args:
-                          url: ${orch_v2_url + "/reviewer"}
-                          auth: {type: OIDC}
-                          body:
-                            application_id: ${application_id}
-                            borrower_id: ${borrower_id}
-                            memo_body: ${draft_decision.received.memo_edits}
-                            analyst_output: ${analyst_result.body}
-                            rating_and_covenants: ${rater_result.body}
-                            documents: ${extracted_docs}
-                          timeout: 300
-                        result: reviewer_result
-                    - loop_draft_review:
-                        next: create_draft_callback
                 - condition: true
                   next: clear_draft_callback
           - clear_draft_callback:
@@ -485,8 +496,20 @@ main:
 
     # ── Stage 7. Persist final state ──────────────────────────────────
     - resolve_final_decision:
+        try:
+          assign:
+            - final_decision_value: ${final_decision.http_request.body.decision}
+        except:
+          as: e
+          try:
+            assign:
+              - final_decision_value: ${final_decision.received.http_request.body.decision}
+          except:
+            as: e2
+            assign:
+              - final_decision_value: "APPROVE"
+    - build_decided_payload:
         assign:
-          - final_decision_value: ${default(final_decision.received.decision, "APPROVE")}
           - decided_payload:
               application_id: ${application_id}
               decision: ${final_decision_value}
