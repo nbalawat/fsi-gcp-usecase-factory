@@ -166,12 +166,242 @@ def http(request: Any) -> Any:
         return _handle_artifact(request)
     if method == "POST" and path == "/state":
         return _handle_state(request)
+    if method == "POST" and path == "/callback":
+        return _handle_callback_register(request)
+    if method == "POST" and path == "/callback/clear":
+        return _handle_callback_clear(request)
+    if method == "POST" and path == "/extraction_fixes":
+        return _handle_extraction_fixes(request)
 
     return (
         json.dumps({"error": "not_found", "path": path}),
         404,
         {"Content-Type": "application/json"},
     )
+
+
+# ── Callback registration / clearing (workflow → DB) ───────────────────────
+
+
+class CallbackRegisterRequest(BaseModel):
+    """Stores a workflow-issued callback URL on application_state.pending_callbacks
+    so the UI can fetch it and POST to it when the human acts."""
+    model_config = ConfigDict(extra="forbid")
+    application_id: str = Field(..., min_length=36, max_length=36)
+    checkpoint: str = Field(..., max_length=40)
+    callback_url: str
+    current_stage: str | None = Field(default=None, max_length=40)
+
+
+class CallbackClearRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    application_id: str = Field(..., min_length=36, max_length=36)
+    checkpoint: str = Field(..., max_length=40)
+
+
+CallbackRegisterRequest.model_rebuild()
+CallbackClearRequest.model_rebuild()
+
+
+def _handle_callback_register(request):
+    try:
+        body = request.get_json(force=True) or {}
+        req = CallbackRegisterRequest.model_validate(body)
+    except ValidationError as e:
+        return (
+            json.dumps({"error": "invalid_request", "details": e.errors()}),
+            422,
+            {"Content-Type": "application/json"},
+        )
+
+    # pg8000 can't bind a parameter through nested CAST(... AS jsonb); build
+    # the full {checkpoint: payload} jsonb merge object in Python and pass it
+    # as a single string parameter we cast once.
+    callback_payload = {
+        "url": req.callback_url,
+        "registered_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+    }
+    merge_obj_json = json.dumps({req.checkpoint: callback_payload})
+    sql = text(
+        """
+        UPDATE application_state
+           SET pending_callbacks = COALESCE(pending_callbacks, CAST('{}' AS jsonb))
+                                  || CAST(:merge AS jsonb),
+               current_stage = COALESCE(:stage, current_stage),
+               updated_at = NOW(),
+               last_event_at = NOW()
+         WHERE application_id = :app_id
+        """
+    )
+    try:
+        with _get_engine().begin() as c:
+            res = c.execute(sql, {
+                "app_id": req.application_id,
+                "merge": merge_obj_json,
+                "stage": req.current_stage,
+            })
+            if res.rowcount == 0:
+                return (
+                    json.dumps({"error": "not_found", "application_id": req.application_id}),
+                    404,
+                    {"Content-Type": "application/json"},
+                )
+        return (
+            json.dumps({"ok": True, "checkpoint": req.checkpoint}),
+            200,
+            {"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        print(f"[{SERVICE_NAME}] callback_register failed: {e}", file=sys.stderr, flush=True)
+        return (
+            json.dumps({"error": "write_failed", "msg": str(e)[:500]}),
+            500,
+            {"Content-Type": "application/json"},
+        )
+
+
+def _handle_callback_clear(request):
+    try:
+        body = request.get_json(force=True) or {}
+        req = CallbackClearRequest.model_validate(body)
+    except ValidationError as e:
+        return (
+            json.dumps({"error": "invalid_request", "details": e.errors()}),
+            422,
+            {"Content-Type": "application/json"},
+        )
+
+    sql = text(
+        """
+        UPDATE application_state
+           SET pending_callbacks = COALESCE(pending_callbacks, CAST('{}' AS jsonb)) - :checkpoint,
+               updated_at = NOW(),
+               last_event_at = NOW()
+         WHERE application_id = :app_id
+        """
+    )
+    try:
+        with _get_engine().begin() as c:
+            c.execute(sql, {"app_id": req.application_id, "checkpoint": req.checkpoint})
+        return (
+            json.dumps({"ok": True}),
+            200,
+            {"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        print(f"[{SERVICE_NAME}] callback_clear failed: {e}", file=sys.stderr, flush=True)
+        return (
+            json.dumps({"error": "write_failed", "msg": str(e)[:500]}),
+            500,
+            {"Content-Type": "application/json"},
+        )
+
+
+# ── Extraction fix-ups (HITL feedback) ─────────────────────────────────────
+
+
+class ExtractionFix(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    doc_id: str = Field(..., min_length=36, max_length=36)
+    field_path: str = Field(..., max_length=200)
+    new_value: Any | None = None
+
+
+class ExtractionFixesRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    application_id: str = Field(..., min_length=36, max_length=36)
+    fixes: list[ExtractionFix]
+
+
+ExtractionFix.model_rebuild()
+ExtractionFixesRequest.model_rebuild()
+
+
+def _set_dotted(d: dict, path: str, value: Any) -> dict:
+    """Set a dotted-path key in a nested dict, creating sub-objects as needed."""
+    parts = path.split(".")
+    cur = d
+    for p in parts[:-1]:
+        if not isinstance(cur.get(p), dict):
+            cur[p] = {}
+        cur = cur[p]
+    cur[parts[-1]] = value
+    return d
+
+
+def _handle_extraction_fixes(request):
+    """Apply per-field overrides to the latest document_extracted event for
+    each (application_id, doc_id). Returns the patched documents list so
+    the workflow can use it directly without re-querying."""
+    try:
+        body = request.get_json(force=True) or {}
+        req = ExtractionFixesRequest.model_validate(body)
+    except ValidationError as e:
+        return (
+            json.dumps({"error": "invalid_request", "details": e.errors()}),
+            422,
+            {"Content-Type": "application/json"},
+        )
+
+    try:
+        engine = _get_engine()
+
+        # Group fixes by doc_id
+        by_doc: dict[str, list[ExtractionFix]] = {}
+        for f in req.fixes:
+            by_doc.setdefault(f.doc_id, []).append(f)
+
+        with engine.begin() as c:
+            patched_docs: list[dict] = []
+            for doc_id, fixes in by_doc.items():
+                # Find the most recent document_extracted event for this app+doc
+                row = c.execute(
+                    text(
+                        "SELECT id, payload FROM application_events "
+                        "WHERE application_id = :a "
+                        "  AND event_type = 'document_extracted' "
+                        "  AND payload->>'doc_id' = :d "
+                        "ORDER BY occurred_at DESC LIMIT 1"
+                    ),
+                    {"a": req.application_id, "d": doc_id},
+                ).first()
+                if not row:
+                    continue
+                event_id, payload = row
+                ext = payload.get("extracted_fields") or {}
+                for f in fixes:
+                    _set_dotted(ext, f.field_path, f.new_value)
+                payload["extracted_fields"] = ext
+                payload.setdefault("_human_overrides", []).extend(
+                    [{"field_path": f.field_path, "new_value": f.new_value} for f in fixes]
+                )
+
+                # Insert a new event recording the override
+                c.execute(
+                    text(
+                        "INSERT INTO application_events (application_id, event_type, "
+                        "service_name, payload) VALUES (:a, 'extraction_override', "
+                        "'underwriter', CAST(:p AS jsonb))"
+                    ),
+                    {"a": req.application_id, "p": json.dumps({
+                        "doc_id": doc_id,
+                        "fixes": [{"field_path": f.field_path, "new_value": f.new_value} for f in fixes],
+                    })},
+                )
+                patched_docs.append(payload)
+
+        return (
+            json.dumps({"ok": True, "documents": patched_docs, "fixed_doc_count": len(patched_docs)}),
+            200,
+            {"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        print(f"[{SERVICE_NAME}] extraction_fixes failed: {e}", file=sys.stderr, flush=True)
+        return (
+            json.dumps({"error": "write_failed", "msg": str(e)[:500]}),
+            500,
+            {"Content-Type": "application/json"},
+        )
 
 
 def _handle_event(request: Any):

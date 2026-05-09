@@ -1,0 +1,517 @@
+# Cloud Workflows v3 — credit-memo-commercial with 4 HITL callbacks
+#
+# Adds human-in-the-loop checkpoints + feedback loops on top of v2:
+#
+#   1. extraction_review — after Stage 1 (per-doc extraction)
+#       approve  → proceed to validation
+#       fix      → apply field overrides → loop back to await
+#
+#   2. rating_review — after Stage 5 (rater)
+#       approve  → proceed to drafter
+#       override → set new risk_band → proceed to drafter
+#
+#   3. draft_review — after drafter
+#       approve  → proceed to final_approval
+#       edit     → store memo edits → re-run reviewer → loop back to await
+#
+#   4. final_approval — same as v2's existing wait_for_approval
+#       approve  → sinks
+#       decline  → publish .decided with DECLINE
+#       return   → return_notice + sinks
+#
+# Eventarc trigger: Pub/Sub topic `credit-memo-commercial.enriched`.
+# Each callback URL is stored in application_state.pending_callbacks
+# (a JSONB map of checkpoint_name → URL) so the UI can fetch + POST.
+
+main:
+  params: [args]
+  steps:
+    - probe_input_shape:
+        # Eventarc CloudEvent shape:
+        #   args = {data: {message: {data: "<base64>", attributes: {...}}, subscription: "..."}, ...}
+        # Direct workflow invocation:
+        #   args = {application_id, borrower_id, ...}  (the parsed payload)
+        # Try the CloudEvent path first; on any failure fall back to args.
+        try:
+          steps:
+            - parse_pubsub:
+                assign:
+                  - parsed: ${json.decode(text.decode(base64.decode(args.data.message.data)))}
+        except:
+          as: e
+          steps:
+            - parse_direct:
+                assign:
+                  - parsed: ${args}
+
+    - init:
+        assign:
+          - application_id:    ${parsed.application_id}
+          - borrower_id:       ${parsed.borrower_id}
+          - loan_amount_usd:   ${parsed.loan_amount_usd}
+          - documents:         ${parsed.documents}
+          - has_re_collateral: ${default(map.get(parsed, "collateral_includes_real_estate"), false)}
+          - audit_writer_url:  ${sys.get_env("AUDIT_WRITER_URL")}
+          - extractor_url:     ${sys.get_env("DOCUMENT_EXTRACTOR_URL")}
+          - orch_v2_url:       ${sys.get_env("ORCHESTRATOR_V2_URL")}
+          - rules_url:         ${sys.get_env("RULES_SERVICE_URL")}
+          - ui_base_url:       ${sys.get_env("UI_BASE_URL")}
+          - dlq_topic:         ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.dlq"}
+
+    - record_workflow_started:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: extracting
+
+    - init_collections:
+        assign:
+          - extracted_docs: []
+
+    # ── Stage 1. Document extraction (parallel — one per doc) ─────────
+    - extract_documents:
+        parallel:
+          shared: [extracted_docs]
+          for:
+            value: doc
+            in: ${documents}
+            steps:
+              - call_extractor:
+                  try:
+                    call: http.post
+                    args:
+                      url: ${extractor_url + "/extract"}
+                      auth: {type: OIDC}
+                      body:
+                        application_id: ${application_id}
+                        doc_id: ${doc.doc_id}
+                        doc_type: ${doc.doc_type}
+                        gcs_uri: ${doc.gcs_uri}
+                      timeout: 600
+                    result: extract_result
+                  retry:
+                    predicate: ${http.default_retry_predicate}
+                    max_retries: 2
+                    backoff: {initial_delay: 5, max_delay: 60, multiplier: 2}
+              - record_extraction:
+                  assign:
+                    - extracted_docs: ${list.concat(default(extracted_docs, []), [extract_result.body])}
+
+    # ── Checkpoint 1: extraction_review ────────────────────────────────
+    - extraction_review_loop:
+        steps:
+          - create_extraction_callback:
+              call: events.create_callback_endpoint
+              args:
+                http_callback_method: POST
+              result: extraction_cb
+
+          - register_extraction_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: extraction_review
+                  callback_url: ${extraction_cb.url}
+                  current_stage: extraction_review
+
+          - await_extraction_review:
+              call: events.await_callback
+              args:
+                callback: ${extraction_cb}
+                timeout: 86400
+              result: extraction_decision
+
+          - check_extraction_decision:
+              switch:
+                - condition: ${default(extraction_decision.received.decision, "approve") == "fix"}
+                  steps:
+                    - apply_extraction_fixes:
+                        call: http.post
+                        args:
+                          url: ${audit_writer_url + "/extraction_fixes"}
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            fixes: ${extraction_decision.received.fixes}
+                        result: fixes_applied
+                    - reload_extracted_docs:
+                        assign:
+                          - extracted_docs: ${default(fixes_applied.body.documents, extracted_docs)}
+                    - loop_extraction_review:
+                        next: create_extraction_callback
+                - condition: true
+                  next: clear_extraction_callback
+
+          - clear_extraction_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback/clear"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: extraction_review
+
+    # ── Stage 2. Validation gate (inline) ─────────────────────────────
+    # Inline validation: any extracted doc with missing_required_fields
+    # OR a failed extraction returns the application for revision. The
+    # full Python validation gate (with tier-based + collateral rules)
+    # lives in usecases/<uc>/validation/gate.py and is called by the UI;
+    # the workflow keeps a simpler pre-check here.
+    - validate_completeness:
+        assign:
+          - validation_decision: "PROCEED"
+          - validation_missing_items: []
+    - validate_iter_docs:
+        for:
+          value: doc
+          in: ${extracted_docs}
+          steps:
+            - check_doc:
+                switch:
+                  - condition: ${default(map.get(doc, "failed"), false) == true}
+                    steps:
+                      - build_failed_item:
+                          assign:
+                            - failed_item:
+                                code: "extraction_failed"
+                                doc_type: ${doc.doc_type}
+                                doc_id: ${doc.doc_id}
+                            - validation_decision: "RETURN_FOR_REVISION"
+                            - validation_missing_items: ${list.concat(validation_missing_items, [failed_item])}
+                  - condition: ${len(default(map.get(doc, "missing_required_fields"), [])) > 0}
+                    steps:
+                      - build_missing_item:
+                          assign:
+                            - missing_item:
+                                code: "missing_required"
+                                doc_type: ${doc.doc_type}
+                                doc_id: ${doc.doc_id}
+                                fields: ${doc.missing_required_fields}
+                            - validation_decision: "RETURN_FOR_REVISION"
+                            - validation_missing_items: ${list.concat(validation_missing_items, [missing_item])}
+
+    - check_validation_decision:
+        switch:
+          - condition: ${validation_decision == "RETURN_FOR_REVISION"}
+            next: run_return_for_revision
+        next: stage_3_atomic_services
+
+    - run_return_for_revision:
+        steps:
+          - write_return_notice:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/artifact"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  artifact_type: return_notice
+                  author: workflow
+                  body:
+                    application_id: ${application_id}
+                    decision: RETURN_FOR_REVISION
+                    missing_items: ${validation_missing_items}
+                    next_steps: "Address the items below and resubmit."
+          - update_state_returned:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/state"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  decision: RETURN_FOR_REVISION
+                  current_stage: done
+          - return_decision_returned:
+              return: "RETURN_FOR_REVISION"
+
+    # ── Stage 3. Atomic services (parallel) ──────────────────────────
+    - stage_3_atomic_services:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: spreading
+
+    # ── Stage 4. Rules ────────────────────────────────────────────────
+    - stage_4_rules:
+        try:
+          call: http.post
+          args:
+            url: ${rules_url + "/evaluate_all"}
+            auth: {type: OIDC}
+            body:
+              application_id: ${application_id}
+              loan_amount_usd: ${loan_amount_usd}
+              service_results: {}
+            timeout: 60
+          result: rules_result
+        except:
+          as: e
+          steps:
+            - log_rules_failure:
+                assign:
+                  - rules_result: {body: {results: {}}}
+
+    # ── Stage 5a. document_processor + analyst ────────────────────────
+    - call_document_processor:
+        call: http.post
+        args:
+          url: ${orch_v2_url + "/document_processor"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            borrower_id: ${borrower_id}
+            documents: ${extracted_docs}
+          timeout: 300
+        result: doc_processor_result
+
+    - call_analyst:
+        call: http.post
+        args:
+          url: ${orch_v2_url + "/analyst"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            borrower_id: ${borrower_id}
+            reconciled_documents: ${doc_processor_result.body}
+            documents: ${extracted_docs}
+            service_results: {}
+          timeout: 300
+        result: analyst_result
+
+    # ── Stage 5b. rater_and_covenant_designer ─────────────────────────
+    - call_rater:
+        call: http.post
+        args:
+          url: ${orch_v2_url + "/rater_and_covenant_designer"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            borrower_id: ${borrower_id}
+            analyst_output: ${analyst_result.body}
+            rules_results: ${rules_result.body}
+          timeout: 300
+        result: rater_result
+
+    # ── Checkpoint 2: rating_review ───────────────────────────────────
+    - rating_review_step:
+        steps:
+          - create_rating_callback:
+              call: events.create_callback_endpoint
+              args:
+                http_callback_method: POST
+              result: rating_cb
+          - register_rating_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: rating_review
+                  callback_url: ${rating_cb.url}
+                  current_stage: rating_review
+          - await_rating_review:
+              call: events.await_callback
+              args:
+                callback: ${rating_cb}
+                timeout: 86400
+              result: rating_decision
+          - apply_rating_decision:
+              switch:
+                - condition: ${default(rating_decision.received.decision, "approve") == "override"}
+                  steps:
+                    - override_band:
+                        assign:
+                          - rater_result.body["risk_band"]: ${rating_decision.received.new_risk_band}
+                          - rater_result.body._human_override: true
+          - clear_rating_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback/clear"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: rating_review
+
+    # ── Stage 5c. drafter ─────────────────────────────────────────────
+    - call_drafter:
+        call: http.post
+        args:
+          url: ${orch_v2_url + "/drafter"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            borrower_id: ${borrower_id}
+            analyst_output: ${analyst_result.body}
+            rating_and_covenants: ${rater_result.body}
+            documents: ${extracted_docs}
+          timeout: 600
+        result: drafter_result
+
+    - call_reviewer:
+        call: http.post
+        args:
+          url: ${orch_v2_url + "/reviewer"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            borrower_id: ${borrower_id}
+            memo_body: ${drafter_result.body}
+            analyst_output: ${analyst_result.body}
+            rating_and_covenants: ${rater_result.body}
+            documents: ${extracted_docs}
+          timeout: 300
+        result: reviewer_result
+
+    - persist_memo:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/artifact"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            artifact_type: credit_memo
+            revision_number: 1
+            author: drafter
+            body: ${drafter_result.body}
+
+    # ── Checkpoint 3: draft_review ────────────────────────────────────
+    - draft_review_loop:
+        steps:
+          - create_draft_callback:
+              call: events.create_callback_endpoint
+              args:
+                http_callback_method: POST
+              result: draft_cb
+          - register_draft_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: draft_review
+                  callback_url: ${draft_cb.url}
+                  current_stage: draft_review
+          - await_draft_review:
+              call: events.await_callback
+              args:
+                callback: ${draft_cb}
+                timeout: 86400
+              result: draft_decision
+          - check_draft_decision:
+              switch:
+                - condition: ${default(draft_decision.received.decision, "approve") == "edit"}
+                  steps:
+                    - persist_edited_memo:
+                        call: http.post
+                        args:
+                          url: ${audit_writer_url + "/artifact"}
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            artifact_type: credit_memo
+                            revision_number: 2
+                            author: underwriter
+                            body: ${draft_decision.received.memo_edits}
+                    - re_review:
+                        call: http.post
+                        args:
+                          url: ${orch_v2_url + "/reviewer"}
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            borrower_id: ${borrower_id}
+                            memo_body: ${draft_decision.received.memo_edits}
+                            analyst_output: ${analyst_result.body}
+                            rating_and_covenants: ${rater_result.body}
+                            documents: ${extracted_docs}
+                          timeout: 300
+                        result: reviewer_result
+                    - loop_draft_review:
+                        next: create_draft_callback
+                - condition: true
+                  next: clear_draft_callback
+          - clear_draft_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback/clear"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: draft_review
+
+    # ── Checkpoint 4: final_approval ──────────────────────────────────
+    - final_approval_step:
+        steps:
+          - create_approval_callback:
+              call: events.create_callback_endpoint
+              args:
+                http_callback_method: POST
+              result: approval_cb
+          - register_approval_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: final_approval
+                  callback_url: ${approval_cb.url}
+                  current_stage: approval
+          - await_final_approval:
+              call: events.await_callback
+              args:
+                callback: ${approval_cb}
+                timeout: 432000
+              result: final_decision
+          - clear_approval_callback:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/callback/clear"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  checkpoint: final_approval
+
+    # ── Stage 7. Persist final state ──────────────────────────────────
+    - resolve_final_decision:
+        assign:
+          - final_decision_value: ${default(final_decision.received.decision, "APPROVE")}
+          - decided_payload:
+              application_id: ${application_id}
+              decision: ${final_decision_value}
+
+    - finalize_state:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: done
+            decision: ${final_decision_value}
+            risk_band: ${rater_result.body.risk_band}
+
+    - publish_decided:
+        call: googleapis.pubsub.v1.projects.topics.publish
+        args:
+          topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.decided"}
+          body:
+            messages:
+              - attributes:
+                  application_id: ${application_id}
+                  decision: ${final_decision_value}
+                data: ${base64.encode(json.encode(decided_payload))}
+
+    - finalize:
+        return: ${final_decision_value}

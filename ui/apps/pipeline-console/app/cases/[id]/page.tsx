@@ -24,6 +24,7 @@ import { MemoEmpty } from "@uc/components/credit-memo/memo-empty";
 import { DocumentExtractionPanel } from "@uc/components/document-extraction/document-extraction-panel";
 import type { DocumentRecord } from "@uc/components/document-extraction/types";
 import { ReturnedApplicationPanel } from "@uc/components/returned-application/returned-application-panel";
+import { CheckpointActionBar } from "@uc/components/checkpoint-actions/checkpoint-action-bar";
 import { MemoExportButtons } from "@uc/components/credit-memo/memo-export-buttons";
 import { MemoToc } from "@uc/components/credit-memo/memo-toc";
 import { LECO_MEMO_FIXTURE } from "@uc/lib/memo-fixtures";
@@ -255,6 +256,14 @@ export default async function CaseDetailPage({
         </aside>
 
         <main className="min-w-0 px-8 py-10 lg:px-12 lg:py-12 space-y-8">
+          {/* HITL action bar — sticky at top when the workflow is paused
+              waiting for a human decision. */}
+          <CheckpointActionBar
+            applicationId={c.application_id}
+            currentStage={c.current_stage}
+            riskBand={c.risk_band}
+          />
+
           {/* Returned-application banner — replaces memo when validation gate
               routed this app back to the applicant. */}
           {returnNotice && c.decision === "RETURN_FOR_REVISION" ? (
