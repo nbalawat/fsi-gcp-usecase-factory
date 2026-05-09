@@ -87,11 +87,46 @@ export const CreditMemoDocument: React.FC<Props> = ({
     ? SECTION_ORDER.indexOf(draftingKey) + 1
     : null;
 
+  // Once the drafter has finished (memo.drafted_at is set), any section
+  // still missing or empty is FINAL-EMPTY, not still-drafting. Render a
+  // clean "section unavailable" tile instead of an indefinite skeleton —
+  // otherwise the user sees skeletons spinning forever (the credit-memo
+  // glitch we paid for).
+  const drafterDone = !!memo?.drafted_at;
+
+  const isEmptyContent = (v: unknown): boolean => {
+    if (v == null) return true;
+    if (typeof v === "object" && !Array.isArray(v)) {
+      const obj = v as Record<string, unknown>;
+      // empty {} OR object with all-empty values (citations:[] only, etc.)
+      const meaningful = Object.entries(obj).filter(([k, val]) => {
+        if (k === "citations") return false;  // citations alone don't count
+        if (val == null) return false;
+        if (Array.isArray(val) && val.length === 0) return false;
+        if (typeof val === "string" && val.trim() === "") return false;
+        if (typeof val === "object" && Object.keys(val).length === 0) return false;
+        return true;
+      });
+      return meaningful.length === 0;
+    }
+    if (Array.isArray(v) && v.length === 0) return true;
+    return false;
+  };
+
   // Wrap each section in a transition container so the swap from skeleton →
   // real content is a soft fade (200 ms) rather than a snap.
   const renderSection = (key: SectionKey, idx: number): React.ReactNode => {
     const content = (memo as Record<string, unknown> | null)?.[key];
-    if (!content) {
+    const empty = isEmptyContent(content);
+
+    if (empty && drafterDone) {
+      return (
+        <FadeIn key={`${key}-na`} keyId={`${key}-na`}>
+          <SectionUnavailable number={idx + 1} title={SECTION_LABELS[key]} />
+        </FadeIn>
+      );
+    }
+    if (empty) {
       return (
         <FadeIn key={`${key}-skel`} keyId={`${key}-skel`}>
           <MemoSectionSkeleton number={idx + 1} title={SECTION_LABELS[key]} />
@@ -343,4 +378,26 @@ const FadeIn: React.FC<{
   <div className="memo-fade-in">
     {children}
   </div>
+);
+
+const SectionUnavailable: React.FC<{ number: number; title: string }> = ({
+  number,
+  title,
+}) => (
+  <section className="my-12 scroll-mt-24">
+    <div className="mb-4">
+      <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+        Section {number}
+      </p>
+      <h2 className="mt-1 font-serif text-h2 font-semi text-ink-1">{title}</h2>
+    </div>
+    <div className="rounded-md border border-rule bg-paper-2 p-5">
+      <p className="font-serif text-body-sm text-ink-2 leading-snug">
+        This section was not produced for the current memo. The drafter agent
+        completed without populating it; the underlying atomic-service
+        outputs may not have provided sufficient detail. Open the audit
+        trail for diagnostic context.
+      </p>
+    </div>
+  </section>
 );

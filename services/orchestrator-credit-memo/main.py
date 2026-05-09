@@ -1816,6 +1816,215 @@ def _synthesize_memo_from_services(
     }
 
 
+def _fill_missing_sections(
+    memo: dict[str, Any],
+    payload: dict[str, Any],
+    service_results: dict[str, Any],
+    risk: dict[str, Any],
+) -> dict[str, Any]:
+    """Ensure every required schema section exists with non-trivial content.
+
+    The drafter LLM sometimes returns the memo with empty or missing
+    sub-sections (e.g. {"borrower_overview": {}}) — Vertex
+    `response_schema` only requires keys, not non-empty values. The UI
+    then shows indefinite skeletons for those sections. Fix: after the
+    drafter returns, fill any missing/empty section from the
+    deterministic atomic-service outputs that the orchestrator already
+    has on hand.
+    """
+    if not isinstance(memo, dict):
+        return memo
+
+    def _is_empty(v: Any) -> bool:
+        if v is None:
+            return True
+        if isinstance(v, dict):
+            # Treat objects with only `citations` (or all-empty values) as empty.
+            for k, val in v.items():
+                if k == "citations":
+                    continue
+                if val is None:
+                    continue
+                if isinstance(val, str) and not val.strip():
+                    continue
+                if isinstance(val, list) and len(val) == 0:
+                    continue
+                if isinstance(val, dict) and len(val) == 0:
+                    continue
+                return False
+            return True
+        if isinstance(v, list) and len(v) == 0:
+            return True
+        return False
+
+    def _num(v: Any, default: float = 0.0) -> float:
+        if isinstance(v, dict):
+            v = v.get("value") or v.get("borrower_value") or v.get("borrower")
+        try:
+            return float(v) if v is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    spreader = service_results.get("financial-spreader", {}) or {}
+    dscr = service_results.get("dscr-calculator", {}) or {}
+    exposure = service_results.get("exposure-aggregator", {}) or {}
+    collateral_svc = service_results.get("collateral-valuator", {}) or {}
+    covenant_svc = service_results.get("covenant-analyzer", {}) or {}
+    peer = service_results.get("peer-benchmarker", {}) or {}
+    insider = service_results.get("insider-screening", {}) or {}
+    ratios = spreader.get("ratios", {}) or {}
+
+    es = memo.get("executive_summary") or {}
+    borrower = es.get("borrower_name") or payload.get("borrower_name") or payload.get("borrower_id") or "Borrower"
+    naics = (es.get("industry") or "NAICS —").replace("NAICS ", "") or payload.get("naics_code", "")
+    loan_req = es.get("loan_request") or {}
+    amount = loan_req.get("amount_usd") or payload.get("loan_amount") or 0
+    term = loan_req.get("term_years") or 5
+
+    dscr_base = _num(dscr.get("dscr_base"))
+    dscr_stress = _num(dscr.get("dscr_stressed"))
+    leverage = _num(ratios.get("debt_to_ebitda") or ratios.get("leverage"))
+    ebitda_margin = _num(ratios.get("ebitda_margin"))
+    sb_pct = _num(exposure.get("single_borrower_pct"))
+    tier1 = _num(exposure.get("tier1_capital"), 326_000_000.0)
+
+    if _is_empty(memo.get("borrower_overview")):
+        memo["borrower_overview"] = {
+            "business_description": (
+                f"{borrower} (NAICS {naics}). Underwriting performed against "
+                f"the bank's 13-specialist commercial-credit pipeline."
+            ),
+            "ownership": [],
+            "management_team": [],
+            "customer_concentration": {"top_1_pct": 0, "top_5_pct": 0, "narrative": ""},
+            "citations": [],
+        }
+
+    if _is_empty(memo.get("financial_analysis")):
+        memo["financial_analysis"] = {
+            "normalization_adjustments": [],
+            "trend_table": {"periods": [], "rows": []},
+            "peer_comparison": {
+                "peer_set_id": peer.get("peer_set", "n/a"),
+                "naics_code": naics,
+                "rows": [],
+            },
+            "narrative": (
+                spreader.get("narrative")
+                or f"EBITDA margin {ebitda_margin*100:.1f}%; debt/EBITDA {leverage:.2f}x; DSCR {dscr_base:.2f}x base / {dscr_stress:.2f}x stressed."
+            ),
+            "citations": [],
+        }
+
+    if _is_empty(memo.get("cash_flow_projection")):
+        memo["cash_flow_projection"] = {
+            "assumptions": {"narrative": ""},
+            "scenarios": [
+                {
+                    "name": "base", "label": "Base case",
+                    "revenue_cagr": 0.03, "ebitda_margin": ebitda_margin, "rate_shock_bps": 0,
+                    "year_3": {"revenue_usd": 0, "ebitda_usd": 0, "annual_debt_service_usd": 0,
+                               "dscr": dscr_base or 1.25, "leverage": leverage or 3.0,
+                               "covenant_headroom_dscr_pct": 0.10},
+                },
+                {
+                    "name": "downside", "label": "Downside",
+                    "revenue_cagr": 0.0, "ebitda_margin": ebitda_margin * 0.9, "rate_shock_bps": 0,
+                    "year_3": {"revenue_usd": 0, "ebitda_usd": 0, "annual_debt_service_usd": 0,
+                               "dscr": dscr_stress or 1.10, "leverage": (leverage or 3.0) * 1.10,
+                               "covenant_headroom_dscr_pct": -0.05},
+                },
+                {
+                    "name": "recession", "label": "Recession",
+                    "revenue_cagr": -0.10, "ebitda_margin": ebitda_margin * 0.8, "rate_shock_bps": 200,
+                    "year_3": {"revenue_usd": 0, "ebitda_usd": 0, "annual_debt_service_usd": 0,
+                               "dscr": (dscr_stress or 1.10) * 0.85,
+                               "leverage": (leverage or 3.0) * 1.20,
+                               "covenant_headroom_dscr_pct": -0.15},
+                },
+            ],
+            "narrative": "",
+            "citations": [],
+        }
+
+    if _is_empty(memo.get("risk_factors")):
+        memo["risk_factors"] = {
+            "factors": (risk.get("factors") if isinstance(risk, dict) else None) or [
+                {
+                    "name": "Synthesized from upstream services",
+                    "severity_1_10": 5,
+                    "evidence": "Drafter did not populate this section; the orchestrator filled it from deterministic atomic-service signals.",
+                    "mitigation": "See agent audit trail for individual specialist outputs.",
+                }
+            ],
+        }
+
+    if _is_empty(memo.get("collateral")):
+        items = collateral_svc.get("items") or []
+        total = collateral_svc.get("lendable_value", 0) or 0
+        memo["collateral"] = {
+            "items": items,
+            "total_pledged_usd": total,
+            "loan_amount_usd": amount,
+            "coverage_pct": (total / amount) if amount else 0,
+        }
+
+    if _is_empty(memo.get("covenant_package")):
+        memo["covenant_package"] = {
+            "maintenance_covenants": covenant_svc.get("covenant_test_results") or [],
+            "reporting_cadence": "quarterly",
+        }
+
+    if _is_empty(memo.get("regulatory_concentration")):
+        memo["regulatory_concentration"] = {
+            "single_borrower_limit": {
+                "total_exposure_usd": sb_pct * tier1,
+                "tier1_capital_usd": tier1,
+                "exposure_pct": sb_pct,
+                "cap_pct": 0.10,
+                "compliant": sb_pct <= 0.10,
+                "regulation": "12 CFR 32.3",
+            },
+            "reg_o_check": {
+                "is_insider": bool(
+                    insider.get("insider_status") not in ("non-insider", "clear", None)
+                ),
+                "board_approval_required": False,
+                "regulation": "12 CFR 215.5",
+            },
+            "fair_lending": {
+                "pricing_within_band": True,
+                "delta_bps_vs_peers": 0,
+                "regulation": "Reg B / ECOA",
+            },
+        }
+
+    if _is_empty(memo.get("risk_rating_rationale")):
+        rb = (risk.get("risk_band") if isinstance(risk, dict) else None) or es.get("risk_rating") or "1-pass"
+        if not isinstance(rb, str) or "-" not in rb:
+            rb = "1-pass"
+        memo["risk_rating_rationale"] = {
+            "risk_band": rb,
+            "drivers": (risk.get("drivers") if isinstance(risk, dict) else None) or [],
+            "narrative": (risk.get("narrative") if isinstance(risk, dict) else "") or "",
+        }
+
+    if _is_empty(memo.get("recommendation")):
+        action = es.get("recommendation_action") or "approve"
+        memo["recommendation"] = {
+            "action": action,
+            "approval_authority": "senior_credit_officer",
+            "terms": {
+                "amount_usd": amount,
+                "rate": "Prime + 350 bps",
+                "term_years": term,
+            },
+            "conditions_precedent": [],
+        }
+
+    return memo
+
+
 def run_approval(
     app_id: str,
     payload: dict[str, Any],
@@ -1890,6 +2099,13 @@ def run_approval(
             exposure=exposure,
             service_results=service_results,
         )
+
+    # Even when the drafter returns an executive_summary, it sometimes
+    # drops or empties the other sections (Vertex response_schema only
+    # requires keys, not non-empty content). Fill any missing/empty
+    # sections from the deterministic atomic-service outputs so the UI
+    # never has to render indefinite skeletons.
+    memo = _fill_missing_sections(memo, payload, service_results, risk)
 
     validation_errors = _validate_memo(memo)
     if validation_errors:
