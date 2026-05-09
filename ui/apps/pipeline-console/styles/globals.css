@@ -1,21 +1,186 @@
+/* Font imports — Inter Tight (UI), Source Serif 4 (display + memo body),
+ * JetBrains Mono (numerics + code). */
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;420;450;500;600;650;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;450;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* shadcn/ui CSS variable system, customized to the bank brand:
+ *   foreground = Coral Black #0F0B0B
+ *   primary    = Deloitte Green #86BC24 (with ink foreground for AA contrast)
+ *   accent     = Deloitte Green tint
+ * Other variables follow shadcn's neutral baseline.
+ *
+ * Risk-band heat map (--risk-1 through --risk-5) is domain-specific
+ * (OCC pass through loss); preserved from the prior token set.
+ */
 @layer base {
-  html,
-  body {
-    @apply bg-surface-canvas text-text-primary antialiased;
-    font-family:
-      "Inter",
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      "Segoe UI",
-      sans-serif;
+  :root {
+    --background: 0 0% 100%;                  /* paper white */
+    --foreground: 0 6% 5%;                    /* Coral Black #0F0B0B */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 6% 5%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 6% 5%;
+
+    --primary: 79 67% 44%;                    /* Deloitte Green #86BC24 */
+    --primary-foreground: 0 6% 5%;
+
+    --secondary: 30 8% 95%;
+    --secondary-foreground: 0 6% 5%;
+
+    --muted: 40 11% 95%;
+    --muted-foreground: 0 2% 41%;
+
+    --accent: 79 50% 91%;                     /* Deloitte Green tint */
+    --accent-foreground: 0 6% 5%;
+
+    --destructive: 9 70% 39%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 13% 89%;
+    --input: 30 13% 89%;
+    --ring: 79 67% 44%;                       /* focus ring = brand green */
+
+    --radius: 0.5rem;
+
+    /* Banking-domain semantic tones */
+    --semantic-success: 90 67% 32%;
+    --semantic-warning: 31 71% 39%;
+    --semantic-danger: 9 70% 39%;
+    --semantic-info: 213 26% 32%;
+
+    --semantic-success-tint: 90 50% 88%;
+    --semantic-warning-tint: 31 50% 88%;
+    --semantic-danger-tint: 9 50% 88%;
+    --semantic-info-tint: 213 30% 89%;
+
+    /* OCC risk-band heat map — never reuse for other domains */
+    --risk-1: 90 67% 32%;
+    --risk-2: 31 71% 39%;
+    --risk-3: 23 71% 45%;
+    --risk-4: 9 70% 39%;
+    --risk-5: 350 60% 35%;
+
+    /* Three font families; never add a fourth */
+    --font-sans: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   }
 
-  *:focus-visible {
-    @apply outline-none ring-2 ring-brand-primary/60;
+  .dark {
+    --background: 0 6% 5%;                    /* Coral Black ground */
+    --foreground: 0 0% 98%;
+    --card: 0 6% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 6% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 79 67% 44%;
+    --primary-foreground: 0 6% 5%;
+    --secondary: 0 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 4% 16%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 79 30% 22%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 9 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 4% 22%;
+    --input: 0 4% 22%;
+    --ring: 79 67% 44%;
   }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* Editorial display headings use the serif. */
+  h1, .display {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
+    font-weight: 600;
+  }
+
+  /* Code, paths, IDs, numerics — JetBrains Mono. */
+  code, pre, kbd, samp, .mono { font-family: var(--font-mono); }
+
+  /* Focus visibility — the shadcn standard ring at brand-green. */
+  *:focus-visible {
+    outline: none;
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Audit-trail row entrance */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Credit-memo section fade-in */
+  @keyframes memoFadeIn {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .memo-fade-in { animation: memoFadeIn 200ms ease-out; }
+
+  /* Eyebrow label utility — uppercase, tracked, muted */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    font-family: var(--font-mono);
+  }
+}
+
+/* Print rules for the memo-print-view route */
+@media print {
+  body { background: #fff; color: #000; }
+  .memo-print-hide { display: none !important; }
+  .memo-print-page {
+    font-family: var(--font-serif);
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+  }
+  .memo-print-page h1 { font-size: 22pt; }
+  .memo-print-page h2 { font-size: 16pt; page-break-after: avoid; }
+  .memo-print-page h3 { font-size: 13pt; page-break-after: avoid; }
+  .memo-print-page section { break-inside: avoid-page; }
+  .memo-print-page table { break-inside: avoid; }
+  .memo-print-page .memo-toc-print { display: none; }
+  @page { margin: 18mm 16mm 22mm 16mm; }
+}
+
+/* Brand wordmark dot — kept for the AppShell header, now reads from --primary */
+.atrium-dot {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  margin-left: 0.2em;
+  vertical-align: baseline;
+}
+
+/* Status dot inside StatusBadge components */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
 }
