@@ -17,29 +17,43 @@ interface Props {
   /** The stage the page was server-rendered with. Refreshes only fire when
    *  the live stage differs (so we don't loop on a stable state). */
   initialStage: string;
+  /** The last_event_at the page was server-rendered with. We also refresh
+   *  when this advances (e.g. during the drafting stage as sections of
+   *  the memo are written one-by-one to application_artifacts). */
+  initialLastEventAt?: string | null;
 }
 
 export const CaseAutoRefresh: React.FC<Props> = ({
   applicationId,
   initialStage,
+  initialLastEventAt,
 }) => {
   const router = useRouter();
   const { case: live } = useLiveCase(applicationId);
   const lastStageRef = React.useRef(initialStage);
+  const lastEventAtRef = React.useRef(initialLastEventAt ?? "");
   const refreshTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     if (!live) return;
     const stage = live.current_stage;
-    if (!stage || stage === lastStageRef.current) return;
+    const lastEventAt = (live as { last_event_at?: string }).last_event_at ?? "";
 
-    // Stage advanced — schedule a refresh. Debounce by 1s so a burst of
-    // intake→spreading→policy events doesn't trigger 4 reloads.
-    lastStageRef.current = stage;
+    const stageAdvanced = !!stage && stage !== lastStageRef.current;
+    // last_event_at is an ISO timestamp; string comparison is monotonic.
+    const eventsAdvanced = !!lastEventAt && lastEventAt > lastEventAtRef.current;
+    if (!stageAdvanced && !eventsAdvanced) return;
+
+    if (stageAdvanced) lastStageRef.current = stage;
+    if (eventsAdvanced) lastEventAtRef.current = lastEventAt;
+
+    // Debounce by 2s so a burst of intake→spreading→policy events (or the
+    // drafter writing 10 sections in quick succession) doesn't trigger
+    // a refresh storm. See plan Track B step 4.
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => {
       router.refresh();
-    }, 1000);
+    }, 2000);
 
     return () => {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);

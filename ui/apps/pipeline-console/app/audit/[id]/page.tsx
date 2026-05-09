@@ -5,6 +5,7 @@ import { Button } from "../../../components/ui/button";
 import { Separator } from "../../../components/ui/separator";
 import { LiveStatus } from "../../../components/live-status";
 import { AuditTrail } from "@uc/components/agent-audit/audit-trail";
+import { CaseAutoRefresh } from "@uc/components/case-auto-refresh";
 import { getActiveCases, getCase } from "@uc/lib/live-data";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,8 @@ export default async function StandaloneAuditPage({
 
   let borrowerName: string | undefined;
   let queueCount = 0;
+  let initialStage: string | null = null;
+  let initialLastEventAt: string | null = null;
   try {
     const [state, total] = await Promise.all([
       getCase(decoded),
@@ -38,6 +41,10 @@ export default async function StandaloneAuditPage({
     ]);
     queueCount = total;
     borrowerName = state?.borrower_name;
+    initialStage = state?.current_stage ?? null;
+    initialLastEventAt =
+      (state as { last_event_at?: string | null } | null | undefined)
+        ?.last_event_at ?? null;
   } catch {
     // DB unavailable — render with id only.
   }
@@ -62,6 +69,14 @@ export default async function StandaloneAuditPage({
         </div>
         <LiveStatus />
       </div>
+
+      {initialStage && (
+        <CaseAutoRefresh
+          applicationId={decoded}
+          initialStage={initialStage}
+          initialLastEventAt={initialLastEventAt}
+        />
+      )}
 
       <main className="px-6 py-6">
         <AuditTrail

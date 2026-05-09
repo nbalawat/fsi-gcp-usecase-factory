@@ -11,6 +11,7 @@ import {
   getCase,
   getMemoArtifact,
 } from "@uc/lib/live-data";
+import { CaseAutoRefresh } from "@uc/components/case-auto-refresh";
 import { CreditMemoDocument } from "@uc/components/credit-memo/credit-memo-document";
 import { MemoEmpty } from "@uc/components/credit-memo/memo-empty";
 import { MemoExportButtons } from "@uc/components/credit-memo/memo-export-buttons";
@@ -99,6 +100,16 @@ export default async function MemoStandalonePage({
           {borrower}
         </h1>
       </header>
+
+      {!useMock && state && (
+        <CaseAutoRefresh
+          applicationId={appId}
+          initialStage={state.current_stage ?? "intake"}
+          initialLastEventAt={
+            (state as { last_event_at?: string | null }).last_event_at ?? null
+          }
+        />
+      )}
 
       <main className="px-6 py-8">
         {memoBody && Object.keys(memoBody).length > 0 ? (
