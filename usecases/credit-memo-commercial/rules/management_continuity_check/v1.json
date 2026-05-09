@@ -1,0 +1,53 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "ceo_tenure_years", "name": "ceo_tenure_years", "dataType": "number"},
+          {"id": "cfo_tenure_years", "name": "cfo_tenure_years", "dataType": "number"},
+          {"id": "cfo_hire_external", "name": "cfo_hire_external", "dataType": "boolean"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "Management Continuity",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "collect",
+        "inputs": [
+          {"id": "c1", "name": "ceo_tenure_years", "field": "ceo_tenure_years", "dataType": "number"},
+          {"id": "c2", "name": "cfo_tenure_years", "field": "cfo_tenure_years", "dataType": "number"},
+          {"id": "c3", "name": "cfo_hire_external", "field": "cfo_hire_external", "dataType": "boolean"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "flag", "field": "flag", "dataType": "string"},
+          {"id": "o2", "name": "action", "field": "action", "dataType": "string"},
+          {"id": "o3", "name": "rating_impact", "field": "rating_impact", "dataType": "string"}
+        ],
+        "rules": [
+          {"_id": "r1", "c1": "< 1.0", "c2": "", "c3": "", "o1": "\"ceo_short_tenure\"", "o2": "\"document_succession_plan\"", "o3": "\"downgrade_trigger\""},
+          {"_id": "r2", "c1": "", "c2": "< 1.0", "c3": "false", "o1": "\"cfo_short_tenure_internal\"", "o2": "\"warning_review_controls\"", "o3": "\"watch\""},
+          {"_id": "r3", "c1": "< 1.0", "c2": "< 1.0", "c3": "", "o1": "\"both_short_tenure\"", "o2": "\"escalate_to_credit_committee\"", "o3": "\"downgrade_one_notch\""}
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

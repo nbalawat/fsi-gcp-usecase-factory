@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/10K.json",
+  "title": "10-K extraction schema",
+  "description": "Target shape passed to Landing AI ADE Extract for SEC Form 10-K filings. ADE Extract returns one extraction object that we cross-check against document_requirements.json:doc_types['10-K'].required_fields.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "fiscal_year_end": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of fiscal year end (e.g. '2024-12-31'). Located on cover page or first page of consolidated balance sheet."
+    },
+
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "ISO 4217 currency code; almost always USD for US filings."
+    },
+
+    "units": {
+      "type": "string",
+      "enum": ["actual", "thousands", "millions"],
+      "description": "Unit of measure used in the financial statements. Values must be reported as-stated; orchestrator normalizes."
+    },
+
+    "income_statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revenue": { "type": ["number", "null"], "description": "Total net revenues for the fiscal year." },
+        "cogs": { "type": ["number", "null"], "description": "Cost of goods sold / cost of revenues." },
+        "gross_profit": { "type": ["number", "null"] },
+        "operating_expenses": { "type": ["number", "null"] },
+        "ebitda": { "type": ["number", "null"], "description": "Earnings before interest, taxes, depreciation, amortization. If not stated, compute = operating_income + depreciation_amortization." },
+        "operating_income": { "type": ["number", "null"] },
+        "depreciation_amortization": { "type": ["number", "null"] },
+        "interest_expense": { "type": ["number", "null"] },
+        "tax_expense": { "type": ["number", "null"] },
+        "net_income": { "type": ["number", "null"] }
+      }
+    },
+
+    "balance_sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_assets": { "type": ["number", "null"] },
+        "current_assets": { "type": ["number", "null"] },
+        "cash_and_equivalents": { "type": ["number", "null"] },
+        "accounts_receivable": { "type": ["number", "null"] },
+        "inventory": { "type": ["number", "null"] },
+        "ppe_net": { "type": ["number", "null"], "description": "Net property, plant, equipment." },
+        "goodwill_intangibles": { "type": ["number", "null"] },
+        "total_liabilities": { "type": ["number", "null"] },
+        "current_liabilities": { "type": ["number", "null"] },
+        "total_debt": { "type": ["number", "null"], "description": "Sum of short-term + long-term debt + capital lease obligations." },
+        "long_term_debt": { "type": ["number", "null"] },
+        "short_term_debt": { "type": ["number", "null"] },
+        "total_equity": { "type": ["number", "null"] }
+      }
+    },
+
+    "cash_flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operating_cash_flow": { "type": ["number", "null"] },
+        "capex": { "type": ["number", "null"], "description": "Capital expenditures; absolute value (positive)." },
+        "free_cash_flow": { "type": ["number", "null"], "description": "If not stated, compute = operating_cash_flow - capex." },
+        "investing_cash_flow": { "type": ["number", "null"] },
+        "financing_cash_flow": { "type": ["number", "null"] },
+        "dividends_paid": { "type": ["number", "null"] }
+      }
+    },
+
+    "customer_concentration": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "From 10-K Item 1 (Business) or Item 7 (MD&A) customer-concentration disclosures.",
+      "properties": {
+        "disclosed": { "type": "boolean" },
+        "top_1_pct": { "type": ["number", "null"], "description": "Largest customer's % of revenue, as decimal fraction (e.g. 0.32 for 32%)." },
+        "top_5_pct": { "type": ["number", "null"] },
+        "named_customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "pct_of_revenue": { "type": ["number", "null"] }
+            }
+          }
+        },
+        "hhi": { "type": ["number", "null"], "description": "Herfindahl-Hirschman Index if computable from disclosure." }
+      }
+    },
+
+    "officers": {
+      "type": "array",
+      "description": "Named executive officers from Item 10 / proxy section.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" },
+          "tenure_years": { "type": ["number", "null"] }
+        }
+      }
+    },
+
+    "subsidiaries": {
+      "type": "array",
+      "description": "Material subsidiaries from Exhibit 21.",
+      "items": { "type": "string" }
+    },
+
+    "segments": {
+      "type": "array",
+      "description": "Reportable business segments with their revenue contribution.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "revenue": { "type": ["number", "null"] },
+          "operating_income": { "type": ["number", "null"] }
+        }
+      }
+    },
+
+    "going_concern_qualification": {
+      "type": "boolean",
+      "description": "True if the filing contains a going-concern qualification."
+    },
+
+    "subsequent_events": {
+      "type": ["string", "null"],
+      "description": "Material subsequent events disclosed after the period end."
+    }
+  },
+
+  "required": [
+    "fiscal_year_end",
+    "income_statement",
+    "balance_sheet",
+    "cash_flow"
+  ]
+}

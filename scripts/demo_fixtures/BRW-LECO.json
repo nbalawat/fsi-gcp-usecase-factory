@@ -1,0 +1,104 @@
+{
+  "borrower_id": "BRW-LECO",
+  "scenario_tag": "happy-path",
+  "loan_request": {
+    "amount_usd": 25000000,
+    "term_years": 5,
+    "facility_type": "term",
+    "purpose": "General corporate purposes; refinance maturing 2022 senior notes and fund automation capex at Cleveland and Mentor, OH plants."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {
+        "revenue": 3826000000,
+        "cogs": 2585000000,
+        "ebitda": 690000000,
+        "capex": 95000000,
+        "depreciation": 78000000,
+        "interest_expense": 32000000,
+        "tax": 138000000,
+        "net_income": 442000000
+      },
+      "fy2024": {
+        "revenue": 4008670000,
+        "cogs": 2535758000,
+        "ebitda": 720000000,
+        "capex": 110000000,
+        "depreciation": 82000000,
+        "interest_expense": 42786000,
+        "tax": 128041000,
+        "net_income": 466108000
+      },
+      "fy2025": {
+        "revenue": 4233003000,
+        "cogs": 2698751000,
+        "ebitda": 800000000,
+        "capex": 120000000,
+        "depreciation": 86000000,
+        "interest_expense": 51561000,
+        "tax": 154917000,
+        "net_income": 520533000
+      }
+    },
+    "balance_sheet": {
+      "fy2025": {
+        "total_assets": 3210000000,
+        "total_debt": 720000000,
+        "total_equity": 1480000000,
+        "current_assets": 1395000000,
+        "current_liabilities": 845000000,
+        "cash": 380000000,
+        "inventory": 540000000,
+        "ar": 410000000
+      }
+    },
+    "cash_flow": {
+      "fy2025": {
+        "operating_cf": 615000000,
+        "investing_cf": -135000000,
+        "financing_cf": -355000000
+      }
+    }
+  },
+  "borrower_metadata": {
+    "legal_name": "Lincoln Electric Holdings, Inc.",
+    "naics_code": "333992",
+    "hq_state": "OH",
+    "employee_count": 11800,
+    "founded_year": 1895,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.08, 0.05, 0.04, 0.03, 0.03],
+    "top_1_pct": 0.08,
+    "hhi": 0.0123
+  },
+  "management": {
+    "ceo_name": "Steven B. Hedlund",
+    "ceo_tenure_years": 3,
+    "cfo_name": "Gabriel Bruno",
+    "cfo_tenure_years": 6,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {
+      "type": "real_estate",
+      "estimated_value_usd": 18000000,
+      "age_years": 22,
+      "condition": "good"
+    },
+    {
+      "type": "equipment",
+      "estimated_value_usd": 12000000,
+      "age_years": 4,
+      "condition": "excellent"
+    }
+  ],
+  "principals_and_owners": [
+    {"name": "Steven B. Hedlund", "stake_pct": 0.004, "role": "CEO", "is_director": true},
+    {"name": "Vanguard Group (institutional)", "stake_pct": 0.114, "role": "Beneficial Owner", "is_director": false},
+    {"name": "BlackRock Inc. (institutional)", "stake_pct": 0.082, "role": "Beneficial Owner", "is_director": false},
+    {"name": "Curtis E. Moll", "stake_pct": 0.001, "role": "Director", "is_director": true},
+    {"name": "Kathryn Jo Lincoln", "stake_pct": 0.012, "role": "Chair Emerita", "is_director": true}
+  ]
+}

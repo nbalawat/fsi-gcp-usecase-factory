@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/audited_financials.json",
+  "title": "Audited financial statements extraction schema",
+  "description": "Private-company audited financials. Substitute for 10-K when borrower isn't an SEC registrant. Same financial shape as 10-K but adds auditor attestation fields.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "fiscal_year_end": { "type": "string", "format": "date" },
+    "currency": { "type": "string", "default": "USD" },
+    "units": { "type": "string", "enum": ["actual", "thousands", "millions"] },
+
+    "auditor_name": {
+      "type": "string",
+      "description": "Audit firm — Big Four, regional, or local. Drives a quality signal."
+    },
+
+    "audit_opinion": {
+      "type": "string",
+      "enum": ["unqualified", "qualified", "adverse", "disclaimer"],
+      "description": "GAAP opinion type. Anything other than 'unqualified' is a yellow/red flag."
+    },
+
+    "going_concern_qualification": {
+      "type": "boolean",
+      "description": "True if the audit report contains a going-concern qualification."
+    },
+
+    "income_statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revenue": { "type": ["number", "null"] },
+        "cogs": { "type": ["number", "null"] },
+        "gross_profit": { "type": ["number", "null"] },
+        "operating_expenses": { "type": ["number", "null"] },
+        "ebitda": { "type": ["number", "null"] },
+        "operating_income": { "type": ["number", "null"] },
+        "depreciation_amortization": { "type": ["number", "null"] },
+        "interest_expense": { "type": ["number", "null"] },
+        "tax_expense": { "type": ["number", "null"] },
+        "net_income": { "type": ["number", "null"] }
+      }
+    },
+
+    "balance_sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_assets": { "type": ["number", "null"] },
+        "current_assets": { "type": ["number", "null"] },
+        "cash_and_equivalents": { "type": ["number", "null"] },
+        "accounts_receivable": { "type": ["number", "null"] },
+        "inventory": { "type": ["number", "null"] },
+        "ppe_net": { "type": ["number", "null"] },
+        "total_liabilities": { "type": ["number", "null"] },
+        "current_liabilities": { "type": ["number", "null"] },
+        "total_debt": { "type": ["number", "null"] },
+        "total_equity": { "type": ["number", "null"] }
+      }
+    },
+
+    "cash_flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operating_cash_flow": { "type": ["number", "null"] },
+        "capex": { "type": ["number", "null"] },
+        "free_cash_flow": { "type": ["number", "null"] }
+      }
+    },
+
+    "footnote_disclosures": {
+      "type": "array",
+      "description": "Material footnote disclosures by topic (debt, leases, contingencies, related parties, etc.).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "topic": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+
+    "related_party_transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "party": { "type": "string" },
+          "nature": { "type": "string" },
+          "amount": { "type": ["number", "null"] }
+        }
+      }
+    }
+  },
+
+  "required": [
+    "fiscal_year_end",
+    "auditor_name",
+    "audit_opinion",
+    "income_statement",
+    "balance_sheet",
+    "cash_flow"
+  ]
+}

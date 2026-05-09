@@ -1,0 +1,15 @@
+{
+  "description": "Proposed spread 300 bps vs peer median 220 bps but only 3 peers → check skipped (peer_count < 5), no flag",
+  "input": {
+    "proposed_spread_bps": 300,
+    "peer_median_spread_bps": 220,
+    "peer_count": 3
+  },
+  "expected_output": {
+    "within_band": true,
+    "delta_bps": 80,
+    "requires_documentation": false,
+    "fair_lending_status": "insufficient_peer_set_skip_check"
+  },
+  "regulatory_basis": "Bank fair-lending policy — peer comparison with fewer than 5 comparable transactions is not statistically reliable; the pricing-band check is suppressed and the deal is reviewed manually instead."
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "insider_loans_total", "name": "insider_loans_total", "dataType": "number"},
+          {"id": "unimpaired_capital_surplus", "name": "unimpaired_capital_surplus", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "Reg O Aggregate Insider Lending Limit (12 CFR 215.4(b))",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [
+          {"id": "c1", "name": "ratio", "field": "insider_loans_total / unimpaired_capital_surplus", "dataType": "number"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "breach", "field": "breach", "dataType": "boolean"},
+          {"id": "o2", "name": "ratio_pct", "field": "ratio_pct", "dataType": "number"},
+          {"id": "o3", "name": "action_required", "field": "action_required", "dataType": "string"}
+        ],
+        "rules": [
+          {"_id": "r1", "c1": ">1.0", "o1": "true", "o2": "(insider_loans_total / unimpaired_capital_surplus) * 100", "o3": "\"halt_new_insider_lending_until_ratio_restored\""},
+          {"_id": "r2", "c1": "", "o1": "false", "o2": "(insider_loans_total / unimpaired_capital_surplus) * 100", "o3": "\"none\""}
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

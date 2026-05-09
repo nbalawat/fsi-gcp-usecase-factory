@@ -1,0 +1,13 @@
+{
+  "description": "Edge case — information-sector borrower (NAICS 51) exactly at 5.0x leverage; strict >5.0 condition means within threshold at the boundary",
+  "input": {
+    "naics_2digit": "51",
+    "leverage_ratio": 5.0
+  },
+  "expected_output": {
+    "within_threshold": true,
+    "max_leverage": 5.0,
+    "breach_severity": "none"
+  },
+  "regulatory_basis": "Interagency Leveraged Lending Guidance (OCC/FRB/FDIC SR 13-3) — information-sector borrowers may carry up to 5.0x leverage given recurring revenue profiles; exactly at the cap is within tolerance"
+}

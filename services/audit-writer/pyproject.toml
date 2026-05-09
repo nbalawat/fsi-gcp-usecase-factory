@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audit-writer"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "functions-framework>=3.5",
+    "pydantic>=2.6",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "pg8000>=1.31",
+    "cloud-sql-python-connector[pg8000]>=1.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4", "mypy>=1.10"]

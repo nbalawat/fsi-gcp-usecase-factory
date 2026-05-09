@@ -1,0 +1,14 @@
+{
+  "description": "Base DSCR 1.45 vs 1.20 floor → 20.83% headroom, well above 10% minimum",
+  "input": {
+    "base_case_value": 1.45,
+    "covenant_threshold": 1.20,
+    "covenant_type": "dscr"
+  },
+  "expected_output": {
+    "adequate_headroom": true,
+    "headroom_pct": 0.20833333333333343,
+    "recommendation": "headroom_sufficient"
+  },
+  "regulatory_basis": "Bank covenant calibration policy — DSCR covenants must provide ≥10% headroom to base-case projections to avoid technical default risk in normal volatility."
+}

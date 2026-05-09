@@ -18,7 +18,12 @@ from typing import Any
 
 import functions_framework
 import sqlalchemy
-from bank.logging import redacting_logger
+try:
+    from bank.logging import redacting_logger
+except ImportError:
+    import logging as _logging
+    def redacting_logger(name: str) -> _logging.Logger:  # type: ignore[misc]
+        return _logging.getLogger(name)
 from opentelemetry import trace
 from sqlalchemy import text
 

@@ -1,0 +1,16 @@
+{
+  "description": "Hospitality sector (NAICS 72*) exposure at 60% of Tier 1 capital — exceeds the 50% bank-policy hospitality cap; breach expected",
+  "input": {
+    "naics_sector": "721110",
+    "sector_exposure_pct": 60
+  },
+  "expected_output": [
+    {
+      "breach": true,
+      "sector_cap_pct": 50,
+      "regulation": "OCC Concentration Guidance / Bank Policy Hospitality Limit",
+      "action": "escalate_to_credit_committee"
+    }
+  ],
+  "regulatory_basis": "OCC Concentration Guidance / Bank Policy — hospitality sector exposure exceeds the 50% Tier 1 capital cap and must be escalated to the credit committee"
+}

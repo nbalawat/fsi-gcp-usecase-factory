@@ -1,0 +1,14 @@
+{
+  "description": "$200K insider loan against $50M Tier 1 capital — applicable limit max($500K, 10% of $50M) = $5M; loan is well within limit",
+  "input": {
+    "insider_loan_amount": 200000,
+    "tier1_capital": 50000000,
+    "has_collateral_backing": false
+  },
+  "expected_output": {
+    "breach": false,
+    "applicable_limit": 5000000,
+    "headroom": 4800000
+  },
+  "regulatory_basis": "12 CFR 215.4(c) — individual insider lending limit is the greater of $500K or 10% of unimpaired capital; loan is within applicable limit"
+}

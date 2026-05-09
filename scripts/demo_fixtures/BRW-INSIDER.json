@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-INSIDER",
+  "scenario_tag": "insider-flag",
+  "loan_request": {
+    "amount_usd": 5000000,
+    "term_years": 5,
+    "facility_type": "term",
+    "purpose": "Working capital and one-time legal/professional spend. NOTE: principal of borrower also serves on the Bank's board — Reg O insider review required."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 16500000, "cogs": 9800000, "ebitda": 4100000, "capex": 600000, "depreciation": 850000, "interest_expense": 320000, "tax": 620000, "net_income": 2310000},
+      "fy2024": {"revenue": 18000000, "cogs": 10600000, "ebitda": 4500000, "capex": 700000, "depreciation": 900000, "interest_expense": 350000, "tax": 690000, "net_income": 2560000},
+      "fy2025": {"revenue": 19200000, "cogs": 11200000, "ebitda": 4800000, "capex": 800000, "depreciation": 940000, "interest_expense": 380000, "tax": 730000, "net_income": 2750000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 28000000, "total_debt": 6800000, "total_equity": 17500000, "current_assets": 12000000, "current_liabilities": 5800000, "cash": 3400000, "inventory": 1200000, "ar": 4200000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 3500000, "investing_cf": -800000, "financing_cf": -1700000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Magnolia Holdings Trust",
+    "naics_code": "525990",
+    "hq_state": "AL",
+    "employee_count": 42,
+    "founded_year": 2010,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.28, 0.16, 0.11, 0.08, 0.05],
+    "top_1_pct": 0.28,
+    "hhi": 0.1190
+  },
+  "management": {
+    "ceo_name": "William H. Carrington III",
+    "ceo_tenure_years": 14,
+    "cfo_name": "Emily Carrington",
+    "cfo_tenure_years": 10,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 4200000, "age_years": 11, "condition": "good"},
+    {"type": "equipment", "estimated_value_usd": 1100000, "age_years": 4, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "William H. Carrington III", "stake_pct": 0.55, "role": "Trustee / Bank Director", "is_director": true},
+    {"name": "Carrington Family Trust", "stake_pct": 0.30, "role": "Owner", "is_director": true},
+    {"name": "Emily Carrington", "stake_pct": 0.10, "role": "CFO / Beneficiary", "is_director": false},
+    {"name": "Outside trustees", "stake_pct": 0.03, "role": "Trustee", "is_director": true},
+    {"name": "Charitable remainder beneficiaries", "stake_pct": 0.02, "role": "Beneficiary", "is_director": false}
+  ]
+}

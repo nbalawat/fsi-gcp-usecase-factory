@@ -1,0 +1,21 @@
+{
+  "service_name": "peer-and-industry-context",
+  "version": "1.0.0",
+  "consolidates": ["peer-benchmarker", "industry-risk-scorer"],
+  "description": "NAICS-driven contextual data for the rater: peer percentile cohort + sector/industry risk scoring. Both endpoints share peer_profiles + industry_risk_scorer_thresholds tables.",
+  "endpoints": {
+    "POST /peer_set":      {"purpose": "Build peer cohort + percentile metrics", "legacy_service": "peer-benchmarker"},
+    "POST /industry_risk": {"purpose": "Score borrower's sector/industry risk", "legacy_service": "industry-risk-scorer"},
+    "GET /health":         {"purpose": "Readiness probe"}
+  },
+  "dependencies": {
+    "secrets": [],
+    "tables_read": ["peer_profiles", "industry_risk_scorer_thresholds", "thresholds"],
+    "tables_write": ["application_events"],
+    "external_apis": []
+  },
+  "production_gates": {
+    "parity_required_for": ["peer-benchmarker", "industry-risk-scorer"],
+    "min_test_files": ["tests/test_parity.py"]
+  }
+}

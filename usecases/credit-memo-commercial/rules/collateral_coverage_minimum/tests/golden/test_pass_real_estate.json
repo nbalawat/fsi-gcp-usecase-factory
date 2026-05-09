@@ -1,0 +1,14 @@
+{
+  "description": "Real-estate-secured loan at 60% LTV is well below the 75% cap; within_threshold=true with no breach severity",
+  "input": {
+    "collateral_type": "real_estate",
+    "collateral_value": 1000000,
+    "loan_amount": 600000
+  },
+  "expected_output": {
+    "within_threshold": true,
+    "max_ltv_pct": 0.75,
+    "breach_severity": "none"
+  },
+  "regulatory_basis": "Bank collateral policy + 12 CFR 34 — real-estate-secured loans must respect LTV caps for readily marketable collateral; 60% LTV is comfortably under the 75% cap."
+}

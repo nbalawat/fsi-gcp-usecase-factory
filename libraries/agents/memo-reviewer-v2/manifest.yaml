@@ -1,0 +1,51 @@
+archetype: memo-reviewer-v2
+version: "1.0.0"
+description: |
+  Audits the drafter's memo before the underwriter sees it. Checks
+  citation density, coherence with the rater's rationale, banker tone
+  (no LLM tells), and section completeness. Replaces the legacy
+  memo_reviewer; structured response_schema + finding categories.
+
+what_archetype_provides:
+  - response_schema with review_outcome + findings + citation_density + section_coverage
+  - 6 finding categories (missing_citation / incoherent_with_rater /
+    tone / section_missing / factual_error / regulatory_omission)
+  - 4 review_outcome enums (approve / approve_with_conditions /
+    return_to_drafter / escalate)
+  - per-category check criteria
+  - citation_density thresholds (>=0.80 approve; 0.60-0.79 conditions;
+    <0.60 return)
+  - "don't rewrite — findings only" discipline rule
+
+what_use_case_provides:
+  - the memo-section names specific to your domain (credit-memo: 10
+    sections; KYC: ~6 sections; commercial-claim: ~5 sections)
+  - the regulatory_omission triggers specific to your regulatory
+    posture
+  - the tone-flag patterns ("I would like to", "as an AI", em-dash runs)
+
+instantiation_steps:
+  1. Copy `usecases/credit-memo-commercial/agents/reviewer.py`
+  2. Adapt REVIEWER_RESPONSE_SCHEMA's section list + the per-category
+     check criteria
+  3. Copy + adapt the prompt
+  4. Schema-validity test + finding-category-coverage test
+
+approved_models:
+  - claude-opus-4-7       # default — needs to read memo + cross-check
+
+cost_target_per_call_usd: 0.03
+latency_p99_ms: 30000
+
+quality_gates:
+  - response_schema validates
+  - 6 finding categories enumerable
+  - citation_density threshold logic is documented + tested
+  - "don't rewrite" rule explicit in prompt
+
+related_skills:
+  - agent-response-schema
+  - claude-api
+
+reference_implementation:
+  - usecases/credit-memo-commercial/agents/reviewer.py

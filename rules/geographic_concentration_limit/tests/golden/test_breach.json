@@ -1,0 +1,13 @@
+{
+  "description": "State exposure at 32% of Tier 1 capital — exceeds the 25% geographic concentration cap; breach expected",
+  "input": {
+    "state": "FL",
+    "geographic_exposure_pct": 32
+  },
+  "expected_output": {
+    "breach": true,
+    "geo_cap_pct": 25,
+    "action": "escalate_to_credit_committee"
+  },
+  "regulatory_basis": "OCC Concentration Guidance — single-state exposure exceeding 25% of Tier 1 capital must be escalated and risk-mitigated"
+}

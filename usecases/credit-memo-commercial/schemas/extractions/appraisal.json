@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/appraisal.json",
+  "title": "Real-estate appraisal extraction schema",
+  "description": "12 CFR 34 mandates a current appraisal for real-estate-secured commercial loans. Drives haircut math + collateral coverage analysis.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "appraisal_date": { "type": "string", "format": "date" },
+    "report_date": { "type": "string", "format": "date" },
+    "currency": { "type": "string", "default": "USD" },
+
+    "appraiser": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "firm": { "type": ["string", "null"] },
+        "license_number": { "type": ["string", "null"] },
+        "license_state": { "type": ["string", "null"] },
+        "designation": { "type": ["string", "null"], "description": "e.g. MAI, SRA" }
+      },
+      "required": ["name"]
+    },
+
+    "intended_use": {
+      "type": "string",
+      "description": "Per Uniform Standards of Professional Appraisal Practice (USPAP)."
+    },
+
+    "intended_user": {
+      "type": "string",
+      "description": "The institution requesting the appraisal."
+    },
+
+    "property": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["industrial", "office", "retail", "multifamily", "mixed_use", "hotel", "warehouse", "land", "specialty"]
+        },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "zip": { "type": ["string", "null"] },
+        "lot_size_sqft": { "type": ["number", "null"] },
+        "building_size_sqft": { "type": ["number", "null"] },
+        "year_built": { "type": ["integer", "null"] },
+        "occupancy_pct": { "type": ["number", "null"], "description": "Decimal fraction." },
+        "zoning": { "type": ["string", "null"] }
+      },
+      "required": ["type", "address"]
+    },
+
+    "appraised_value": {
+      "type": "number",
+      "description": "Final reconciled value (the headline number)."
+    },
+
+    "valuation_methods": {
+      "type": "array",
+      "description": "Sales comparison / income / cost approaches used.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "enum": ["sales_comparison", "income", "cost", "other"] },
+          "value_indication": { "type": "number" },
+          "weight": { "type": ["number", "null"], "description": "Weight in final reconciliation, 0-1." }
+        }
+      }
+    },
+
+    "comparable_sales": {
+      "type": "array",
+      "description": "Comparables used in the sales-comparison approach.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": { "type": "string" },
+          "sale_date": { "type": "string", "format": "date" },
+          "sale_price": { "type": "number" },
+          "size_sqft": { "type": ["number", "null"] },
+          "price_per_sqft": { "type": ["number", "null"] }
+        }
+      }
+    },
+
+    "income_approach": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "noi": { "type": ["number", "null"], "description": "Net operating income." },
+        "cap_rate": { "type": ["number", "null"], "description": "Decimal fraction." },
+        "value": { "type": ["number", "null"] }
+      }
+    },
+
+    "environmental_concerns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "concern": { "type": "string" },
+          "severity": { "type": "string", "enum": ["recognized", "controlled", "historical", "potential"] }
+        }
+      }
+    },
+
+    "expected_useful_life_years": { "type": ["number", "null"] },
+
+    "limiting_conditions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "USPAP limiting conditions / extraordinary assumptions."
+    }
+  },
+
+  "required": ["appraisal_date", "appraiser", "appraised_value", "property", "valuation_methods"]
+}

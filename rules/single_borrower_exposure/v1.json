@@ -21,7 +21,7 @@
       "type": "functionNode",
       "position": {"x": 300, "y": 0},
       "content": {
-        "source": "const total = proposed_amount + existing_exposure_committed;\nconst limit = tier1_capital * 0.15;\nconst headroom = limit - total;\nreturn { limit_status: total > limit ? 'breach' : headroom < limit * 0.1 ? 'warning' : 'pass', headroom_dollars: headroom, total_exposure: total, limit_dollars: limit };"
+        "source": "export const handler = (input) => {\n  const total = input.proposed_amount + input.existing_exposure_committed;\n  const limit = input.tier1_capital * 0.15;\n  const headroom = limit - total;\n  return {\n    limit_status: total > limit ? 'breach' : (headroom < limit * 0.1 ? 'warning' : 'pass'),\n    headroom_dollars: headroom,\n    total_exposure: total,\n    limit_dollars: limit\n  };\n};"
       }
     },
     {

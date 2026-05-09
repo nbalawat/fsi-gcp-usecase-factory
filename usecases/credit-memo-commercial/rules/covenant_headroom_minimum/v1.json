@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "base_case_value", "name": "base_case_value", "dataType": "number"},
+          {"id": "covenant_threshold", "name": "covenant_threshold", "dataType": "number"},
+          {"id": "covenant_type", "name": "covenant_type", "dataType": "string"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Covenant Headroom Computation",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "export const handler = (input) => {\n  const monitored = ['dscr', 'leverage', 'current_ratio'];\n  if (input.covenant_threshold === 0) {\n    return {\n      adequate_headroom: false,\n      headroom_pct: 0,\n      recommendation: 'invalid_threshold_zero'\n    };\n  }\n  const headroom = (input.base_case_value - input.covenant_threshold) / input.covenant_threshold;\n  if (!monitored.includes(input.covenant_type)) {\n    return {\n      adequate_headroom: true,\n      headroom_pct: headroom,\n      recommendation: 'covenant_type_not_monitored_for_headroom'\n    };\n  }\n  if (headroom < 0.10) {\n    return {\n      adequate_headroom: false,\n      headroom_pct: headroom,\n      recommendation: 'recalibrate_covenant_or_strengthen_structure'\n    };\n  }\n  return {\n    adequate_headroom: true,\n    headroom_pct: headroom,\n    recommendation: 'headroom_sufficient'\n  };\n};"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

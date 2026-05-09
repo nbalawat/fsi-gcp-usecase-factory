@@ -1,0 +1,15 @@
+{
+  "description": "Proposed spread 215 bps vs peer median 220 bps (delta -5 bps, peer_count 12) → within band",
+  "input": {
+    "proposed_spread_bps": 215,
+    "peer_median_spread_bps": 220,
+    "peer_count": 12
+  },
+  "expected_output": {
+    "within_band": true,
+    "delta_bps": -5,
+    "requires_documentation": false,
+    "fair_lending_status": "within_peer_band"
+  },
+  "regulatory_basis": "Reg B / ECOA + bank fair-lending policy — proposed spread is within the +/- 15 bps tolerance vs a statistically meaningful peer set; no disparate-pricing flag."
+}

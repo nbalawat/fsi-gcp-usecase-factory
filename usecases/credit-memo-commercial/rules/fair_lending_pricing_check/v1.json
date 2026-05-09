@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "proposed_spread_bps", "name": "proposed_spread_bps", "dataType": "number"},
+          {"id": "peer_median_spread_bps", "name": "peer_median_spread_bps", "dataType": "number"},
+          {"id": "peer_count", "name": "peer_count", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Fair Lending Pricing Band",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "export const handler = (input) => {\n  const delta_bps = input.proposed_spread_bps - input.peer_median_spread_bps;\n  const abs_delta = Math.abs(delta_bps);\n  if (input.peer_count < 5) {\n    return {\n      within_band: true,\n      delta_bps: delta_bps,\n      requires_documentation: false,\n      fair_lending_status: 'insufficient_peer_set_skip_check'\n    };\n  }\n  if (abs_delta > 15) {\n    return {\n      within_band: false,\n      delta_bps: delta_bps,\n      requires_documentation: true,\n      fair_lending_status: 'flag_audit_trail_required'\n    };\n  }\n  return {\n    within_band: true,\n    delta_bps: delta_bps,\n    requires_documentation: false,\n    fair_lending_status: 'within_peer_band'\n  };\n};"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

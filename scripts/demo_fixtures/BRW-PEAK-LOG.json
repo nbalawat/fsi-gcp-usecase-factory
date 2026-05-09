@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-PEAK-LOG",
+  "scenario_tag": "management-continuity-weak",
+  "loan_request": {
+    "amount_usd": 12000000,
+    "term_years": 5,
+    "facility_type": "term",
+    "purpose": "Tractor fleet refresh (60 units) and trailer expansion. Recent CFO departure raises governance/continuity concern."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 88000000, "cogs": 72000000, "ebitda": 8400000, "capex": 4200000, "depreciation": 3300000, "interest_expense": 1100000, "tax": 1050000, "net_income": 2950000},
+      "fy2024": {"revenue": 92000000, "cogs": 75500000, "ebitda": 8800000, "capex": 4400000, "depreciation": 3450000, "interest_expense": 1180000, "tax": 1100000, "net_income": 3070000},
+      "fy2025": {"revenue": 89000000, "cogs": 73800000, "ebitda": 8200000, "capex": 4300000, "depreciation": 3500000, "interest_expense": 1220000, "tax": 870000, "net_income": 2610000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 56000000, "total_debt": 19500000, "total_equity": 22500000, "current_assets": 18000000, "current_liabilities": 12500000, "cash": 2400000, "inventory": 1100000, "ar": 13800000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 5300000, "investing_cf": -4300000, "financing_cf": -1400000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Peak Logistics Group Inc.",
+    "naics_code": "484121",
+    "hq_state": "IL",
+    "employee_count": 480,
+    "founded_year": 1991,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.21, 0.13, 0.09, 0.06, 0.04],
+    "top_1_pct": 0.21,
+    "hhi": 0.0723
+  },
+  "management": {
+    "ceo_name": "Donald V. Brennan",
+    "ceo_tenure_years": 22,
+    "cfo_name": "Kevin Sato",
+    "cfo_tenure_years": 1,
+    "cfo_external_hire": true
+  },
+  "collateral_offered": [
+    {"type": "equipment", "estimated_value_usd": 14000000, "age_years": 4, "condition": "good"},
+    {"type": "real_estate", "estimated_value_usd": 5800000, "age_years": 24, "condition": "fair"}
+  ],
+  "principals_and_owners": [
+    {"name": "Brennan Family Holdings LLC", "stake_pct": 0.68, "role": "Owner", "is_director": true},
+    {"name": "Donald V. Brennan", "stake_pct": 0.24, "role": "CEO", "is_director": true},
+    {"name": "Kevin Sato", "stake_pct": 0.005, "role": "CFO (new hire)", "is_director": false},
+    {"name": "Senior managers", "stake_pct": 0.04, "role": "Management", "is_director": false},
+    {"name": "Outside investors", "stake_pct": 0.035, "role": "Minority", "is_director": false}
+  ]
+}

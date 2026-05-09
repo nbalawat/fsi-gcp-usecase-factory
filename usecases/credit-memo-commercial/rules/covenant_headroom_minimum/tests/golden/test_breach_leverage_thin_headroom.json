@@ -1,0 +1,14 @@
+{
+  "description": "Leverage covenant base 3.6x vs threshold 3.5x = 2.86% headroom < 10% minimum → breach",
+  "input": {
+    "base_case_value": 3.6,
+    "covenant_threshold": 3.5,
+    "covenant_type": "leverage"
+  },
+  "expected_output": {
+    "adequate_headroom": false,
+    "headroom_pct": 0.02857142857142847,
+    "recommendation": "recalibrate_covenant_or_strengthen_structure"
+  },
+  "regulatory_basis": "Bank covenant calibration policy — leverage covenant set with <10% headroom is too tight; minor EBITDA volatility would trip default."
+}

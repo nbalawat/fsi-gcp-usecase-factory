@@ -1,0 +1,14 @@
+{
+  "description": "Equipment-secured loan exactly at the 60% LTV cap → within_threshold=true (boundary inclusive)",
+  "input": {
+    "collateral_type": "equipment",
+    "collateral_value": 500000,
+    "loan_amount": 300000
+  },
+  "expected_output": {
+    "within_threshold": true,
+    "max_ltv_pct": 0.6,
+    "breach_severity": "none"
+  },
+  "regulatory_basis": "Bank collateral policy — equipment LTV cap of 60% is inclusive at the boundary; a loan exactly at the cap is compliant."
+}

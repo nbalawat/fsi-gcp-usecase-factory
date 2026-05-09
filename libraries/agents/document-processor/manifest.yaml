@@ -1,0 +1,51 @@
+archetype: document-processor
+version: "1.0.0"
+description: |
+  Cross-document reconciliation agent. Decides which source document to
+  trust per field when multiple docs disagree, surfaces material
+  discrepancies, and builds a single canonical financial set every
+  downstream agent uses. Replaces document_classifier + extractor in
+  the legacy 13-agent stack — both roles moved to the
+  document-extractor atomic service + the user-time doc_type tagging.
+
+what_archetype_provides:
+  - response_schema with reconciled_financials + discrepancies + trust_decisions
+  - 5 discrepancy-detection invariants (balance-sheet identity,
+    income-statement integrity, period continuity, officer continuity,
+    confidence threshold)
+  - trust hierarchy (audited > unaudited; most-recent-FYE wins; etc.)
+  - "don't reconcile by averaging" discipline rule
+
+what_use_case_provides:
+  - the field-paths specific to your domain
+  - the trust hierarchy specific to your doc-type mix
+  - the discrepancy-detection invariants specific to your numbers
+  - the missing_required_fields list
+
+instantiation_steps:
+  1. Copy `usecases/credit-memo-commercial/agents/document_processor.py`
+  2. Adapt DOCUMENT_PROCESSOR_RESPONSE_SCHEMA's reconciled_financials
+     shape to your domain
+  3. Copy + adapt the prompt; keep the trust hierarchy + invariants
+  4. Schema-validity test as before
+
+approved_models:
+  - gemini-3-1-flash      # default
+
+cost_target_per_call_usd: 0.03
+latency_p99_ms: 20000
+
+quality_gates:
+  - reconciled_financials matches your doc-type's extraction schema
+  - balance-sheet identity holds (within 1%)
+  - period continuity check fires when prior FYE + flow != ending equity
+  - missing_required_fields enumerated
+
+related_skills:
+  - agent-response-schema
+  - document-extraction-pipeline
+  - validation-gate
+
+reference_implementation:
+  - usecases/credit-memo-commercial/agents/document_processor.py
+  - usecases/credit-memo-commercial/agents/prompts/document_processor.md

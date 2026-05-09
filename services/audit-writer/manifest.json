@@ -1,0 +1,20 @@
+{
+  "service_name": "audit-writer",
+  "version": "1.0.0",
+  "description": "Brokers Cloud SQL writes for Cloud Workflows. The v2 workflow can't write SQL directly so it calls these endpoints to record events / artifacts / state transitions.",
+  "endpoints": {
+    "POST /event":    {"purpose": "Append a row to application_events"},
+    "POST /artifact": {"purpose": "Upsert a row in application_artifacts"},
+    "POST /state":    {"purpose": "Selective UPDATE of application_state columns"},
+    "GET /health":    {"purpose": "Readiness probe"}
+  },
+  "dependencies": {
+    "secrets": ["fsi-banking-db-pass-dev"],
+    "tables_read": [],
+    "tables_write": ["application_events", "application_artifacts", "application_state"],
+    "external_apis": []
+  },
+  "production_gates": {
+    "min_test_files": ["tests/test_audit_writer.py"]
+  }
+}

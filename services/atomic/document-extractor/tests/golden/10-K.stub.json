@@ -1,0 +1,72 @@
+{
+  "extracted_fields": {
+    "fiscal_year_end": "2024-12-31",
+    "currency": "USD",
+    "units": "millions",
+    "income_statement": {
+      "revenue": 4233.0,
+      "cogs": 2842.0,
+      "ebitda": 804.0,
+      "operating_income": 612.0,
+      "depreciation_amortization": 192.0,
+      "interest_expense": 34.0,
+      "tax_expense": 134.0,
+      "net_income": 444.0
+    },
+    "balance_sheet": {
+      "total_assets": 3892.0,
+      "current_assets": 1812.0,
+      "cash_and_equivalents": 412.0,
+      "accounts_receivable": 624.0,
+      "inventory": 488.0,
+      "ppe_net": 712.0,
+      "total_liabilities": 1923.0,
+      "current_liabilities": 882.0,
+      "total_debt": 720.0,
+      "long_term_debt": 642.0,
+      "short_term_debt": 78.0,
+      "total_equity": 1969.0
+    },
+    "cash_flow": {
+      "operating_cash_flow": 712.0,
+      "capex": 121.0,
+      "free_cash_flow": 591.0
+    },
+    "customer_concentration": {
+      "disclosed": true,
+      "top_1_pct": 0.08,
+      "top_5_pct": 0.24,
+      "named_customers": []
+    },
+    "officers": [
+      {
+        "name": "Christopher L. Mapes",
+        "title": "CEO",
+        "tenure_years": 12.0
+      },
+      {
+        "name": "Gabriel Bruno",
+        "title": "CFO",
+        "tenure_years": 4.0
+      }
+    ],
+    "going_concern_qualification": false
+  },
+  "confidence": 0.93,
+  "page_count": 240,
+  "citations": [
+    {
+      "field_path": "income_statement.revenue",
+      "chunk_id": "ch_42",
+      "page": 18,
+      "bbox": [
+        0.1,
+        0.2,
+        0.6,
+        0.25
+      ],
+      "excerpt": "Net sales totaled $4,233.0 million in 2024",
+      "confidence": 0.96
+    }
+  ]
+}

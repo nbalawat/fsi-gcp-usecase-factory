@@ -1,0 +1,229 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/document_requirements.json",
+  "title": "Document requirements for commercial credit memo applications",
+  "description": "The contract for what each document type must contain, what's required at the application level by loan size, and which extraction schema feeds Landing AI ADE Extract for each doc type. Single source of truth read by document-extractor service + validation gate + UI missing-fields rendering.",
+
+  "version": "1.0",
+
+  "doc_types": {
+    "10-K": {
+      "label": "Annual report (Form 10-K)",
+      "description": "SEC-required annual report for public companies; gold-standard for financial extraction.",
+      "required_fields": [
+        "fiscal_year_end",
+        "income_statement.revenue",
+        "income_statement.ebitda",
+        "income_statement.net_income",
+        "balance_sheet.total_assets",
+        "balance_sheet.total_debt",
+        "balance_sheet.total_equity",
+        "cash_flow.operating_cash_flow"
+      ],
+      "preferred_fields": [
+        "income_statement.cogs",
+        "income_statement.depreciation_amortization",
+        "income_statement.interest_expense",
+        "balance_sheet.cash_and_equivalents",
+        "balance_sheet.current_assets",
+        "balance_sheet.current_liabilities",
+        "balance_sheet.inventory",
+        "balance_sheet.accounts_receivable",
+        "cash_flow.capex",
+        "customer_concentration.top_5",
+        "customer_concentration.hhi",
+        "officers",
+        "subsidiaries",
+        "segments"
+      ],
+      "extraction_schema": "schemas/extractions/10K.json",
+      "expected_pages": [50, 350]
+    },
+
+    "10-Q": {
+      "label": "Quarterly report (Form 10-Q)",
+      "description": "SEC quarterly filing; confirms recency + interim trends.",
+      "required_fields": [
+        "fiscal_period_end",
+        "income_statement.revenue",
+        "income_statement.ebitda",
+        "balance_sheet.total_debt",
+        "balance_sheet.total_assets"
+      ],
+      "preferred_fields": [
+        "income_statement.net_income",
+        "cash_flow.operating_cash_flow",
+        "balance_sheet.cash_and_equivalents",
+        "subsequent_events"
+      ],
+      "extraction_schema": "schemas/extractions/10Q.json",
+      "expected_pages": [20, 80]
+    },
+
+    "audited_financials": {
+      "label": "Audited financial statements",
+      "description": "Private-company audited financials; substitute for 10-K when borrower isn't public.",
+      "required_fields": [
+        "fiscal_year_end",
+        "auditor_name",
+        "audit_opinion",
+        "income_statement.revenue",
+        "income_statement.ebitda",
+        "income_statement.net_income",
+        "balance_sheet.total_assets",
+        "balance_sheet.total_debt",
+        "balance_sheet.total_equity",
+        "cash_flow.operating_cash_flow"
+      ],
+      "preferred_fields": [
+        "income_statement.cogs",
+        "income_statement.depreciation_amortization",
+        "balance_sheet.current_assets",
+        "balance_sheet.current_liabilities",
+        "footnote_disclosures",
+        "going_concern_qualification"
+      ],
+      "extraction_schema": "schemas/extractions/audited_financials.json",
+      "expected_pages": [25, 120]
+    },
+
+    "AR_aging": {
+      "label": "Accounts receivable aging report",
+      "description": "Required for $10M+ loans; drives customer concentration + working-capital analysis.",
+      "required_fields": [
+        "as_of_date",
+        "total_ar",
+        "customers"
+      ],
+      "preferred_fields": [
+        "aging_buckets.current",
+        "aging_buckets.30_days",
+        "aging_buckets.60_days",
+        "aging_buckets.90_plus_days",
+        "concentration_top_5_pct",
+        "doubtful_accounts"
+      ],
+      "extraction_schema": "schemas/extractions/AR_aging.json",
+      "expected_pages": [1, 30]
+    },
+
+    "board_minutes": {
+      "label": "Board minutes",
+      "description": "Required for $50M+ loans + Reg O insider relationships; surfaces governance + management changes.",
+      "required_fields": [
+        "meeting_date",
+        "directors_present"
+      ],
+      "preferred_fields": [
+        "resolutions",
+        "officer_changes",
+        "compensation_changes",
+        "related_party_disclosures",
+        "audit_committee_findings"
+      ],
+      "extraction_schema": "schemas/extractions/board_minutes.json",
+      "expected_pages": [3, 40]
+    },
+
+    "appraisal": {
+      "label": "Real-estate / collateral appraisal",
+      "description": "Required when collateral package includes real estate (12 CFR 34); drives haircut math.",
+      "required_fields": [
+        "appraisal_date",
+        "appraiser_name",
+        "appraised_value",
+        "valuation_method"
+      ],
+      "preferred_fields": [
+        "property_type",
+        "property_address",
+        "lot_size",
+        "improvements",
+        "comparable_sales",
+        "income_approach_value",
+        "cost_approach_value",
+        "expected_useful_life",
+        "environmental_concerns"
+      ],
+      "extraction_schema": "schemas/extractions/appraisal.json",
+      "expected_pages": [10, 80]
+    },
+
+    "business_plan": {
+      "label": "Business plan / projections",
+      "description": "Optional; drives stress-scenario modeling when borrower has thin operating history.",
+      "required_fields": [
+        "horizon_years",
+        "revenue_projection",
+        "ebitda_projection"
+      ],
+      "preferred_fields": [
+        "key_assumptions",
+        "capex_plan",
+        "headcount_plan",
+        "market_size",
+        "competitive_position"
+      ],
+      "extraction_schema": "schemas/extractions/business_plan.json",
+      "expected_pages": [10, 60]
+    }
+  },
+
+  "application_completeness": {
+    "_doc": "Rules for whether an application has enough documentation to underwrite. Checked by validation gate after Stage 1. Loan-amount-tiered: bigger loans demand more rigor.",
+
+    "minimum_always": {
+      "any_of": ["10-K", "audited_financials"],
+      "reason": "Need at least one set of audited annual financials to underwrite any commercial credit"
+    },
+
+    "tiers_by_loan_amount": [
+      {
+        "loan_amount_lt": 10000000,
+        "must_have": [],
+        "minimum_satisfied_by": ["10-K", "audited_financials"],
+        "reason": "Sub-$10M loans can be underwritten on a single annual financial statement set"
+      },
+      {
+        "loan_amount_lt": 50000000,
+        "must_have": ["AR_aging"],
+        "minimum_satisfied_by": [
+          { "all_of": [{"any_of": ["10-K", "audited_financials"]}, "AR_aging"] }
+        ],
+        "reason": "$10M-$50M loans require AR aging for customer concentration + working capital analysis"
+      },
+      {
+        "loan_amount_lt": 200000000,
+        "must_have": ["AR_aging", "10-Q"],
+        "minimum_satisfied_by": [
+          { "all_of": [{"any_of": ["10-K", "audited_financials"]}, "10-Q", "AR_aging"] }
+        ],
+        "reason": "$50M+ loans require recency (10-Q) and AR aging"
+      },
+      {
+        "loan_amount_lt": 999999999999,
+        "must_have": ["AR_aging", "10-Q", "board_minutes"],
+        "minimum_satisfied_by": [
+          { "all_of": [{"any_of": ["10-K", "audited_financials"]}, "10-Q", "AR_aging", "board_minutes"] }
+        ],
+        "reason": "$200M+ loans require board minutes for governance + Reg O screening + audit-committee findings"
+      }
+    ],
+
+    "collateral_conditional": {
+      "if_collateral_includes_real_estate": ["appraisal"],
+      "reason": "12 CFR 34 requires a current appraisal for any real-estate-secured commercial loan"
+    }
+  },
+
+  "completeness_severity": {
+    "_doc": "When required_fields are missing, how aggressive is the action? critical = block underwriting, return application; warning = proceed with degraded confidence; info = log only.",
+
+    "rules": [
+      { "condition": "doc_type_required_fields_missing AND any of [revenue, ebitda, total_assets, total_debt, fiscal_year_end]", "severity": "critical" },
+      { "condition": "doc_type_required_fields_missing AND not in critical-list", "severity": "warning" },
+      { "condition": "doc_type_preferred_fields_missing", "severity": "info" },
+      { "condition": "application_completeness_violated", "severity": "critical" }
+    ]
+  }
+}

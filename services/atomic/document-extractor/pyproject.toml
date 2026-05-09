@@ -1,0 +1,46 @@
+[project]
+name = "document-extractor"
+version = "1.0.0"
+description = "Atomic document-extractor — Landing AI ADE + Vertex Gemini fallback"
+requires-python = ">=3.11"
+dependencies = [
+    "functions-framework==3.5.0",
+    "pydantic==2.9.2",
+    "requests==2.32.3",
+    "google-cloud-storage==2.18.2",
+    "google-cloud-pubsub==2.27.1",
+    "google-genai==0.7.0",
+    "sqlalchemy==2.0.36",
+    "psycopg2-binary==2.9.10",
+    "cloud-sql-python-connector[pg8000]==1.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+    "pytest-mock==3.14.0",
+    "pytest-recording==0.13.2",
+    "pytest-timeout==2.3.1",
+    "respx==0.21.1",
+    "ruff==0.7.4",
+    "mypy==1.13.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "live: tests that hit real external APIs (Landing AI, Vertex). Requires LANDING_AI_API_KEY env.",
+    "fixtures: tests that need real PDF fixtures in tests/fixtures/",
+    "slow: tests >10s wall time",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

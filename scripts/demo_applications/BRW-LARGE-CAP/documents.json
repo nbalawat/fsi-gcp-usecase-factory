@@ -1,0 +1,6 @@
+[
+  {"field": "file_0", "doc_type": "10-K",          "filename": "10K_FY2023.pdf"},
+  {"field": "file_1", "doc_type": "10-Q",          "filename": "10Q_Q3_2024.pdf"},
+  {"field": "file_2", "doc_type": "AR_aging",      "filename": "AR_aging_Q3.pdf"},
+  {"field": "file_3", "doc_type": "board_minutes", "filename": "board_minutes_Q3.pdf"}
+]

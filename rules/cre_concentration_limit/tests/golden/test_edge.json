@@ -1,0 +1,9 @@
+{
+  "description": "Edge case — total CRE exactly at 300% and construction exactly at 100% of capital; strict >threshold conditions mean neither rule fires",
+  "input": {
+    "cre_loans_pct_capital": 300,
+    "construction_loans_pct_capital": 100
+  },
+  "expected_output": [],
+  "regulatory_basis": "OCC 2006 CRE Concentration Guidance — exactly at the 300%/100% supervisory criteria is not a breach (strict greater-than thresholds)"
+}

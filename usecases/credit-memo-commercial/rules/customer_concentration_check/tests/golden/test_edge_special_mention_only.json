@@ -1,0 +1,14 @@
+{
+  "description": "Top customer 30% (>25%, ≤40%), top-5 60%, HHI 2000 → special_mention with single alert and quarterly-monitor recommendation",
+  "input": {
+    "top_1_pct": 0.30,
+    "top_5_pct": 0.60,
+    "hhi": 2000
+  },
+  "expected_output": {
+    "rating_impact": "special_mention",
+    "alerts": ["top_1_customer_over_25pct"],
+    "recommendation": "document_concentration_risk_and_monitor_quarterly"
+  },
+  "regulatory_basis": "Bank concentration policy — single customer between 25%-40% triggers special-mention treatment; aggregate top-5 and HHI remain within tolerance, so quarterly monitoring suffices."
+}

@@ -1,0 +1,13 @@
+{
+  "description": "State exposure at 18% of Tier 1 capital — below the 25% geographic concentration cap; no breach expected",
+  "input": {
+    "state": "TX",
+    "geographic_exposure_pct": 18
+  },
+  "expected_output": {
+    "breach": false,
+    "geo_cap_pct": 25,
+    "action": "none"
+  },
+  "regulatory_basis": "OCC Concentration Guidance — single-state concentration below the 25% Tier 1 capital cap"
+}

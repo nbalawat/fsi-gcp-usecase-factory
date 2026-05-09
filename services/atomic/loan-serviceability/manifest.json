@@ -1,0 +1,21 @@
+{
+  "service_name": "loan-serviceability",
+  "version": "1.0.0",
+  "consolidates": ["dscr-calculator", "covenant-analyzer"],
+  "description": "Loan-serviceability metrics: DSCR (base + stressed) and covenant tests. Drop-in replacement for the two legacy services; identical I/O contracts behind /dscr and /covenant_test endpoints.",
+  "endpoints": {
+    "POST /dscr":          {"purpose": "Compute DSCR base + stressed", "legacy_service": "dscr-calculator"},
+    "POST /covenant_test": {"purpose": "Test covenants over projection horizon", "legacy_service": "covenant-analyzer"},
+    "GET /health":         {"purpose": "Readiness probe"}
+  },
+  "dependencies": {
+    "secrets": [],
+    "tables_read": ["thresholds"],
+    "tables_write": ["application_events"],
+    "external_apis": []
+  },
+  "production_gates": {
+    "parity_required_for": ["dscr-calculator", "covenant-analyzer"],
+    "min_test_files": ["tests/test_parity.py"]
+  }
+}

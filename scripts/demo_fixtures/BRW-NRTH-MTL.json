@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-NRTH-MTL",
+  "scenario_tag": "covenant-headroom-thin",
+  "loan_request": {
+    "amount_usd": 15000000,
+    "term_years": 5,
+    "facility_type": "revolver",
+    "purpose": "Working capital revolver to support seasonal steel inventory build and AR financing."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 92000000, "cogs": 74000000, "ebitda": 9100000, "capex": 3200000, "depreciation": 2900000, "interest_expense": 2100000, "tax": 950000, "net_income": 3150000},
+      "fy2024": {"revenue": 88000000, "cogs": 71500000, "ebitda": 8500000, "capex": 2800000, "depreciation": 2950000, "interest_expense": 2200000, "tax": 720000, "net_income": 2630000},
+      "fy2025": {"revenue": 86000000, "cogs": 70200000, "ebitda": 8200000, "capex": 2600000, "depreciation": 2980000, "interest_expense": 2250000, "tax": 640000, "net_income": 2330000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 72000000, "total_debt": 31500000, "total_equity": 22500000, "current_assets": 31000000, "current_liabilities": 19500000, "cash": 1900000, "inventory": 14500000, "ar": 12200000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 4900000, "investing_cf": -2600000, "financing_cf": -1700000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Northbridge Metals Corp",
+    "naics_code": "331110",
+    "hq_state": "PA",
+    "employee_count": 420,
+    "founded_year": 1947,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.16, 0.11, 0.09, 0.07, 0.05],
+    "top_1_pct": 0.16,
+    "hhi": 0.0492
+  },
+  "management": {
+    "ceo_name": "James T. O'Connell",
+    "ceo_tenure_years": 11,
+    "cfo_name": "Patricia Vega",
+    "cfo_tenure_years": 4,
+    "cfo_external_hire": true
+  },
+  "collateral_offered": [
+    {"type": "equipment", "estimated_value_usd": 11000000, "age_years": 12, "condition": "fair"},
+    {"type": "inventory", "estimated_value_usd": 14500000, "age_years": 0, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "O'Connell Family Holdings", "stake_pct": 0.55, "role": "Owner", "is_director": true},
+    {"name": "James T. O'Connell", "stake_pct": 0.22, "role": "CEO", "is_director": true},
+    {"name": "Sarah O'Connell", "stake_pct": 0.15, "role": "Director", "is_director": true},
+    {"name": "Patricia Vega", "stake_pct": 0.02, "role": "CFO", "is_director": false},
+    {"name": "ESOP", "stake_pct": 0.06, "role": "Employee", "is_director": false}
+  ]
+}

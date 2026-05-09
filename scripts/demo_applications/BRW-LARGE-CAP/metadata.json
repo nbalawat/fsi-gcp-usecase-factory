@@ -1,0 +1,9 @@
+{
+  "borrower_id": "BRW-LARGE-CAP",
+  "borrower_name": "Large Cap Industrial Corp.",
+  "loan_amount_usd": 250000000,
+  "naics_code": "333992",
+  "facility_type": "revolver",
+  "term_years": 5,
+  "scenario_tag": "demo-large-cap-full-set"
+}

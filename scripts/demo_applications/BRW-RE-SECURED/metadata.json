@@ -1,0 +1,10 @@
+{
+  "borrower_id": "BRW-RE-SECURED",
+  "borrower_name": "Riverside Real Estate Holdings",
+  "loan_amount_usd": 50000000,
+  "naics_code": "236220",
+  "facility_type": "term_loan",
+  "term_years": 7,
+  "scenario_tag": "demo-RE-collateral-with-appraisal",
+  "collateral_includes_real_estate": true
+}

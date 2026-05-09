@@ -1,0 +1,14 @@
+{
+  "description": "Top customer 45% (>40%), top-5 80% (>75%), HHI 3200 (>2500) → substandard rating with all three alerts",
+  "input": {
+    "top_1_pct": 0.45,
+    "top_5_pct": 0.80,
+    "hhi": 3200
+  },
+  "expected_output": {
+    "rating_impact": "substandard",
+    "alerts": ["top_1_customer_over_40pct", "top_5_customers_over_75pct", "hhi_above_antitrust_threshold"],
+    "recommendation": "require_concentration_mitigation_plan_and_credit_committee_approval"
+  },
+  "regulatory_basis": "Bank concentration policy — single-customer concentration above 40% is a substandard rating trigger; combined with elevated top-5 and HHI signals severe revenue dependence."
+}

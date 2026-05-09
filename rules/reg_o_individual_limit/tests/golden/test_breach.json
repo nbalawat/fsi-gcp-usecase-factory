@@ -1,0 +1,14 @@
+{
+  "description": "$6M insider loan against $50M Tier 1 capital, no collateral — applicable limit is $5M (10% of Tier 1); loan exceeds limit",
+  "input": {
+    "insider_loan_amount": 6000000,
+    "tier1_capital": 50000000,
+    "has_collateral_backing": false
+  },
+  "expected_output": {
+    "breach": true,
+    "applicable_limit": 5000000,
+    "headroom": -1000000
+  },
+  "regulatory_basis": "12 CFR 215.4(c) — unsecured insider loan exceeds the 10% of unimpaired capital cap; cannot be made without prior board approval and adequate collateral"
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/business_plan.json",
+  "title": "Business plan / projections extraction schema",
+  "description": "Optional document. Drives stress-scenario modeling when borrower has thin operating history (start-ups, post-acquisition, post-restructuring).",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "plan_date": { "type": "string", "format": "date" },
+    "horizon_years": { "type": "integer", "minimum": 1, "maximum": 10 },
+    "currency": { "type": "string", "default": "USD" },
+
+    "annual_projections": {
+      "type": "array",
+      "description": "One entry per projected year.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "year": { "type": "integer" },
+          "revenue": { "type": ["number", "null"] },
+          "ebitda": { "type": ["number", "null"] },
+          "net_income": { "type": ["number", "null"] },
+          "operating_cash_flow": { "type": ["number", "null"] },
+          "capex": { "type": ["number", "null"] },
+          "headcount": { "type": ["integer", "null"] }
+        },
+        "required": ["year"]
+      }
+    },
+
+    "key_assumptions": {
+      "type": "array",
+      "description": "Material assumptions driving the projection (revenue growth %, market size, win rate, etc.).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "enum": ["revenue", "cost", "capex", "macro", "other"] },
+          "description": { "type": "string" },
+          "value": { "type": ["string", "number", "null"] }
+        }
+      }
+    },
+
+    "market_position": {
+      "type": ["string", "null"],
+      "description": "Competitive positioning narrative."
+    },
+
+    "risk_factors": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "use_of_proceeds": {
+      "type": ["string", "null"],
+      "description": "What the requested loan will fund."
+    }
+  },
+
+  "required": ["horizon_years", "annual_projections"]
+}

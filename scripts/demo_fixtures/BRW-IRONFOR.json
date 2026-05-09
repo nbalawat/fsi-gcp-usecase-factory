@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-IRONFOR",
+  "scenario_tag": "customer-concentration-substandard",
+  "loan_request": {
+    "amount_usd": 9000000,
+    "term_years": 5,
+    "facility_type": "term",
+    "purpose": "Restaurant remodel program (12 locations) and POS modernization. Borrower already rated 3-substandard; concentration in 1 franchisor brand exceeds 60%."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 68000000, "cogs": 51000000, "ebitda": 5800000, "capex": 2300000, "depreciation": 2400000, "interest_expense": 1450000, "tax": 380000, "net_income": 1570000},
+      "fy2024": {"revenue": 71000000, "cogs": 53800000, "ebitda": 5900000, "capex": 2400000, "depreciation": 2450000, "interest_expense": 1520000, "tax": 360000, "net_income": 1570000},
+      "fy2025": {"revenue": 69000000, "cogs": 53200000, "ebitda": 5400000, "capex": 2200000, "depreciation": 2480000, "interest_expense": 1580000, "tax": 250000, "net_income": 1090000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 41000000, "total_debt": 18800000, "total_equity": 11500000, "current_assets": 11000000, "current_liabilities": 11200000, "cash": 1100000, "inventory": 1900000, "ar": 2800000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 3200000, "investing_cf": -2200000, "financing_cf": -1300000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Ironfork Restaurants Group",
+    "naics_code": "722511",
+    "hq_state": "TN",
+    "employee_count": 1280,
+    "founded_year": 2008,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.62, 0.14, 0.08, 0.04, 0.03],
+    "top_1_pct": 0.62,
+    "hhi": 0.4129
+  },
+  "management": {
+    "ceo_name": "Tony Falco",
+    "ceo_tenure_years": 4,
+    "cfo_name": "Rebecca Ng",
+    "cfo_tenure_years": 2,
+    "cfo_external_hire": true
+  },
+  "collateral_offered": [
+    {"type": "equipment", "estimated_value_usd": 4800000, "age_years": 6, "condition": "fair"},
+    {"type": "real_estate", "estimated_value_usd": 6200000, "age_years": 18, "condition": "fair"}
+  ],
+  "principals_and_owners": [
+    {"name": "Falco Hospitality Holdings", "stake_pct": 0.52, "role": "Owner", "is_director": true},
+    {"name": "Tony Falco", "stake_pct": 0.18, "role": "CEO", "is_director": true},
+    {"name": "Tennessee Growth Fund II", "stake_pct": 0.20, "role": "PE Investor", "is_director": true},
+    {"name": "Rebecca Ng", "stake_pct": 0.01, "role": "CFO", "is_director": false},
+    {"name": "Outside minority investors", "stake_pct": 0.09, "role": "Minority", "is_director": false}
+  ]
+}

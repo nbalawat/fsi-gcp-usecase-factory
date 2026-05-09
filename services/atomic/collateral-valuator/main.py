@@ -19,7 +19,12 @@ from typing import Any
 
 import functions_framework
 import sqlalchemy
-from bank.logging import redacting_logger
+try:
+    from bank.logging import redacting_logger
+except ImportError:
+    import logging as _logging
+    def redacting_logger(name: str) -> _logging.Logger:  # type: ignore[misc]
+        return _logging.getLogger(name)
 from opentelemetry import trace
 from sqlalchemy import text
 
@@ -72,7 +77,7 @@ def _load_thresholds() -> dict[str, Any]:
     with _get_engine().connect() as conn:
         rows = conn.execute(
             text("""
-                SELECT record_type, lookup_key, base_haircut, age_decay_per_year,
+                SELECT row_type, key_name, base_haircut, age_decay_per_year,
                        max_haircut, multiplier_value
                 FROM collateral_valuator_thresholds
                 WHERE effective_date <= CURRENT_DATE

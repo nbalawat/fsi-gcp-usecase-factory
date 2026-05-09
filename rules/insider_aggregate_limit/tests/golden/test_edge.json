@@ -1,0 +1,13 @@
+{
+  "description": "Edge case — insider loans exactly equal unimpaired capital ($10M / $10M = 100%); strict >1.0 condition means no breach exactly at the cap",
+  "input": {
+    "insider_loans_total": 10000000,
+    "unimpaired_capital_surplus": 10000000
+  },
+  "expected_output": {
+    "breach": false,
+    "ratio_pct": 100,
+    "action_required": "none"
+  },
+  "regulatory_basis": "12 CFR 215.4(b) — exactly at the 100% unimpaired-capital cap is not a breach (strict greater-than threshold)"
+}

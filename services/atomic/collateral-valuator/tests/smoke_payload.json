@@ -16,7 +16,7 @@
       "condition": "fair"
     },
     {
-      "type": "accounts_receivable",
+      "type": "receivables",
       "estimated_value": 400000,
       "age_years": 0,
       "condition": "excellent"
@@ -28,7 +28,7 @@
       "condition": "good"
     },
     {
-      "type": "marketable_securities",
+      "type": "cash",
       "estimated_value": 600000,
       "age_years": 0,
       "condition": "excellent"

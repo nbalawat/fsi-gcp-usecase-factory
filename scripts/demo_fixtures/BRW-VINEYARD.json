@@ -1,0 +1,53 @@
+{
+  "borrower_id": "BRW-VINEYARD",
+  "scenario_tag": "acquisition-pending",
+  "loan_request": {
+    "amount_usd": 22000000,
+    "term_years": 6,
+    "facility_type": "term",
+    "purpose": "Bridge financing for pending acquisition of artisan-bakery competitor (target close Q3-2026). Senior secured term facility, repaid from combined operating cash flow."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 116000000, "cogs": 84000000, "ebitda": 16500000, "capex": 4900000, "depreciation": 4200000, "interest_expense": 1450000, "tax": 2700000, "net_income": 8150000},
+      "fy2024": {"revenue": 124000000, "cogs": 89500000, "ebitda": 17800000, "capex": 5300000, "depreciation": 4400000, "interest_expense": 1480000, "tax": 2950000, "net_income": 8970000},
+      "fy2025": {"revenue": 132000000, "cogs": 95000000, "ebitda": 18900000, "capex": 5700000, "depreciation": 4600000, "interest_expense": 1520000, "tax": 3150000, "net_income": 9630000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 96000000, "total_debt": 23000000, "total_equity": 51000000, "current_assets": 32000000, "current_liabilities": 19500000, "cash": 8200000, "inventory": 11500000, "ar": 9100000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 13900000, "investing_cf": -5700000, "financing_cf": -4200000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Vineyard Foods Co.",
+    "naics_code": "311422",
+    "hq_state": "CA",
+    "employee_count": 720,
+    "founded_year": 2001,
+    "fiscal_year_end": "09-30"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.14, 0.10, 0.07, 0.05, 0.04],
+    "top_1_pct": 0.14,
+    "hhi": 0.0386
+  },
+  "management": {
+    "ceo_name": "Lucia Marquez",
+    "ceo_tenure_years": 12,
+    "cfo_name": "Alan Iwasaki",
+    "cfo_tenure_years": 8,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 14500000, "age_years": 11, "condition": "good"},
+    {"type": "equipment", "estimated_value_usd": 9200000, "age_years": 5, "condition": "excellent"},
+    {"type": "inventory", "estimated_value_usd": 8100000, "age_years": 0, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Marquez Family Trust", "stake_pct": 0.42, "role": "Founder", "is_director": true},
+    {"name": "Lucia Marquez", "stake_pct": 0.14, "role": "CEO", "is_director": true},
+    {"name": "Sequoia Specialty Foods Fund", "stake_pct": 0.32, "role": "PE Sponsor", "is_director": true},
+    {"name": "Alan Iwasaki", "stake_pct": 0.03, "role": "CFO", "is_director": false},
+    {"name": "Employee equity pool", "stake_pct": 0.09, "role": "Employee", "is_director": false}
+  ]
+}

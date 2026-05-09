@@ -1,0 +1,52 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "naics_2digit", "name": "naics_2digit", "dataType": "string"},
+          {"id": "dscr_base", "name": "dscr_base", "dataType": "number"},
+          {"id": "dscr_stressed", "name": "dscr_stressed", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "Industry DSCR Floors (Shared Lending Guidance)",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [
+          {"id": "c1", "name": "naics_2digit", "field": "naics_2digit", "dataType": "string"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "dscr_floor", "field": "dscr_floor", "dataType": "number"},
+          {"id": "o2", "name": "base_passes", "field": "base_passes", "dataType": "boolean"},
+          {"id": "o3", "name": "stressed_passes", "field": "stressed_passes", "dataType": "boolean"}
+        ],
+        "rules": [
+          {"_id": "r1", "c1": "\"31\",\"32\",\"33\"", "o1": "1.25", "o2": "dscr_base >= 1.25", "o3": "dscr_stressed >= 1.25"},
+          {"_id": "r2", "c1": "\"62\"", "o1": "1.30", "o2": "dscr_base >= 1.30", "o3": "dscr_stressed >= 1.30"},
+          {"_id": "r3", "c1": "\"72\"", "o1": "1.40", "o2": "dscr_base >= 1.40", "o3": "dscr_stressed >= 1.40"},
+          {"_id": "r4", "c1": "", "o1": "1.20", "o2": "dscr_base >= 1.20", "o3": "dscr_stressed >= 1.20"}
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

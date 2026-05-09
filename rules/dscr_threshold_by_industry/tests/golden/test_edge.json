@@ -1,0 +1,14 @@
+{
+  "description": "Edge case — healthcare (NAICS 62) with both base and stressed DSCR exactly at the 1.30 floor; >= comparator passes at boundary",
+  "input": {
+    "naics_2digit": "62",
+    "dscr_base": 1.30,
+    "dscr_stressed": 1.30
+  },
+  "expected_output": {
+    "dscr_floor": 1.30,
+    "base_passes": true,
+    "stressed_passes": true
+  },
+  "regulatory_basis": "Interagency Leveraged Lending Guidance (OCC/FRB/FDIC SR 13-3) — healthcare 1.30x DSCR floor; exactly at the floor is acceptable (>= comparator)"
+}

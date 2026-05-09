@@ -1,0 +1,378 @@
+# Cloud Workflows v2 — credit-memo-commercial
+#
+# Rewrite for the factory-grade architecture:
+#   - Multi-document parallel ingestion (per-doc document-extractor calls)
+#   - Validation gate after extraction → return_for_revision branch
+#   - 5 consolidated atomic services (was 8)
+#   - 5 consolidated agents (was 13)
+#   - All audit writes go through the audit-writer service (Workflows
+#     can't write to Cloud SQL directly)
+#
+# Eventarc trigger: Pub/Sub topic `credit-memo-commercial.enriched`
+# (handler service publishes after the multi-doc upload route writes
+#  application_state + application_documents rows).
+#
+# DO NOT EDIT — use /fsi-prompt-update to change behavior.
+
+main:
+  params: [args]
+  steps:
+    # ── 1. Init ────────────────────────────────────────────────────────
+    - init:
+        assign:
+          - application_id:    ${args.application_id}
+          - borrower_id:       ${args.borrower_id}
+          - loan_amount_usd:   ${args.loan_amount_usd}
+          - documents:         ${args.documents}
+          - has_re_collateral: ${default(args.collateral_includes_real_estate, false)}
+          - rules_service_url: ${sys.get_env("RULES_SERVICE_URL")}
+          - audit_writer_url:  ${sys.get_env("AUDIT_WRITER_URL")}
+          - extractor_url:     ${sys.get_env("DOCUMENT_EXTRACTOR_URL")}
+          - dlq_topic:         ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.dlq"}
+
+    - audit_workflow_started:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/event"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            event_type: stage_entered
+            service_name: workflow
+            payload:
+              stage: workflow_started
+              doc_count: ${len(documents)}
+
+    # ── Stage 1. Document extraction (parallel — one per doc) ─────────
+    - extract_documents:
+        parallel:
+          shared: [extracted_docs]
+          for:
+            value: doc
+            in: ${documents}
+            steps:
+              - call_extractor:
+                  try:
+                    call: http.post
+                    args:
+                      url: ${extractor_url + "/extract"}
+                      auth: {type: OIDC}
+                      body:
+                        application_id: ${application_id}
+                        doc_id: ${doc.doc_id}
+                        doc_type: ${doc.doc_type}
+                        gcs_uri: ${doc.gcs_uri}
+                      timeout: 600   # Landing AI ADE can take 5+ min on large 10-Ks
+                    result: extract_result
+                  retry:
+                    predicate: ${http.default_retry_predicate}
+                    max_retries: 2
+                    backoff:
+                      initial_delay: 5
+                      max_delay: 60
+                      multiplier: 2
+
+              - record_extraction:
+                  assign:
+                    - extracted_docs: ${list.concat(default(extracted_docs, []), [extract_result.body])}
+
+    # ── Stage 2. Validation gate ──────────────────────────────────────
+    - validate_completeness:
+        call: http.get
+        args:
+          url: ${sys.get_env("UI_VALIDATE_URL") + "/api/applications/" + application_id + "/validate"}
+          auth: {type: OIDC}
+          timeout: 30
+        result: validation_result
+
+    - check_validation_decision:
+        switch:
+          - condition: ${validation_result.body.validation.decision == "RETURN_FOR_REVISION"}
+            next: run_return_for_revision
+        next: stage_3_atomic_services
+
+    # ── Branch: return for revision ───────────────────────────────────
+    - run_return_for_revision:
+        steps:
+          - write_return_notice:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/artifact"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  artifact_type: return_notice
+                  author: workflow
+                  body: ${validation_result.body.validation}
+
+          - update_state_returned:
+              call: http.post
+              args:
+                url: ${audit_writer_url + "/state"}
+                auth: {type: OIDC}
+                body:
+                  application_id: ${application_id}
+                  decision: RETURN_FOR_REVISION
+                  current_stage: approval
+
+          - publish_decided_returned:
+              call: googleapis.pubsub.v1.projects.topics.publish
+              args:
+                topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.decided"}
+                body:
+                  messages:
+                    - attributes:
+                        application_id: ${application_id}
+                        decision: RETURN_FOR_REVISION
+                      data: '${base64.encode(json.encode({"application_id": application_id, "decision": "RETURN_FOR_REVISION"}))}'
+
+          - return_decision_returned:
+              return: ${"RETURN_FOR_REVISION"}
+
+    # ── Stage 3. Atomic services (parallel — 5 consolidated services) ─
+    - stage_3_atomic_services:
+        parallel:
+          shared: [service_results]
+          branches:
+            - financial_spreader_branch:
+                steps:
+                  - call_financial_spreader:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("FINANCIAL_SPREADER_URL") + "/spread"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          documents: ${extracted_docs}
+                      result: spread_result
+                  - assign_spread:
+                      assign:
+                        - service_results: ${default(service_results, {})}
+                        - service_results.financial_spreader: ${spread_result.body}
+
+            - loan_serviceability_branch:
+                steps:
+                  - call_dscr:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("LOAN_SERVICEABILITY_URL") + "/dscr"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          loan_amount_usd: ${loan_amount_usd}
+                      result: dscr_result
+                  - call_covenant_test:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("LOAN_SERVICEABILITY_URL") + "/covenant_test"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                      result: covenant_result
+                  - assign_loan:
+                      assign:
+                        - service_results: ${default(service_results, {})}
+                        - service_results.loan_serviceability: '{dscr: ${dscr_result.body}, covenants: ${covenant_result.body}}'
+
+            - peer_industry_branch:
+                steps:
+                  - call_peer_set:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("PEER_AND_INDUSTRY_CONTEXT_URL") + "/peer_set"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                      result: peer_result
+                  - call_industry:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("PEER_AND_INDUSTRY_CONTEXT_URL") + "/industry_risk"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                      result: industry_result
+                  - assign_peer_industry:
+                      assign:
+                        - service_results: ${default(service_results, {})}
+                        - service_results.peer_and_industry_context: '{peer: ${peer_result.body}, industry: ${industry_result.body}}'
+
+            - collateral_branch:
+                steps:
+                  - call_collateral:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("COLLATERAL_VALUATOR_URL") + "/value"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                      result: collateral_result
+                  - assign_collateral:
+                      assign:
+                        - service_results: ${default(service_results, {})}
+                        - service_results.collateral_valuator: ${collateral_result.body}
+
+            - borrower_network_branch:
+                steps:
+                  - call_exposure:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("BORROWER_NETWORK_URL") + "/exposure"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          borrower_id: ${borrower_id}
+                      result: exposure_result
+                  - call_insider:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("BORROWER_NETWORK_URL") + "/insider_check"}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          borrower_id: ${borrower_id}
+                      result: insider_result
+                  - assign_borrower_network:
+                      assign:
+                        - service_results: ${default(service_results, {})}
+                        - service_results.borrower_network: '{exposure: ${exposure_result.body}, insider: ${insider_result.body}}'
+
+    # ── Stage 4. Rules (sequential — 16 rules via rules-service) ──────
+    - stage_4_rules:
+        call: http.post
+        args:
+          url: ${rules_service_url + "/evaluate_all"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            inputs:
+              loan_amount_usd: ${loan_amount_usd}
+              service_results: ${service_results}
+        result: rules_result
+
+    # ── Stage 5. Agents (sequential — 4 of 5; document_processor ran in stage 1) ─
+    - call_document_processor:
+        call: http.post
+        args:
+          url: ${sys.get_env("DOCUMENT_PROCESSOR_AGENT_URL")}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            documents: ${extracted_docs}
+          timeout: 120
+        result: doc_processor_result
+
+    - call_analyst:
+        call: http.post
+        args:
+          url: ${sys.get_env("ANALYST_AGENT_URL")}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            reconciled_documents: ${doc_processor_result.body}
+            service_results: ${service_results}
+          timeout: 180
+        result: analyst_result
+
+    - call_rater_covenant:
+        call: http.post
+        args:
+          url: ${sys.get_env("RATER_AND_COVENANT_AGENT_URL")}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            analyst_output: ${analyst_result.body}
+            rules_results: ${rules_result.body}
+          timeout: 120
+        result: rater_result
+
+    - call_drafter:
+        call: http.post
+        args:
+          url: ${sys.get_env("DRAFTER_AGENT_URL")}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            analyst_output: ${analyst_result.body}
+            rating_and_covenants: ${rater_result.body}
+          timeout: 240
+        result: drafter_result
+
+    - call_reviewer:
+        call: http.post
+        args:
+          url: ${sys.get_env("REVIEWER_AGENT_URL")}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            memo_body: ${drafter_result.body}
+            analyst_output: ${analyst_result.body}
+            rating_and_covenants: ${rater_result.body}
+          timeout: 120
+        result: reviewer_result
+
+    # ── Stage 6. Approval gate ────────────────────────────────────────
+    - record_pre_approval_state:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: approval
+            risk_band: ${rater_result.body.risk_band}
+
+    - wait_for_approval:
+        call: events.await_callback
+        args:
+          callback: ${"projects/" + sys.get_env("GCP_PROJECT") + "/locations/" + sys.get_env("GCP_REGION") + "/workflows/credit-memo-commercial-v2/callbacks/" + application_id}
+          timeout: 432000   # 5 calendar days = 432_000 seconds
+        result: approval_event
+
+    # ── Stage 7. Sinks (parallel) ─────────────────────────────────────
+    - stage_7_sinks:
+        parallel:
+          branches:
+            - gl_posting_branch:
+                steps:
+                  - skip_gl_if_returned:
+                      switch:
+                        - condition: ${approval_event.decision != "APPROVE"}
+                          next: gl_done
+                  - call_gl_posting:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("GL_POSTING_SINK_URL")}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          decision: ${approval_event.decision}
+                          memo: ${drafter_result.body}
+                  - gl_done:
+                      assign: [gl_done: true]
+
+            - document_store_branch:
+                steps:
+                  - call_document_store:
+                      call: http.post
+                      args:
+                        url: ${sys.get_env("DOCUMENT_STORE_GCS_SINK_URL")}
+                        auth: {type: OIDC}
+                        body:
+                          application_id: ${application_id}
+                          documents: ${extracted_docs}
+                          memo: ${drafter_result.body}
+
+    - publish_decided:
+        call: googleapis.pubsub.v1.projects.topics.publish
+        args:
+          topic: ${"projects/" + sys.get_env("GCP_PROJECT") + "/topics/credit-memo-commercial.decided"}
+          body:
+            messages:
+              - attributes:
+                  application_id: ${application_id}
+                  decision: ${approval_event.decision}
+                data: '${base64.encode(json.encode({"application_id": application_id, "decision": approval_event.decision}))}'
+
+    - finalize:
+        return: ${approval_event.decision}

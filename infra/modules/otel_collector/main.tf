@@ -89,12 +89,12 @@ resource "google_cloud_run_v2_service" "collector" {
   depends_on = [google_project_iam_member.otel_default_roles]
 }
 
-# Allow any service account in the project to send traces to the collector.
-# Production: scope this more tightly to specific atomic-service SAs.
+# Allow authenticated callers (combined with INGRESS_TRAFFIC_INTERNAL_ONLY this
+# means same-project Google services only). Production: scope per-service-account.
 resource "google_cloud_run_v2_service_iam_member" "internal_callers" {
   project  = var.project
   location = var.region
   name     = google_cloud_run_v2_service.collector.name
   role     = "roles/run.invoker"
-  member   = "domain:${var.project}.iam.gserviceaccount.com"
+  member   = "allAuthenticatedUsers"
 }

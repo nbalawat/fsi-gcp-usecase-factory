@@ -1,0 +1,9 @@
+{
+  "description": "Total CRE at 250% and construction at 80% of capital — both below the OCC 2006 guidance thresholds",
+  "input": {
+    "cre_loans_pct_capital": 250,
+    "construction_loans_pct_capital": 80
+  },
+  "expected_output": [],
+  "regulatory_basis": "OCC 2006 CRE Concentration Guidance — total CRE below 300% and construction below 100% of capital; no enhanced risk management triggered"
+}

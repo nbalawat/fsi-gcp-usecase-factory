@@ -1,0 +1,53 @@
+{
+  "borrower_id": "BRW-DELTA-CN",
+  "scenario_tag": "cre-concentration-warning",
+  "loan_request": {
+    "amount_usd": 18000000,
+    "term_years": 6,
+    "facility_type": "term",
+    "purpose": "Construction equipment fleet refresh and yard expansion. Bank's CRE portfolio concentration is approaching 300% of capital threshold."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 142000000, "cogs": 113000000, "ebitda": 14500000, "capex": 5500000, "depreciation": 5100000, "interest_expense": 1750000, "tax": 1900000, "net_income": 5750000},
+      "fy2024": {"revenue": 156000000, "cogs": 124000000, "ebitda": 15800000, "capex": 6100000, "depreciation": 5300000, "interest_expense": 1850000, "tax": 2150000, "net_income": 6500000},
+      "fy2025": {"revenue": 161000000, "cogs": 128500000, "ebitda": 16200000, "capex": 6300000, "depreciation": 5450000, "interest_expense": 1920000, "tax": 2210000, "net_income": 6620000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 118000000, "total_debt": 36000000, "total_equity": 41000000, "current_assets": 48000000, "current_liabilities": 28500000, "cash": 6900000, "inventory": 3100000, "ar": 28000000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 11200000, "investing_cf": -6300000, "financing_cf": -3800000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Delta Construction Holdings",
+    "naics_code": "237310",
+    "hq_state": "GA",
+    "employee_count": 540,
+    "founded_year": 1986,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.32, 0.18, 0.10, 0.07, 0.05],
+    "top_1_pct": 0.32,
+    "hhi": 0.1502
+  },
+  "management": {
+    "ceo_name": "Roy Tankersley",
+    "ceo_tenure_years": 18,
+    "cfo_name": "Cynthia Murray",
+    "cfo_tenure_years": 9,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 22000000, "age_years": 14, "condition": "good"},
+    {"type": "real_estate", "estimated_value_usd": 9500000, "age_years": 7, "condition": "excellent"},
+    {"type": "equipment", "estimated_value_usd": 8400000, "age_years": 3, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Tankersley Family Trust", "stake_pct": 0.71, "role": "Owner", "is_director": true},
+    {"name": "Roy Tankersley", "stake_pct": 0.16, "role": "CEO", "is_director": true},
+    {"name": "Eric Tankersley", "stake_pct": 0.08, "role": "VP Ops", "is_director": true},
+    {"name": "Cynthia Murray", "stake_pct": 0.02, "role": "CFO", "is_director": false},
+    {"name": "Senior employees", "stake_pct": 0.03, "role": "Employee", "is_director": false}
+  ]
+}

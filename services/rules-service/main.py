@@ -17,7 +17,12 @@ from typing import Any
 import functions_framework
 import sqlalchemy
 import zen
-from bank.logging import redacting_logger  # type: ignore[import-not-found]
+try:
+    from bank.logging import redacting_logger  # type: ignore[import-not-found]
+except ImportError:
+    import logging as _logging
+    def redacting_logger(name: str) -> _logging.Logger:  # type: ignore[misc]
+        return _logging.getLogger(name)
 from opentelemetry import trace
 from sqlalchemy import text
 
@@ -34,17 +39,27 @@ GCP_PROJECT = os.environ["GCP_PROJECT"]  # fail-closed; never default to a proje
 # (regulatory_thresholds, single_borrower_exposure) AND per-use-case rules
 # (credit-memo-eligibility, etc.). Set RULES_DIRS to a comma-separated list to
 # override; otherwise default to repo-level rules/ + every usecases/<uc>/rules/.
-_REPO_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-_DEFAULT_RULES_DIRS = [
-    os.path.join(_REPO_ROOT, "rules"),
-]
-# Auto-discover per-use-case rule directories at startup.
-_uc_root = os.path.join(_REPO_ROOT, "usecases")
-if os.path.isdir(_uc_root):
-    for entry in sorted(os.listdir(_uc_root)):
-        candidate = os.path.join(_uc_root, entry, "rules")
-        if os.path.isdir(candidate):
-            _DEFAULT_RULES_DIRS.append(candidate)
+# Searches both the repo layout (services/rules-service/../../{rules,usecases})
+# AND the container layout where the build context is staged at the service
+# directory root (so /app/{rules,usecases} also work).
+_SVC_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.normpath(os.path.join(_SVC_DIR, "..", ".."))
+_CANDIDATE_ROOTS = [_REPO_ROOT, _SVC_DIR]
+
+_DEFAULT_RULES_DIRS: list[str] = []
+_seen: set[str] = set()
+for _root in _CANDIDATE_ROOTS:
+    _r = os.path.join(_root, "rules")
+    if os.path.isdir(_r) and _r not in _seen:
+        _DEFAULT_RULES_DIRS.append(_r)
+        _seen.add(_r)
+    _uc_root = os.path.join(_root, "usecases")
+    if os.path.isdir(_uc_root):
+        for entry in sorted(os.listdir(_uc_root)):
+            candidate = os.path.join(_uc_root, entry, "rules")
+            if os.path.isdir(candidate) and candidate not in _seen:
+                _DEFAULT_RULES_DIRS.append(candidate)
+                _seen.add(candidate)
 
 _env_dirs = os.environ.get("RULES_DIRS", "")
 if _env_dirs:

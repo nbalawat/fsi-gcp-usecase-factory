@@ -1,0 +1,9 @@
+{
+  "borrower_id": "BRW-MIDCAP-MFG",
+  "borrower_name": "Midcap Manufacturing Co.",
+  "loan_amount_usd": 5000000,
+  "naics_code": "332710",
+  "facility_type": "term_loan",
+  "term_years": 3,
+  "scenario_tag": "demo-sub10M-single-doc"
+}

@@ -1,0 +1,13 @@
+{
+  "description": "Edge case — state exposure exactly at the 25% cap. Strict >25 condition means no breach exactly at the boundary",
+  "input": {
+    "state": "CA",
+    "geographic_exposure_pct": 25
+  },
+  "expected_output": {
+    "breach": false,
+    "geo_cap_pct": 25,
+    "action": "none"
+  },
+  "regulatory_basis": "OCC Concentration Guidance — exactly at the 25% Tier 1 single-state cap is not a breach (strict greater-than threshold)"
+}

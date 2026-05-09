@@ -1,0 +1,82 @@
+{
+  "service_name": "document-extractor",
+  "version": "1.0.0",
+  "description": "Extracts structured financial fields from loan-application documents (10-K, 10-Q, audited financials, AR aging, board minutes, appraisals) with citations + missing-field detection. Vendor-pluggable: Landing AI ADE (default) or LiteParse + Vertex Gemini (fallback).",
+  "endpoints": {
+    "POST /extract": {
+      "purpose": "Extract one document end-to-end",
+      "request_schema": "ExtractRequest",
+      "response_schema": "ExtractResponse"
+    },
+    "GET /health": {
+      "purpose": "Health check; verifies vendor reachability"
+    }
+  },
+  "input_schema": {
+    "type": "object",
+    "required": ["application_id", "doc_id", "doc_type", "gcs_uri"],
+    "properties": {
+      "application_id": {"type": "string", "format": "uuid"},
+      "doc_id": {"type": "string", "format": "uuid"},
+      "doc_type": {"type": "string", "enum": ["10-K", "10-Q", "audited_financials", "AR_aging", "board_minutes", "appraisal", "business_plan"]},
+      "gcs_uri": {"type": "string", "pattern": "^gs://"}
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "required": ["doc_id", "doc_type", "extracted_fields", "missing_required_fields", "citations", "confidence", "vendor", "credit_usage_units", "latency_ms"],
+    "properties": {
+      "doc_id": {"type": "string"},
+      "doc_type": {"type": "string"},
+      "extracted_fields": {"type": "object"},
+      "missing_required_fields": {"type": "array", "items": {"type": "string"}},
+      "missing_preferred_fields": {"type": "array", "items": {"type": "string"}},
+      "citations": {"type": "array"},
+      "confidence": {"type": "number"},
+      "vendor": {"type": "string"},
+      "credit_usage_units": {"type": "number"},
+      "latency_ms": {"type": "integer"},
+      "warnings": {"type": "array"}
+    }
+  },
+  "dependencies": {
+    "secrets": ["landing-ai-api-key"],
+    "tables_read": [],
+    "tables_write": ["application_events"],
+    "external_apis": ["api.va.landing.ai (Landing AI ADE)"]
+  },
+  "production_gates": {
+    "cost_budget_per_call_usd": 1.00,
+    "cost_target_per_doc_usd": 0.50,
+    "latency_p99_ms": 300000,
+    "latency_target_per_page_ms": 6500,
+    "min_test_fixtures": 5,
+    "required_test_files": [
+      "tests/test_schemas.py",
+      "tests/test_requirements_validation.py",
+      "tests/test_live_landing_ai.py",
+      "tests/test_live_audit_completeness.py",
+      "tests/test_live_round_trip.py",
+      "tests/test_live_cost_and_latency.py"
+    ],
+    "measurements": {
+      "_source": "Live Landing AI ADE calls 2026-05-09; recorded for cost+latency regression detection",
+      "smoke_10pages_pdf_10pp": {
+        "elapsed_ms": 50873,
+        "credit_usage": 35.9,
+        "estimated_cost_usd": 0.036,
+        "citations": 32,
+        "vendor_model": "extract-20260314"
+      },
+      "small_valid_financial_pdf_30pp": {
+        "elapsed_ms": 64318,
+        "credit_usage": 114.64,
+        "estimated_cost_usd": 0.115,
+        "citations": 56,
+        "per_page_ms": 2144,
+        "per_page_cost_usd": 0.0038,
+        "vendor_model": "extract-20260314"
+      }
+    }
+  }
+}

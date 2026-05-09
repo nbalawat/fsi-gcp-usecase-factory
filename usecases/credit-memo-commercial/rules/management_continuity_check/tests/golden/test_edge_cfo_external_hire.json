@@ -1,0 +1,10 @@
+{
+  "description": "Stable CEO and short-tenure CFO who is an external hire → no flag (external hires are expected to have short tenure and bring fresh expertise)",
+  "input": {
+    "ceo_tenure_years": 8.0,
+    "cfo_tenure_years": 0.4,
+    "cfo_hire_external": true
+  },
+  "expected_output": [],
+  "regulatory_basis": "Bank policy — externally recruited CFOs with short tenure are not flagged as continuity risk; the rule targets internal succession failure, not deliberate external recruitment."
+}

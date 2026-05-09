@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-RIDGE-HC",
+  "scenario_tag": "real-estate-secured",
+  "loan_request": {
+    "amount_usd": 30000000,
+    "term_years": 10,
+    "facility_type": "mortgage",
+    "purpose": "Acquisition financing for medical office building (San Antonio campus, 110k sqft) plus partial refinance of existing first lien."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 145000000, "cogs": 78000000, "ebitda": 22500000, "capex": 8400000, "depreciation": 6200000, "interest_expense": 2700000, "tax": 3450000, "net_income": 10150000},
+      "fy2024": {"revenue": 158000000, "cogs": 84500000, "ebitda": 25200000, "capex": 9100000, "depreciation": 6500000, "interest_expense": 2800000, "tax": 3950000, "net_income": 11950000},
+      "fy2025": {"revenue": 167000000, "cogs": 89000000, "ebitda": 26800000, "capex": 9600000, "depreciation": 6800000, "interest_expense": 2950000, "tax": 4250000, "net_income": 12800000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 215000000, "total_debt": 64000000, "total_equity": 95000000, "current_assets": 38000000, "current_liabilities": 24000000, "cash": 11500000, "inventory": 4200000, "ar": 18500000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 19400000, "investing_cf": -9600000, "financing_cf": -7100000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Ridgecrest Health Holdings Inc.",
+    "naics_code": "622110",
+    "hq_state": "TX",
+    "employee_count": 1450,
+    "founded_year": 1998,
+    "fiscal_year_end": "06-30"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.22, 0.14, 0.09, 0.06, 0.04],
+    "top_1_pct": 0.22,
+    "hhi": 0.0773
+  },
+  "management": {
+    "ceo_name": "Dr. Anita Reyes",
+    "ceo_tenure_years": 9,
+    "cfo_name": "Marcus L. Whitfield",
+    "cfo_tenure_years": 5,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 38000000, "age_years": 6, "condition": "excellent"},
+    {"type": "real_estate", "estimated_value_usd": 14000000, "age_years": 18, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Ridgecrest Founders LP", "stake_pct": 0.41, "role": "Founders", "is_director": true},
+    {"name": "Dr. Anita Reyes", "stake_pct": 0.08, "role": "CEO", "is_director": true},
+    {"name": "Greenwood Health Capital", "stake_pct": 0.28, "role": "PE Sponsor", "is_director": true},
+    {"name": "Marcus L. Whitfield", "stake_pct": 0.02, "role": "CFO", "is_director": false},
+    {"name": "Physician partner pool", "stake_pct": 0.21, "role": "Minority", "is_director": false}
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-LIGHT-HC",
+  "scenario_tag": "weak-coverage",
+  "loan_request": {
+    "amount_usd": 20000000,
+    "term_years": 7,
+    "facility_type": "term",
+    "purpose": "Refinance existing senior debt and fund Tampa surgical center expansion. Current EBITDA service coverage is thin."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 96000000, "cogs": 64000000, "ebitda": 11200000, "capex": 6500000, "depreciation": 4400000, "interest_expense": 3100000, "tax": 920000, "net_income": 2780000},
+      "fy2024": {"revenue": 99000000, "cogs": 66200000, "ebitda": 11500000, "capex": 6800000, "depreciation": 4550000, "interest_expense": 3300000, "tax": 870000, "net_income": 2780000},
+      "fy2025": {"revenue": 101000000, "cogs": 67800000, "ebitda": 11600000, "capex": 7000000, "depreciation": 4600000, "interest_expense": 3450000, "tax": 810000, "net_income": 2740000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 105000000, "total_debt": 41000000, "total_equity": 28000000, "current_assets": 26000000, "current_liabilities": 22500000, "cash": 4100000, "inventory": 2800000, "ar": 14500000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 7100000, "investing_cf": -7000000, "financing_cf": -1200000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Lighthouse Health Group LLC",
+    "naics_code": "622110",
+    "hq_state": "FL",
+    "employee_count": 880,
+    "founded_year": 2005,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.18, 0.12, 0.08, 0.05, 0.04],
+    "top_1_pct": 0.18,
+    "hhi": 0.0533
+  },
+  "management": {
+    "ceo_name": "Dr. Marcus Bell",
+    "ceo_tenure_years": 6,
+    "cfo_name": "Jennifer Park",
+    "cfo_tenure_years": 3,
+    "cfo_external_hire": true
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 22000000, "age_years": 9, "condition": "good"},
+    {"type": "equipment", "estimated_value_usd": 6500000, "age_years": 5, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Bell Family Holdings", "stake_pct": 0.36, "role": "Founder", "is_director": true},
+    {"name": "Dr. Marcus Bell", "stake_pct": 0.12, "role": "CEO", "is_director": true},
+    {"name": "Coastal Health Capital LP", "stake_pct": 0.40, "role": "PE Sponsor", "is_director": true},
+    {"name": "Jennifer Park", "stake_pct": 0.01, "role": "CFO", "is_director": false},
+    {"name": "Physician partners", "stake_pct": 0.11, "role": "Minority", "is_director": false}
+  ]
+}

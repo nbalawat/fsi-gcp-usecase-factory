@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/AR_aging.json",
+  "title": "AR aging extraction schema",
+  "description": "Accounts receivable aging by customer. Drives customer-concentration analysis + working-capital quality. Required for $10M+ loans.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "as_of_date": { "type": "string", "format": "date" },
+    "currency": { "type": "string", "default": "USD" },
+
+    "total_ar": { "type": "number", "description": "Total outstanding accounts receivable across all customers." },
+
+    "aging_buckets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "current": { "type": ["number", "null"] },
+        "30_days": { "type": ["number", "null"], "description": "1-30 days past due." },
+        "60_days": { "type": ["number", "null"], "description": "31-60 days past due." },
+        "90_days": { "type": ["number", "null"], "description": "61-90 days past due." },
+        "90_plus_days": { "type": ["number", "null"], "description": "Over 90 days past due." }
+      }
+    },
+
+    "customers": {
+      "type": "array",
+      "description": "Per-customer rows from the aging schedule.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "total": { "type": "number" },
+          "current": { "type": ["number", "null"] },
+          "30_days": { "type": ["number", "null"] },
+          "60_days": { "type": ["number", "null"] },
+          "90_days": { "type": ["number", "null"] },
+          "90_plus_days": { "type": ["number", "null"] }
+        },
+        "required": ["name", "total"]
+      }
+    },
+
+    "doubtful_accounts_reserve": { "type": ["number", "null"] },
+
+    "concentration_top_5_pct": {
+      "type": ["number", "null"],
+      "description": "Top 5 customers' total / overall total, as decimal fraction."
+    }
+  },
+
+  "required": ["as_of_date", "total_ar", "customers"]
+}

@@ -1,0 +1,14 @@
+{
+  "description": "CEO 0.5y AND CFO 0.5y (internal hire) → all three rules fire including escalation",
+  "input": {
+    "ceo_tenure_years": 0.5,
+    "cfo_tenure_years": 0.5,
+    "cfo_hire_external": false
+  },
+  "expected_output": [
+    {"flag": "ceo_short_tenure", "action": "document_succession_plan", "rating_impact": "downgrade_trigger"},
+    {"flag": "cfo_short_tenure_internal", "action": "warning_review_controls", "rating_impact": "watch"},
+    {"flag": "both_short_tenure", "action": "escalate_to_credit_committee", "rating_impact": "downgrade_one_notch"}
+  ],
+  "regulatory_basis": "SR 11-7 governance + bank policy — both senior officers below 1.0y tenure constitutes acute key-person risk; escalate to credit committee with one-notch downgrade."
+}

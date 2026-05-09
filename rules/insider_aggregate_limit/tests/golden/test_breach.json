@@ -1,0 +1,13 @@
+{
+  "description": "Insider loans total $12M against $10M unimpaired capital — 120% ratio, breaches the Reg O aggregate cap",
+  "input": {
+    "insider_loans_total": 12000000,
+    "unimpaired_capital_surplus": 10000000
+  },
+  "expected_output": {
+    "breach": true,
+    "ratio_pct": 120,
+    "action_required": "halt_new_insider_lending_until_ratio_restored"
+  },
+  "regulatory_basis": "12 CFR 215.4(b) — aggregate insider lending exceeds 100% of unimpaired capital and surplus; new insider lending must halt until ratio restored"
+}

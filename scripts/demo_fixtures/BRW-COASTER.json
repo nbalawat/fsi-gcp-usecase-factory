@@ -1,0 +1,53 @@
+{
+  "borrower_id": "BRW-COASTER",
+  "scenario_tag": "regulatory-clock-tight",
+  "loan_request": {
+    "amount_usd": 35000000,
+    "term_years": 7,
+    "facility_type": "mortgage",
+    "purpose": "Refinance maturing CMBS on 6-property NYC commercial portfolio. Existing facility matures in 38 days — regulatory clock and approval timeline are tight."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 28500000, "cogs": 11000000, "ebitda": 14200000, "capex": 2100000, "depreciation": 4100000, "interest_expense": 5800000, "tax": 720000, "net_income": 3580000},
+      "fy2024": {"revenue": 30200000, "cogs": 11500000, "ebitda": 15400000, "capex": 2200000, "depreciation": 4200000, "interest_expense": 6100000, "tax": 850000, "net_income": 4250000},
+      "fy2025": {"revenue": 31000000, "cogs": 11800000, "ebitda": 15800000, "capex": 2300000, "depreciation": 4300000, "interest_expense": 6300000, "tax": 880000, "net_income": 4320000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 162000000, "total_debt": 78000000, "total_equity": 64000000, "current_assets": 9500000, "current_liabilities": 7800000, "cash": 4200000, "inventory": 0, "ar": 2600000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 9100000, "investing_cf": -2300000, "financing_cf": -5400000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Coaster Real Estate LLC",
+    "naics_code": "531110",
+    "hq_state": "NY",
+    "employee_count": 38,
+    "founded_year": 2003,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.24, 0.19, 0.14, 0.10, 0.07],
+    "top_1_pct": 0.24,
+    "hhi": 0.1262
+  },
+  "management": {
+    "ceo_name": "Marvin Slater",
+    "ceo_tenure_years": 22,
+    "cfo_name": "Helen Wu",
+    "cfo_tenure_years": 11,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "real_estate", "estimated_value_usd": 56000000, "age_years": 28, "condition": "good"},
+    {"type": "real_estate", "estimated_value_usd": 18500000, "age_years": 14, "condition": "good"},
+    {"type": "real_estate", "estimated_value_usd": 9200000, "age_years": 35, "condition": "fair"}
+  ],
+  "principals_and_owners": [
+    {"name": "Slater Family Holdings LP", "stake_pct": 0.58, "role": "Founder", "is_director": true},
+    {"name": "Marvin Slater", "stake_pct": 0.22, "role": "Managing Member", "is_director": true},
+    {"name": "Coaster Investors LLC", "stake_pct": 0.16, "role": "Investor", "is_director": true},
+    {"name": "Helen Wu", "stake_pct": 0.02, "role": "CFO", "is_director": false},
+    {"name": "Outside minority partners", "stake_pct": 0.02, "role": "Minority", "is_director": false}
+  ]
+}

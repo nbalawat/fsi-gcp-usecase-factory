@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "collateral_type", "name": "collateral_type", "dataType": "string"},
+          {"id": "collateral_value", "name": "collateral_value", "dataType": "number"},
+          {"id": "loan_amount", "name": "loan_amount", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Collateral Coverage LTV Check",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "export const handler = (input) => {\n  const ltvCaps = {\n    real_estate: 0.75,\n    equipment: 0.60,\n    accounts_receivable: 0.80,\n    inventory: 0.50,\n    cash: 0.95\n  };\n  const cap = ltvCaps[input.collateral_type];\n  if (cap === undefined) {\n    return {\n      within_threshold: false,\n      max_ltv_pct: 0,\n      breach_severity: 'unknown_collateral_type'\n    };\n  }\n  if (input.collateral_value <= 0) {\n    return {\n      within_threshold: false,\n      max_ltv_pct: cap,\n      breach_severity: 'critical'\n    };\n  }\n  const ltv = input.loan_amount / input.collateral_value;\n  const within = ltv <= cap;\n  let severity = 'none';\n  if (!within) {\n    const overage = ltv - cap;\n    if (overage > 0.15) severity = 'critical';\n    else if (overage > 0.05) severity = 'major';\n    else severity = 'minor';\n  }\n  return {\n    within_threshold: within,\n    max_ltv_pct: cap,\n    breach_severity: severity\n  };\n};"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/10Q.json",
+  "title": "10-Q extraction schema",
+  "description": "Quarterly filing — confirms recency + interim trends. Subset of 10-K shape; less detail required.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "fiscal_period_end": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date of quarter end."
+    },
+
+    "quarter": {
+      "type": "string",
+      "enum": ["Q1", "Q2", "Q3"],
+      "description": "Q4 is reported in the 10-K instead."
+    },
+
+    "currency": { "type": "string", "default": "USD" },
+    "units": { "type": "string", "enum": ["actual", "thousands", "millions"] },
+
+    "income_statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revenue": { "type": ["number", "null"] },
+        "cogs": { "type": ["number", "null"] },
+        "ebitda": { "type": ["number", "null"] },
+        "operating_income": { "type": ["number", "null"] },
+        "interest_expense": { "type": ["number", "null"] },
+        "net_income": { "type": ["number", "null"] }
+      }
+    },
+
+    "balance_sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_assets": { "type": ["number", "null"] },
+        "cash_and_equivalents": { "type": ["number", "null"] },
+        "total_debt": { "type": ["number", "null"] },
+        "total_equity": { "type": ["number", "null"] }
+      }
+    },
+
+    "cash_flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operating_cash_flow_ytd": { "type": ["number", "null"], "description": "Year-to-date operating cash flow." },
+        "capex_ytd": { "type": ["number", "null"] }
+      }
+    },
+
+    "subsequent_events": { "type": ["string", "null"] },
+
+    "covenant_compliance_disclosure": {
+      "type": ["string", "null"],
+      "description": "If filer discloses covenant compliance status, capture the statement verbatim."
+    }
+  },
+
+  "required": ["fiscal_period_end", "income_statement", "balance_sheet"]
+}

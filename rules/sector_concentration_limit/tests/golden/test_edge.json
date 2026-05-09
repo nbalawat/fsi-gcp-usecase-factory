@@ -1,0 +1,9 @@
+{
+  "description": "Edge case — CRE sector exposure exactly at 300% (the cap). Strict >300 condition means no breach exactly at the boundary",
+  "input": {
+    "naics_sector": "531000",
+    "sector_exposure_pct": 300
+  },
+  "expected_output": [],
+  "regulatory_basis": "OCC Concentration Guidance / Bank Policy — CRE exposure exactly at the 300% Tier 1 cap is not a breach (strict greater-than threshold)"
+}

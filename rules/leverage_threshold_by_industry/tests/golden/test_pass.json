@@ -1,0 +1,13 @@
+{
+  "description": "Manufacturing borrower (NAICS 33) at 3.5x Total Debt/EBITDA — within the 4.0x manufacturing leverage cap",
+  "input": {
+    "naics_2digit": "33",
+    "leverage_ratio": 3.5
+  },
+  "expected_output": {
+    "within_threshold": true,
+    "max_leverage": 4.0,
+    "breach_severity": "none"
+  },
+  "regulatory_basis": "Interagency Shared National Credit / Leveraged Lending Guidance (OCC/FRB/FDIC SR 13-3) — manufacturing leverage at or below 4.0x is within risk appetite"
+}

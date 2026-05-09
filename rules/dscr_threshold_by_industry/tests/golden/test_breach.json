@@ -1,0 +1,14 @@
+{
+  "description": "Hospitality borrower (NAICS 72) with base DSCR 1.50 (passes) but stressed 1.20 (fails the 1.40 hospitality floor)",
+  "input": {
+    "naics_2digit": "72",
+    "dscr_base": 1.50,
+    "dscr_stressed": 1.20
+  },
+  "expected_output": {
+    "dscr_floor": 1.40,
+    "base_passes": true,
+    "stressed_passes": false
+  },
+  "regulatory_basis": "Interagency Leveraged Lending Guidance (OCC/FRB/FDIC SR 13-3) — hospitality requires elevated 1.40x DSCR floor; stressed DSCR fails the floor and triggers downgrade review"
+}

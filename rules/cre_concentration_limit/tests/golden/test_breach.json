@@ -1,0 +1,20 @@
+{
+  "description": "Total CRE at 320% and construction at 110% of capital — both thresholds breached; collect policy returns both findings",
+  "input": {
+    "cre_loans_pct_capital": 320,
+    "construction_loans_pct_capital": 110
+  },
+  "expected_output": [
+    {
+      "breach": true,
+      "regulation": "OCC 2006 CRE Concentration Guidance — Total CRE > 300% of capital",
+      "action_required": "enhanced_risk_management_and_board_notification"
+    },
+    {
+      "breach": true,
+      "regulation": "OCC 2006 CRE Concentration Guidance — Construction loans > 100% of capital",
+      "action_required": "enhanced_risk_management_and_board_notification"
+    }
+  ],
+  "regulatory_basis": "OCC 2006 CRE Concentration Guidance — both supervisory criteria triggered (total CRE > 300% of capital and construction > 100% of capital)"
+}

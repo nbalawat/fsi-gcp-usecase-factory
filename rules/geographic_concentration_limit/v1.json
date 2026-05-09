@@ -1,0 +1,49 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "state", "name": "state", "dataType": "string"},
+          {"id": "geographic_exposure_pct", "name": "geographic_exposure_pct", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "Geographic Concentration Limit (OCC Concentration Guidance)",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "first",
+        "inputs": [
+          {"id": "c1", "name": "geographic_exposure_pct", "field": "geographic_exposure_pct", "dataType": "number"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "breach", "field": "breach", "dataType": "boolean"},
+          {"id": "o2", "name": "geo_cap_pct", "field": "geo_cap_pct", "dataType": "number"},
+          {"id": "o3", "name": "action", "field": "action", "dataType": "string"}
+        ],
+        "rules": [
+          {"_id": "r1", "c1": ">25", "o1": "true", "o2": "25", "o3": "\"escalate_to_credit_committee\""},
+          {"_id": "r2", "c1": "", "o1": "false", "o2": "25", "o3": "\"none\""}
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

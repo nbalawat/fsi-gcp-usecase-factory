@@ -1,0 +1,11 @@
+{
+  "extracted_fields": {
+    "meeting_date": "2024-08-15",
+    "directors_present": [
+      "Director A",
+      "Director B"
+    ]
+  },
+  "confidence": 0.88,
+  "page_count": 12
+}

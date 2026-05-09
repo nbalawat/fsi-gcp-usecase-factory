@@ -1,0 +1,52 @@
+{
+  "borrower_id": "BRW-SUMMIT-RT",
+  "scenario_tag": "pricing-outlier",
+  "loan_request": {
+    "amount_usd": 10000000,
+    "term_years": 4,
+    "facility_type": "revolver",
+    "purpose": "Working capital revolver to fund seasonal inventory and store-format expansion. RM proposing SOFR+150 bps — well below peer avg 240 bps for this risk grade."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {"revenue": 124000000, "cogs": 78000000, "ebitda": 16500000, "capex": 4400000, "depreciation": 3600000, "interest_expense": 1100000, "tax": 2900000, "net_income": 8900000},
+      "fy2024": {"revenue": 138000000, "cogs": 86000000, "ebitda": 18900000, "capex": 5200000, "depreciation": 3950000, "interest_expense": 1150000, "tax": 3450000, "net_income": 10350000},
+      "fy2025": {"revenue": 146000000, "cogs": 90500000, "ebitda": 20100000, "capex": 5600000, "depreciation": 4150000, "interest_expense": 1180000, "tax": 3700000, "net_income": 11070000}
+    },
+    "balance_sheet": {
+      "fy2025": {"total_assets": 88000000, "total_debt": 16800000, "total_equity": 47000000, "current_assets": 41000000, "current_liabilities": 22500000, "cash": 6800000, "inventory": 21500000, "ar": 5200000}
+    },
+    "cash_flow": {"fy2025": {"operating_cf": 14200000, "investing_cf": -5600000, "financing_cf": -3900000}}
+  },
+  "borrower_metadata": {
+    "legal_name": "Summit Outfitters Inc.",
+    "naics_code": "451110",
+    "hq_state": "CO",
+    "employee_count": 920,
+    "founded_year": 1989,
+    "fiscal_year_end": "01-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.04, 0.03, 0.02, 0.02, 0.02],
+    "top_1_pct": 0.04,
+    "hhi": 0.0041
+  },
+  "management": {
+    "ceo_name": "Erik Lundgren",
+    "ceo_tenure_years": 8,
+    "cfo_name": "Brenda Chao",
+    "cfo_tenure_years": 6,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "inventory", "estimated_value_usd": 21500000, "age_years": 0, "condition": "good"},
+    {"type": "real_estate", "estimated_value_usd": 9500000, "age_years": 11, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Lundgren Family LLC", "stake_pct": 0.48, "role": "Owner", "is_director": true},
+    {"name": "Erik Lundgren", "stake_pct": 0.18, "role": "CEO", "is_director": true},
+    {"name": "Aspen Capital Partners", "stake_pct": 0.22, "role": "Minority Investor", "is_director": true},
+    {"name": "Brenda Chao", "stake_pct": 0.02, "role": "CFO", "is_director": false},
+    {"name": "ESOP", "stake_pct": 0.10, "role": "Employee", "is_director": false}
+  ]
+}

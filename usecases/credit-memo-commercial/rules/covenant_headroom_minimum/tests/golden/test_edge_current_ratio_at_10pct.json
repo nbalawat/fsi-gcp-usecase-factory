@@ -1,0 +1,14 @@
+{
+  "description": "Current ratio base 1.32 vs floor 1.20 = exactly 10% headroom → adequate (boundary inclusive)",
+  "input": {
+    "base_case_value": 1.32,
+    "covenant_threshold": 1.20,
+    "covenant_type": "current_ratio"
+  },
+  "expected_output": {
+    "adequate_headroom": true,
+    "headroom_pct": 0.10000000000000009,
+    "recommendation": "headroom_sufficient"
+  },
+  "regulatory_basis": "Bank covenant calibration policy — 10% headroom is the inclusive minimum; a covenant set exactly at the floor is acceptable."
+}

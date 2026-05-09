@@ -1,0 +1,527 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atrium.bank.example.com/schemas/credit_memo/v1.json",
+  "title": "Commercial Credit Memo (10 sections + appendices)",
+  "description": "Canonical structure for a commercial credit memo. The drafter agent emits JSON conforming to this schema; the memo-reviewer agent validates citation density (>=0.80) and internal consistency before the memo is presentable to a credit officer.",
+  "type": "object",
+  "required": [
+    "version",
+    "application_id",
+    "borrower_id",
+    "drafted_at",
+    "drafted_by",
+    "executive_summary",
+    "borrower_overview",
+    "financial_analysis",
+    "cash_flow_projection",
+    "risk_factors",
+    "collateral",
+    "covenant_package",
+    "regulatory_concentration",
+    "risk_rating_rationale",
+    "recommendation"
+  ],
+  "additionalProperties": false,
+
+  "properties": {
+    "version":              { "type": "string", "const": "1.0" },
+    "application_id":       { "type": "string", "format": "uuid" },
+    "borrower_id":          { "type": "string", "minLength": 3 },
+    "drafted_at":           { "type": "string", "format": "date-time" },
+    "drafted_by":           { "type": "string", "description": "agent role name, e.g. memo-drafter@1.0" },
+    "revision_number":      { "type": "integer", "minimum": 1, "default": 1 },
+    "review_status":        {
+      "type": "string",
+      "enum": ["draft", "reviewed", "approved", "revise"]
+    },
+
+    "executive_summary":     { "$ref": "#/$defs/ExecutiveSummary" },
+    "borrower_overview":     { "$ref": "#/$defs/BorrowerOverview" },
+    "financial_analysis":    { "$ref": "#/$defs/FinancialAnalysis" },
+    "cash_flow_projection":  { "$ref": "#/$defs/CashFlowProjection" },
+    "risk_factors":          { "$ref": "#/$defs/RiskFactors" },
+    "collateral":            { "$ref": "#/$defs/Collateral" },
+    "covenant_package":      { "$ref": "#/$defs/CovenantPackage" },
+    "regulatory_concentration": { "$ref": "#/$defs/RegulatoryConcentration" },
+    "risk_rating_rationale": { "$ref": "#/$defs/RiskRatingRationale" },
+    "recommendation":        { "$ref": "#/$defs/Recommendation" },
+    "appendices":            { "$ref": "#/$defs/Appendices" },
+    "citation_density":      { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction of material claims with a source_citation. Must be >= 0.80 for review_status='approved'." }
+  },
+
+  "$defs": {
+
+    "Citation": {
+      "type": "object",
+      "required": ["source", "claim"],
+      "additionalProperties": false,
+      "properties": {
+        "source":   { "type": "string", "description": "human-readable source name, e.g. '10-K_2025.pdf' or 'RMA NAICS 333992 Annual Statement Studies FY24'" },
+        "page":     { "type": ["integer", "null"], "minimum": 1 },
+        "section":  { "type": ["string", "null"] },
+        "excerpt":  { "type": "string", "minLength": 4, "maxLength": 600 },
+        "claim":    { "type": "string", "description": "the assertion in the memo body that this citation supports" },
+        "kind":     {
+          "type": "string",
+          "enum": ["10-K_page", "10-Q_page", "audited_financials", "peer_table", "regulation", "service_output", "agent_output", "internal_policy", "court_filing", "appraisal", "other"],
+          "default": "other"
+        },
+        "url":      { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+
+    "MoneyUSD":   { "type": "number", "description": "USD, decimal allowed" },
+    "RatioX":     { "type": "number", "description": "ratio expressed as a multiplier (e.g. 1.41x → 1.41)" },
+    "PercentDecimal": { "type": "number", "minimum": 0, "maximum": 1, "description": "fraction (e.g. 25% → 0.25)" },
+
+    "RiskBand": {
+      "type": "string",
+      "enum": ["1-pass", "2-special-mention", "3-substandard", "4-doubtful", "5-loss"],
+      "description": "OCC risk rating per Comptroller's Handbook: Rating Credit Risk"
+    },
+
+    "DecisionAction": {
+      "type": "string",
+      "enum": ["approve", "approve_conditional", "decline", "return_for_revision"]
+    },
+
+    "ApprovalAuthority": {
+      "type": "string",
+      "enum": ["relationship_manager", "senior_credit_officer", "senior_credit_committee", "board_credit_committee", "full_board"]
+    },
+
+    "ExecutiveSummary": {
+      "type": "object",
+      "required": ["text", "borrower_name", "industry", "loan_request", "risk_rating", "recommendation_action", "highlights"],
+      "additionalProperties": false,
+      "properties": {
+        "text":            { "type": "string", "minLength": 200, "maxLength": 2000, "description": "1-page narrative, <=300 words" },
+        "borrower_name":   { "type": "string" },
+        "industry":        { "type": "string", "description": "e.g. 'Welding & Cutting Equipment Manufacturing (NAICS 333992)'" },
+        "loan_request": {
+          "type": "object",
+          "required": ["amount_usd", "term_years", "facility_type"],
+          "properties": {
+            "amount_usd":    { "$ref": "#/$defs/MoneyUSD" },
+            "term_years":    { "type": "number", "minimum": 0.25 },
+            "facility_type": { "type": "string", "enum": ["term_loan", "revolver", "line_of_credit", "construction", "mortgage", "other"] },
+            "pricing":       { "type": ["string", "null"], "description": "e.g. 'Prime + 350 bps'" }
+          }
+        },
+        "risk_rating":          { "$ref": "#/$defs/RiskBand" },
+        "recommendation_action":{ "$ref": "#/$defs/DecisionAction" },
+        "highlights":           { "type": "array", "items": { "type": "string", "maxLength": 240 }, "minItems": 1, "maxItems": 5 },
+        "citations":            { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "BorrowerOverview": {
+      "type": "object",
+      "required": ["business_description", "ownership", "management_team", "customer_concentration"],
+      "additionalProperties": false,
+      "properties": {
+        "business_description":   { "type": "string", "minLength": 80 },
+        "ownership":              {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "stake_pct", "role"],
+            "properties": {
+              "name":      { "type": "string" },
+              "stake_pct": { "$ref": "#/$defs/PercentDecimal" },
+              "role":      { "type": "string", "description": "e.g. 'Founder/CEO', 'Family trust beneficiary'" },
+              "is_insider":{ "type": "boolean", "default": false }
+            }
+          }
+        },
+        "management_team": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "name", "tenure_years"],
+            "properties": {
+              "role":          { "type": "string", "enum": ["CEO", "CFO", "COO", "CRO", "GC", "President", "Other"] },
+              "name":          { "type": "string" },
+              "tenure_years":  { "type": "number", "minimum": 0 },
+              "background":    { "type": "string", "maxLength": 240 }
+            }
+          }
+        },
+        "customer_concentration": {
+          "type": "object",
+          "required": ["top_1_pct", "top_5_pct"],
+          "properties": {
+            "top_1_pct":   { "$ref": "#/$defs/PercentDecimal" },
+            "top_5_pct":   { "$ref": "#/$defs/PercentDecimal" },
+            "hhi":         { "type": ["number", "null"], "minimum": 0, "maximum": 10000 },
+            "narrative":   { "type": "string" }
+          }
+        },
+        "supplier_concentration": {
+          "type": "object",
+          "properties": {
+            "top_1_pct":  { "$ref": "#/$defs/PercentDecimal" },
+            "narrative":  { "type": "string" }
+          }
+        },
+        "related_party_transactions": { "type": "array", "items": { "type": "string" } },
+        "citations":                  { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "FinancialAnalysis": {
+      "type": "object",
+      "required": ["normalization_adjustments", "trend_table", "peer_comparison", "narrative"],
+      "additionalProperties": false,
+      "properties": {
+        "normalization_adjustments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["period", "line_item", "original_value", "adjusted_value", "rationale"],
+            "properties": {
+              "period":          { "type": "string", "description": "e.g. 'FY24'" },
+              "line_item":       { "type": "string", "description": "e.g. 'EBITDA'" },
+              "original_value":  { "type": "number" },
+              "adjusted_value":  { "type": "number" },
+              "rationale":       { "type": "string", "description": "e.g. 'added back $500k legal settlement'" },
+              "citation":        { "$ref": "#/$defs/Citation" }
+            }
+          }
+        },
+        "trend_table": {
+          "type": "object",
+          "required": ["periods", "rows"],
+          "properties": {
+            "periods": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "e.g. ['FY22','FY23','FY24']" },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["metric", "values"],
+                "properties": {
+                  "metric":  { "type": "string", "description": "e.g. 'Revenue ($M)'" },
+                  "values":  { "type": "array", "items": { "type": ["number", "string", "null"] } },
+                  "trend":   { "type": "string", "description": "e.g. '+8.8% 2yr CAGR'" }
+                }
+              }
+            }
+          }
+        },
+        "peer_comparison": {
+          "type": "object",
+          "required": ["peer_set_id", "naics_code", "rows"],
+          "properties": {
+            "peer_set_id":       { "type": "string" },
+            "naics_code":        { "type": "string" },
+            "peer_count":        { "type": ["integer", "null"], "minimum": 1 },
+            "data_source":       { "type": "string", "description": "e.g. 'RMA Annual Statement Studies FY24'" },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["metric", "borrower", "median"],
+                "properties": {
+                  "metric":           { "type": "string" },
+                  "borrower":         { "type": ["number", "string"] },
+                  "median":           { "type": ["number", "string"] },
+                  "p25":              { "type": ["number", "string", "null"] },
+                  "p75":              { "type": ["number", "string", "null"] },
+                  "borrower_assessment": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "narrative":  { "type": "string", "minLength": 200 },
+        "citations":  { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "CashFlowProjection": {
+      "type": "object",
+      "required": ["assumptions", "scenarios", "narrative"],
+      "additionalProperties": false,
+      "properties": {
+        "assumptions": {
+          "type": "object",
+          "properties": {
+            "revenue_cagr":     { "$ref": "#/$defs/PercentDecimal" },
+            "ebitda_margin":    { "$ref": "#/$defs/PercentDecimal" },
+            "capex_pct_revenue":{ "$ref": "#/$defs/PercentDecimal" },
+            "working_capital_days": {
+              "type": "object",
+              "properties": {
+                "dso": { "type": "integer" },
+                "dpo": { "type": "integer" },
+                "inventory_days": { "type": "integer" }
+              }
+            },
+            "narrative":        { "type": "string" }
+          }
+        },
+        "scenarios": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["name", "revenue_cagr", "ebitda_margin", "rate_shock_bps", "year_3"],
+            "properties": {
+              "name":              { "type": "string", "enum": ["base", "downside", "recession", "recession_plus_200bps", "rate_shock_only", "custom"] },
+              "label":             { "type": "string" },
+              "revenue_cagr":      { "type": "number" },
+              "ebitda_margin":     { "$ref": "#/$defs/PercentDecimal" },
+              "rate_shock_bps":    { "type": "integer" },
+              "year_3": {
+                "type": "object",
+                "required": ["revenue_usd", "ebitda_usd", "annual_debt_service_usd", "dscr", "leverage", "covenant_headroom_dscr_pct"],
+                "properties": {
+                  "revenue_usd":              { "$ref": "#/$defs/MoneyUSD" },
+                  "ebitda_usd":               { "$ref": "#/$defs/MoneyUSD" },
+                  "annual_debt_service_usd":  { "$ref": "#/$defs/MoneyUSD" },
+                  "dscr":                     { "$ref": "#/$defs/RatioX" },
+                  "leverage":                 { "$ref": "#/$defs/RatioX" },
+                  "covenant_headroom_dscr_pct": { "type": "number", "description": "negative = breach" }
+                }
+              },
+              "interpretation": { "type": "string" }
+            }
+          }
+        },
+        "narrative":  { "type": "string" },
+        "citations":  { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "RiskFactors": {
+      "type": "object",
+      "required": ["factors"],
+      "properties": {
+        "factors": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["name", "severity_1_10", "evidence", "mitigation"],
+            "properties": {
+              "name":          { "type": "string", "description": "e.g. 'Customer concentration'" },
+              "severity_1_10": { "type": "integer", "minimum": 1, "maximum": 10 },
+              "evidence":      { "type": "string" },
+              "mitigation":    { "type": "string" },
+              "citations":     { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+            }
+          }
+        }
+      }
+    },
+
+    "Collateral": {
+      "type": "object",
+      "required": ["items", "total_pledged_usd", "loan_amount_usd", "coverage_pct"],
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "appraised_value_usd", "haircut_pct", "lendable_value_usd"],
+            "properties": {
+              "type":               { "type": "string", "enum": ["real_estate", "equipment", "accounts_receivable", "inventory", "cash", "marketable_securities", "other"] },
+              "description":        { "type": "string" },
+              "appraised_value_usd":{ "$ref": "#/$defs/MoneyUSD" },
+              "haircut_pct":        { "$ref": "#/$defs/PercentDecimal" },
+              "lendable_value_usd": { "$ref": "#/$defs/MoneyUSD" },
+              "lien_position":      { "type": "string", "enum": ["first", "second", "shared_first", "subordinated"] },
+              "regulation":         { "type": "string", "description": "e.g. '12 CFR 34.43'" },
+              "citation":           { "$ref": "#/$defs/Citation" }
+            }
+          }
+        },
+        "total_pledged_usd": { "$ref": "#/$defs/MoneyUSD" },
+        "loan_amount_usd":   { "$ref": "#/$defs/MoneyUSD" },
+        "coverage_pct":      { "type": "number", "minimum": 0 },
+        "narrative":         { "type": "string" }
+      }
+    },
+
+    "CovenantPackage": {
+      "type": "object",
+      "required": ["maintenance_covenants", "reporting_cadence"],
+      "additionalProperties": false,
+      "properties": {
+        "maintenance_covenants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "threshold", "test_frequency"],
+            "properties": {
+              "name":               { "type": "string", "enum": ["DSCR_floor", "leverage_cap", "current_ratio_floor", "fixed_charge_coverage_floor", "capex_cap", "tangible_net_worth_floor", "minimum_liquidity"] },
+              "threshold":          { "type": "number" },
+              "threshold_unit":     { "type": "string", "enum": ["x", "pct", "usd"] },
+              "test_frequency":     { "type": "string", "enum": ["quarterly", "annually", "semi_annually", "monthly"] },
+              "grace_period_days":  { "type": "integer", "minimum": 0 },
+              "headroom_pct_at_base": { "type": "number" },
+              "rationale":          { "type": "string" }
+            }
+          }
+        },
+        "incurrence_covenants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "applies_when"],
+            "properties": {
+              "name":          { "type": "string", "description": "e.g. 'M&A consent', 'Dividend restriction'" },
+              "applies_when":  { "type": "string" },
+              "threshold":     { "type": ["number", "string", "null"] }
+            }
+          }
+        },
+        "reporting_cadence":   { "type": "string", "description": "e.g. 'Quarterly within 45 days of quarter-end'" },
+        "narrative":           { "type": "string" },
+        "citations":           { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "RegulatoryConcentration": {
+      "type": "object",
+      "required": ["single_borrower_limit", "reg_o_check", "fair_lending"],
+      "additionalProperties": false,
+      "properties": {
+        "single_borrower_limit": {
+          "type": "object",
+          "required": ["total_exposure_usd", "tier1_capital_usd", "exposure_pct", "cap_pct", "compliant"],
+          "properties": {
+            "total_exposure_usd": { "$ref": "#/$defs/MoneyUSD" },
+            "tier1_capital_usd":  { "$ref": "#/$defs/MoneyUSD" },
+            "exposure_pct":       { "$ref": "#/$defs/PercentDecimal" },
+            "cap_pct":            { "$ref": "#/$defs/PercentDecimal", "description": "0.10 (or 0.15 if specially backed)" },
+            "compliant":          { "type": "boolean" },
+            "regulation":         { "type": "string", "default": "12 CFR 32.3" }
+          }
+        },
+        "reg_o_check": {
+          "type": "object",
+          "required": ["is_insider", "board_approval_required"],
+          "properties": {
+            "is_insider":              { "type": "boolean" },
+            "related_to":              { "type": ["string", "null"] },
+            "insider_match_confidence":{ "$ref": "#/$defs/PercentDecimal" },
+            "board_approval_required": { "type": "boolean" },
+            "estimated_board_meeting": { "type": ["string", "null"], "format": "date" },
+            "regulation":              { "type": "string", "default": "12 CFR 215.5" }
+          }
+        },
+        "appraisal_check": {
+          "type": "object",
+          "properties": {
+            "required":   { "type": "boolean" },
+            "regulation": { "type": "string", "default": "12 CFR 34.43" },
+            "rationale":  { "type": "string" }
+          }
+        },
+        "fair_lending": {
+          "type": "object",
+          "required": ["pricing_within_band", "delta_bps_vs_peers"],
+          "properties": {
+            "pricing_within_band":  { "type": "boolean" },
+            "delta_bps_vs_peers":   { "type": "number" },
+            "regulation":           { "type": "string", "default": "Reg B / ECOA" }
+          }
+        },
+        "bsa_aml_ofac": {
+          "type": "object",
+          "properties": {
+            "ofac_clear":      { "type": "boolean" },
+            "kyc_complete":    { "type": "boolean" },
+            "screening_notes": { "type": "string" }
+          }
+        },
+        "citations": { "type": "array", "items": { "$ref": "#/$defs/Citation" } }
+      }
+    },
+
+    "RiskRatingRationale": {
+      "type": "object",
+      "required": ["risk_band", "drivers", "narrative"],
+      "additionalProperties": false,
+      "properties": {
+        "risk_band": { "$ref": "#/$defs/RiskBand" },
+        "drivers": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["factor", "assessment", "evidence"],
+            "properties": {
+              "factor":     { "type": "string", "description": "e.g. 'Leverage', 'DSCR', 'Liquidity', 'Management', 'Collateral', 'Customer concentration'" },
+              "assessment": { "type": "string", "enum": ["strong", "adequate", "weak", "concerning"] },
+              "evidence":   { "type": "string" },
+              "citation":   { "$ref": "#/$defs/Citation" }
+            }
+          }
+        },
+        "identified_weaknesses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["weakness", "mitigation"],
+            "properties": {
+              "weakness":    { "type": "string" },
+              "mitigation":  { "type": "string" }
+            }
+          }
+        },
+        "occ_handbook_citation": { "type": "string", "default": "OCC Comptroller's Handbook: Rating Credit Risk" },
+        "narrative":             { "type": "string" }
+      }
+    },
+
+    "Recommendation": {
+      "type": "object",
+      "required": ["action", "terms", "approval_authority", "conditions_precedent"],
+      "additionalProperties": false,
+      "properties": {
+        "action":             { "$ref": "#/$defs/DecisionAction" },
+        "approval_authority": { "$ref": "#/$defs/ApprovalAuthority" },
+        "terms": {
+          "type": "object",
+          "required": ["amount_usd", "rate", "term_years"],
+          "properties": {
+            "amount_usd":           { "$ref": "#/$defs/MoneyUSD" },
+            "rate":                 { "type": "string", "description": "e.g. 'Prime + 350 bps = 11.25% fixed'" },
+            "term_years":           { "type": "number", "minimum": 0.25 },
+            "amortization_years":   { "type": ["number", "null"] },
+            "balloon_at_maturity":  { "type": "boolean", "default": false },
+            "origination_fee_pct":  { "$ref": "#/$defs/PercentDecimal" },
+            "annual_fee_bps":       { "type": ["number", "null"] },
+            "prepayment":           { "type": "string" },
+            "draws":                { "type": "string" }
+          }
+        },
+        "conditions_precedent": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "e.g. 'Satisfactory appraisal', 'Board approval per 12 CFR 215.5', 'UCC search clear'"
+        },
+        "narrative":  { "type": "string" }
+      }
+    },
+
+    "Appendices": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "appraisal_summary":            { "type": "object" },
+        "normalized_financials_3yr":    { "type": "object" },
+        "projection_3statement":        { "type": "object" },
+        "peer_comparison_full":         { "type": "object" },
+        "customer_concentration_detail":{ "type": "object" },
+        "org_chart":                    { "type": "object" },
+        "risk_rating_scorecard":        { "type": "object" }
+      }
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atrium.bank.example.com/schemas/credit-memo/extractions/board_minutes.json",
+  "title": "Board minutes extraction schema",
+  "description": "Surfaces governance + management changes + Reg O insider relationships. Required for $50M+ loans.",
+
+  "type": "object",
+  "additionalProperties": false,
+
+  "properties": {
+    "meeting_date": { "type": "string", "format": "date" },
+    "meeting_type": {
+      "type": "string",
+      "enum": ["regular", "special", "committee", "annual"]
+    },
+
+    "directors_present": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "directors_absent": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "officers_present": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      }
+    },
+
+    "resolutions": {
+      "type": "array",
+      "description": "Material board resolutions adopted at the meeting.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "topic": { "type": "string" },
+          "summary": { "type": "string" },
+          "vote": { "type": ["string", "null"], "description": "e.g. 'unanimous', '7-2', etc." }
+        }
+      }
+    },
+
+    "officer_changes": {
+      "type": "array",
+      "description": "Hires, terminations, promotions, resignations of executive officers.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "officer_name": { "type": "string" },
+          "change_type": { "type": "string", "enum": ["hire", "termination", "promotion", "resignation", "other"] },
+          "title_before": { "type": ["string", "null"] },
+          "title_after": { "type": ["string", "null"] },
+          "effective_date": { "type": ["string", "null"], "format": "date" }
+        }
+      }
+    },
+
+    "compensation_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "officer_name": { "type": "string" },
+          "change_type": { "type": "string" },
+          "effective_date": { "type": ["string", "null"], "format": "date" }
+        }
+      }
+    },
+
+    "related_party_disclosures": {
+      "type": "array",
+      "description": "Reg O / 12 CFR 215 — insider transactions, board approvals of related-party transactions.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "party": { "type": "string" },
+          "relationship": { "type": "string" },
+          "transaction_summary": { "type": "string" },
+          "amount": { "type": ["number", "null"] },
+          "board_approved": { "type": "boolean" }
+        }
+      }
+    },
+
+    "audit_committee_findings": {
+      "type": ["string", "null"],
+      "description": "Audit committee report summary if covered at this meeting."
+    },
+
+    "subsequent_events_disclosed": { "type": ["string", "null"] }
+  },
+
+  "required": ["meeting_date", "directors_present"]
+}

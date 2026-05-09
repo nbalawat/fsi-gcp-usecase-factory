@@ -1,0 +1,51 @@
+archetype: rater-with-covenant
+version: "1.0.0"
+description: |
+  Single agent that produces both a regulatory risk band AND the
+  control package (covenants for credit; conditions for KYC; mitigants
+  for operational-risk). Replaces the rater + covenant_designer fan-out;
+  keeps rationale-to-control linkage tight (same model writes both).
+
+what_archetype_provides:
+  - response_schema covering risk_band + drivers + control_package + monitoring_cadence
+  - 3-class control structure (financial / negative / reporting)
+  - "every control references a driver" discipline rule
+  - "deterministic-rule failures force band downgrade" hard rule
+  - banker-readable risk-band enum (OCC 1-pass / 2-special-mention / ...)
+
+what_use_case_provides:
+  - the regulatory band enum (OCC for credit; CIP/AML levels for KYC;
+    Basel risk weights for trading)
+  - the control classes specific to your domain (financial covenants
+    for credit; periodic-review conditions for KYC; documentation
+    requirements for trade)
+  - the rule-set evaluator output that feeds into deterministic-rule
+    forcing
+
+instantiation_steps:
+  1. Copy `usecases/credit-memo-commercial/agents/rater_and_covenant_designer.py`
+  2. Adapt RATER_RESPONSE_SCHEMA's risk_band enum + control_package
+     classes to your domain
+  3. Copy + adapt the prompt's "covenant_package" → "control_package"
+     section
+  4. Schema-validity test + driver-evidence test
+
+approved_models:
+  - claude-opus-4-7       # default — heaviest reasoning agent
+
+cost_target_per_call_usd: 0.04
+latency_p99_ms: 60000
+
+quality_gates:
+  - every driver has evidence (citation)
+  - every control references a driver (audit-trail linkage)
+  - rules_results.violation forces band >= "concern-equivalent"
+  - schema-validity test green
+
+related_skills:
+  - agent-response-schema
+  - model-selection
+  - claude-api
+
+reference_implementation:
+  - usecases/credit-memo-commercial/agents/rater_and_covenant_designer.py

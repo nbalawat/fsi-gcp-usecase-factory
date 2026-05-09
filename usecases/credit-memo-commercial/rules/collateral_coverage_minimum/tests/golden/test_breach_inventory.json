@@ -1,0 +1,14 @@
+{
+  "description": "Inventory-secured loan at 70% LTV exceeds 50% cap by 20 points → critical breach severity",
+  "input": {
+    "collateral_type": "inventory",
+    "collateral_value": 1000000,
+    "loan_amount": 700000
+  },
+  "expected_output": {
+    "within_threshold": false,
+    "max_ltv_pct": 0.5,
+    "breach_severity": "critical"
+  },
+  "regulatory_basis": "Bank collateral policy — inventory is illiquid and capped at 50% LTV; a 70% advance rate is a critical breach requiring credit-committee override."
+}

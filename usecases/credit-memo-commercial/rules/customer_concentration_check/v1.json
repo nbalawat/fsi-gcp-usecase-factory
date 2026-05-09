@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "top_1_pct", "name": "top_1_pct", "dataType": "number"},
+          {"id": "top_5_pct", "name": "top_5_pct", "dataType": "number"},
+          {"id": "hhi", "name": "hhi", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Customer Concentration Aggregator",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "export const handler = (input) => {\n  const alerts = [];\n  let rating_impact = 'pass';\n  if (input.top_1_pct > 0.40) {\n    rating_impact = 'substandard';\n    alerts.push('top_1_customer_over_40pct');\n  } else if (input.top_1_pct > 0.25) {\n    rating_impact = 'special_mention';\n    alerts.push('top_1_customer_over_25pct');\n  }\n  if (input.top_5_pct > 0.75) {\n    alerts.push('top_5_customers_over_75pct');\n  }\n  if (input.hhi > 2500) {\n    alerts.push('hhi_above_antitrust_threshold');\n  }\n  let recommendation;\n  if (rating_impact === 'substandard') {\n    recommendation = 'require_concentration_mitigation_plan_and_credit_committee_approval';\n  } else if (rating_impact === 'special_mention' || alerts.length > 0) {\n    recommendation = 'document_concentration_risk_and_monitor_quarterly';\n  } else {\n    recommendation = 'no_action_required';\n  }\n  return {\n    rating_impact: rating_impact,\n    alerts: alerts,\n    recommendation: recommendation\n  };\n};"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

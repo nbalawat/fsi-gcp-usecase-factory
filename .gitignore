@@ -42,3 +42,14 @@ tfplan*
 # Node
 node_modules/
 infra/shared/terraform.tfvars
+
+# Large binary fixtures — derived on-demand, not committed
+# Pull with services/atomic/document-extractor/tests/fixtures/download.sh
+# and scripts/demo_applications/build_pdfs.sh
+services/atomic/document-extractor/tests/fixtures/*.pdf
+scripts/demo_applications/_raw_pdfs/
+scripts/demo_applications/BRW-*/files/*.pdf
+
+# Local dev process / log noise
+/tmp/dev*.log
+ui/apps/pipeline-console/_diag.mjs

@@ -1,0 +1,14 @@
+{
+  "description": "Edge case — small bank with $1M Tier 1; $500K insider loan exactly at the absolute floor; strict >limit means no breach at boundary",
+  "input": {
+    "insider_loan_amount": 500000,
+    "tier1_capital": 1000000,
+    "has_collateral_backing": false
+  },
+  "expected_output": {
+    "breach": false,
+    "applicable_limit": 500000,
+    "headroom": 0
+  },
+  "regulatory_basis": "12 CFR 215.4(c) — for small institutions where 10% of capital is below $500K, the absolute $500K floor applies; exactly at the floor is not a breach"
+}

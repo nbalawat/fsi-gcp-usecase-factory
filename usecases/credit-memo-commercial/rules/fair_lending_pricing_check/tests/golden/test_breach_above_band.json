@@ -1,0 +1,15 @@
+{
+  "description": "Proposed spread 250 bps vs peer median 220 bps (delta +30 bps > 15, peer_count 8) → flag, audit trail required",
+  "input": {
+    "proposed_spread_bps": 250,
+    "peer_median_spread_bps": 220,
+    "peer_count": 8
+  },
+  "expected_output": {
+    "within_band": false,
+    "delta_bps": 30,
+    "requires_documentation": true,
+    "fair_lending_status": "flag_audit_trail_required"
+  },
+  "regulatory_basis": "Reg B / ECOA + bank fair-lending policy — pricing 30 bps above peer median with 8 statistically valid peers requires documented justification (risk factor, structure, relationship pricing)."
+}

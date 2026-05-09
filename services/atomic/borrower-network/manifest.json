@@ -1,0 +1,21 @@
+{
+  "service_name": "borrower-network",
+  "version": "1.0.0",
+  "consolidates": ["exposure-aggregator", "insider-screening"],
+  "description": "Borrower-graph traversals: total exposure aggregation across loan_facilities + borrower_master, and Reg O insider screening across officers_directors + principal_shareholders + related_interests.",
+  "endpoints": {
+    "POST /exposure":       {"purpose": "Aggregate single-borrower exposure", "legacy_service": "exposure-aggregator"},
+    "POST /insider_check":  {"purpose": "Reg O insider screening", "legacy_service": "insider-screening"},
+    "GET /health":          {"purpose": "Readiness probe"}
+  },
+  "dependencies": {
+    "secrets": [],
+    "tables_read": ["loan_facilities", "borrower_master", "officers_directors", "principal_shareholders", "related_interests"],
+    "tables_write": ["application_events"],
+    "external_apis": []
+  },
+  "production_gates": {
+    "parity_required_for": ["exposure-aggregator", "insider-screening"],
+    "min_test_files": ["tests/test_parity.py"]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "description": "CEO 5y and CFO 3y tenure → no flags fire; empty collect result",
+  "input": {
+    "ceo_tenure_years": 5.0,
+    "cfo_tenure_years": 3.0,
+    "cfo_hire_external": false
+  },
+  "expected_output": [],
+  "regulatory_basis": "SR 11-7 governance + bank policy — both senior officers exceed 1.0y tenure, so no continuity-risk flags trigger."
+}

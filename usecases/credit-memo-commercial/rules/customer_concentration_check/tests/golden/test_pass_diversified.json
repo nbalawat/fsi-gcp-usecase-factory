@@ -1,0 +1,14 @@
+{
+  "description": "Top customer 12%, top-5 45%, HHI 1100 (unconcentrated) → no alerts, pass rating",
+  "input": {
+    "top_1_pct": 0.12,
+    "top_5_pct": 0.45,
+    "hhi": 1100
+  },
+  "expected_output": {
+    "rating_impact": "pass",
+    "alerts": [],
+    "recommendation": "no_action_required"
+  },
+  "regulatory_basis": "Bank concentration policy — customer base is diversified well below all single-name and aggregate thresholds; HHI under 2500 is unconcentrated per DOJ/FTC merger guidelines."
+}

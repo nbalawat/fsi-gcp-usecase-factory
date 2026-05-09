@@ -13,12 +13,17 @@ import { ApprovalActions } from "./approval-actions";
 import {
   getActiveCases,
   getCase,
+  getDocumentsForCase,
   getEventsForCase,
   getMemoArtifact,
+  getReturnNoticeArtifact,
   toCaseRecord,
 } from "@uc/lib/live-data";
 import { CreditMemoDocument } from "@uc/components/credit-memo/credit-memo-document";
 import { MemoEmpty } from "@uc/components/credit-memo/memo-empty";
+import { DocumentExtractionPanel } from "@uc/components/document-extraction/document-extraction-panel";
+import type { DocumentRecord } from "@uc/components/document-extraction/types";
+import { ReturnedApplicationPanel } from "@uc/components/returned-application/returned-application-panel";
 import { MemoExportButtons } from "@uc/components/credit-memo/memo-export-buttons";
 import { MemoToc } from "@uc/components/credit-memo/memo-toc";
 import { LECO_MEMO_FIXTURE } from "@uc/lib/memo-fixtures";
@@ -83,12 +88,16 @@ export default async function CaseDetailPage({
   let state: Awaited<ReturnType<typeof getCase>> = null;
   let memo: Awaited<ReturnType<typeof getMemoArtifact>> = null;
   let events: Awaited<ReturnType<typeof getEventsForCase>> = [];
+  let documents: Awaited<ReturnType<typeof getDocumentsForCase>> = [];
+  let returnNotice: Awaited<ReturnType<typeof getReturnNoticeArtifact>> = null;
   let queueLength = 0;
   try {
-    [state, memo, events, queueLength] = await Promise.all([
+    [state, memo, events, documents, returnNotice, queueLength] = await Promise.all([
       getCase(decoded),
       getMemoArtifact(decoded),
       getEventsForCase(decoded),
+      getDocumentsForCase(decoded),
+      getReturnNoticeArtifact(decoded),
       getActiveCases(100).then((rows) => rows.length),
     ]);
   } catch (e) {
@@ -245,17 +254,36 @@ export default async function CaseDetailPage({
           )}
         </aside>
 
-        <main className="min-w-0 px-8 py-10 lg:px-12 lg:py-12">
-          {/* Memo first — it's the artifact the user came for. */}
-          {memoToRender ? (
-            <CreditMemoDocument
-              applicationId={c.application_id}
-              memo={memoToRender as Partial<CreditMemoBody>}
-              hideToc
+        <main className="min-w-0 px-8 py-10 lg:px-12 lg:py-12 space-y-8">
+          {/* Returned-application banner — replaces memo when validation gate
+              routed this app back to the applicant. */}
+          {returnNotice && c.decision === "RETURN_FOR_REVISION" ? (
+            <ReturnedApplicationPanel
+              notice={returnNotice as never}
+              borrower_name={c.borrower_name}
+              loan_amount_usd={c.loan_amount_usd}
             />
-          ) : (
-            <MemoEmpty />
-          )}
+          ) : null}
+
+          {/* Per-document panel — shows what was extracted from each PDF. */}
+          {documents.length > 0 ? (
+            <DocumentExtractionPanel
+              documents={documents as unknown as DocumentRecord[]}
+            />
+          ) : null}
+
+          {/* Memo first when not returned — it's the artifact the user came for. */}
+          {!returnNotice || c.decision !== "RETURN_FOR_REVISION" ? (
+            memoToRender ? (
+              <CreditMemoDocument
+                applicationId={c.application_id}
+                memo={memoToRender as Partial<CreditMemoBody>}
+                hideToc
+              />
+            ) : (
+              <MemoEmpty />
+            )
+          ) : null}
 
           {/* Pipeline activity below the memo — secondary content, the
            * "how this was built" trail, not the headline artifact. */}

@@ -17,8 +17,8 @@ variable "environment" {
 
 variable "image_uri" {
   type        = string
-  description = "OTel collector container image. Default points at the Google-managed image; override for custom processors."
-  default     = "us-docker.pkg.dev/cloud-ops-agents-artifacts/google-cloud-opentelemetry-collector/otelopscol:latest"
+  description = "OTel collector container image. Default = upstream contrib; bank prod should mirror to Artifact Registry."
+  default     = "otel/opentelemetry-collector-contrib:0.108.0"
 }
 
 variable "vpc_connector" {

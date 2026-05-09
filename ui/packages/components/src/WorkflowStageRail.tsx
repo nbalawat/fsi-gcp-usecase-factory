@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 
 export type StageType = "agent" | "human" | "mixed" | "auto";

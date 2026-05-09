@@ -1,0 +1,21 @@
+{
+  "extracted_fields": {
+    "as_of_date": "2024-12-31",
+    "total_ar": 624.0,
+    "customers": [
+      {
+        "name": "Customer A",
+        "total": 142.0,
+        "current": 138.0
+      },
+      {
+        "name": "Customer B",
+        "total": 88.0,
+        "current": 86.0
+      }
+    ]
+  },
+  "confidence": 0.91,
+  "page_count": 14,
+  "citations": []
+}

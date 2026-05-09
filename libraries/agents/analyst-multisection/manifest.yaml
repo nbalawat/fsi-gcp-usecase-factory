@@ -1,0 +1,59 @@
+archetype: analyst-multisection
+version: "1.0.0"
+description: |
+  Single Vertex Gemini call producing N analytical sub-sections in one
+  shot via response_schema. Replaces per-specialist fan-outs (1-call vs
+  N-call). Reference instantiation: credit-memo-commercial's `analyst`
+  agent, which produces 7 sub-sections (normalization, peer_set,
+  management_quality, customer_concentration, stress_scenarios,
+  collateral, regulatory).
+
+what_archetype_provides:
+  - response_schema dict pattern (Vertex OpenAPI subset)
+  - prompt structure (Role / Inputs / Output contract / Discipline rules / Output)
+  - citation-evidence requirement on every non-numeric claim
+  - schema-driven validation (Vertex rejects malformed output)
+  - deterministic schema-validity test pattern
+
+what_use_case_provides:
+  - the N sub-sections specific to your domain (credit-memo: 7;
+    mortgage-underwriting: ~5; commercial-claim: ~6; KYC: ~4)
+  - the leaf shapes (numeric vs string vs enum) per sub-section
+  - banker-readable enums (band labels, ratings, severities)
+  - per-section critical-field list (drives missing-field detection)
+
+instantiation_steps:
+  1. Copy `usecases/credit-memo-commercial/agents/analyst.py` to
+     `usecases/<your-uc>/agents/<analyst-role>.py`
+  2. Replace the 7 sub-sections in ANALYST_RESPONSE_SCHEMA with your N
+  3. Copy `agents/prompts/analyst.md` and edit the Role + Inputs +
+     "The seven sub-sections" sections to match your schema
+  4. Add a deterministic schema-validity test — see the pattern in
+     `tests/test_consolidated_agents.py::TestSchemaValidity`
+  5. The orchestrator code that invokes the analyst is already in
+     `services/orchestrator-credit-memo/main.py::run_spreading` style;
+     use it as a template
+
+approved_models:
+  - gemini-3-1-flash      # default — native response_schema support
+  - gemini-2.5-pro        # for harder reasoning loads
+  - claude-opus-4-7       # via Anthropic tool-use forced-tool pattern
+
+cost_target_per_call_usd: 0.05
+latency_p99_ms: 30000
+
+quality_gates:
+  - response_schema validates as Vertex OpenAPI subset
+  - every required sub-section in the legacy fan-out is mapped
+  - every non-numeric claim sub-section requires evidence (citation)
+  - deterministic schema-validity test in CI
+
+related_skills:
+  - agent-response-schema
+  - model-selection
+  - production-test-suite
+
+reference_implementation:
+  - usecases/credit-memo-commercial/agents/analyst.py
+  - usecases/credit-memo-commercial/agents/prompts/analyst.md
+  - usecases/credit-memo-commercial/tests/test_consolidated_agents.py

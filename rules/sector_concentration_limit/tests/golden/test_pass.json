@@ -1,0 +1,9 @@
+{
+  "description": "CRE sector exposure at 250% of Tier 1 — well below the 300% bank-policy CRE concentration cap; no breach expected",
+  "input": {
+    "naics_sector": "531000",
+    "sector_exposure_pct": 250
+  },
+  "expected_output": [],
+  "regulatory_basis": "OCC Concentration Guidance / Bank Policy — CRE concentration is below the 300% Tier 1 capital cap"
+}

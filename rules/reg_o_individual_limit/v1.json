@@ -1,0 +1,38 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "insider_loan_amount", "name": "insider_loan_amount", "dataType": "number"},
+          {"id": "tier1_capital", "name": "tier1_capital", "dataType": "number"},
+          {"id": "has_collateral_backing", "name": "has_collateral_backing", "dataType": "boolean"}
+        ]
+      }
+    },
+    {
+      "id": "fn",
+      "name": "Reg O Individual Insider Limit (12 CFR 215.4(c))",
+      "type": "functionNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "source": "export const handler = (input) => {\n  const baseLimit = Math.max(500000, 0.10 * input.tier1_capital);\n  const applicable_limit = input.has_collateral_backing ? baseLimit * 1.5 : baseLimit;\n  const headroom = applicable_limit - input.insider_loan_amount;\n  const breach = input.insider_loan_amount > applicable_limit;\n  return {\n    breach: breach,\n    applicable_limit: applicable_limit,\n    headroom: headroom\n  };\n};"
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "fn"},
+    {"id": "e2", "sourceId": "fn", "targetId": "output"}
+  ]
+}

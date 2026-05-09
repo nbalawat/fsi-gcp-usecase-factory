@@ -19,7 +19,12 @@ import sqlalchemy
 from opentelemetry import trace
 from sqlalchemy import text
 
-from bank.logging import redacting_logger
+try:
+    from bank.logging import redacting_logger
+except ImportError:
+    import logging as _logging
+    def redacting_logger(name: str) -> _logging.Logger:  # type: ignore[misc]
+        return _logging.getLogger(name)
 
 logger = redacting_logger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -46,6 +51,7 @@ def _get_engine() -> sqlalchemy.Engine:
                     user=os.environ["DB_USER"],
                     password=os.environ["DB_PASS"],
                     db=os.environ.get("DB_NAME", "fsi_banking"),
+                    ip_type=os.environ.get("DB_IP_TYPE", "PRIVATE"),
                 )
 
             _engine = sqlalchemy.create_engine("postgresql+pg8000://", creator=getconn, pool_size=2, max_overflow=0)

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://gorules.io/schemas/rule.json",
+  "contentType": "application/vnd.gorules.decision",
+  "nodes": [
+    {
+      "id": "input",
+      "name": "Request",
+      "type": "inputNode",
+      "position": {"x": 0, "y": 0},
+      "content": {
+        "fields": [
+          {"id": "cre_loans_pct_capital", "name": "cre_loans_pct_capital", "dataType": "number"},
+          {"id": "construction_loans_pct_capital", "name": "construction_loans_pct_capital", "dataType": "number"}
+        ]
+      }
+    },
+    {
+      "id": "table",
+      "name": "CRE Concentration Limits (OCC 2006 CRE Guidance)",
+      "type": "decisionTableNode",
+      "position": {"x": 300, "y": 0},
+      "content": {
+        "hitPolicy": "collect",
+        "inputs": [
+          {"id": "c1", "name": "cre_loans_pct_capital", "field": "cre_loans_pct_capital", "dataType": "number"},
+          {"id": "c2", "name": "construction_loans_pct_capital", "field": "construction_loans_pct_capital", "dataType": "number"}
+        ],
+        "outputs": [
+          {"id": "o1", "name": "breach", "field": "breach", "dataType": "boolean"},
+          {"id": "o2", "name": "regulation", "field": "regulation", "dataType": "string"},
+          {"id": "o3", "name": "action_required", "field": "action_required", "dataType": "string"}
+        ],
+        "rules": [
+          {"_id": "r1", "c1": ">300", "c2": "", "o1": "true", "o2": "\"OCC 2006 CRE Concentration Guidance — Total CRE > 300% of capital\"", "o3": "\"enhanced_risk_management_and_board_notification\""},
+          {"_id": "r2", "c1": "", "c2": ">100", "o1": "true", "o2": "\"OCC 2006 CRE Concentration Guidance — Construction loans > 100% of capital\"", "o3": "\"enhanced_risk_management_and_board_notification\""}
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "name": "Response",
+      "type": "outputNode",
+      "position": {"x": 600, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "e1", "sourceId": "input", "targetId": "table"},
+    {"id": "e2", "sourceId": "table", "targetId": "output"}
+  ]
+}

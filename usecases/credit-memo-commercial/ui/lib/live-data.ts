@@ -181,6 +181,81 @@ export async function getRecentEvents(
  *      so the UI renders a real-looking memo. This keeps the demo presentable
  *      until the Anthropic API key is wired and the agents produce real prose.
  */
+/**
+ * Load the application's documents joined with their latest extraction
+ * event. The new per-document panel + spreading panel + the validation
+ * gate all consume this shape.
+ */
+export interface DocumentRow {
+  doc_id: string;
+  doc_type: string;
+  original_filename: string;
+  gcs_uri: string;
+  file_size_bytes: number;
+  extraction_status: string;
+  page_count: number | null;
+  confidence: number | null;
+  extracted_fields: Record<string, unknown>;
+  citations: unknown[];
+  missing_required_fields: string[];
+  missing_preferred_fields: string[];
+  error_code: string | null;
+  error_message: string | null;
+  uploaded_at: string;
+  extracted_at: string | null;
+}
+
+export async function getDocumentsForCase(applicationId: string): Promise<DocumentRow[]> {
+  const pool = getPool();
+  const r = await pool.query(
+    `SELECT d.doc_id, d.doc_type, d.original_filename, d.gcs_uri,
+            d.file_size_bytes, d.extraction_status, d.page_count, d.confidence,
+            COALESCE(d.missing_required_fields, '[]'::jsonb) AS missing_required,
+            d.error_code, d.error_message, d.uploaded_at, d.extracted_at,
+            e.payload AS extraction_payload
+       FROM application_documents d
+       LEFT JOIN application_events e ON e.id = d.extraction_event_id
+      WHERE d.application_id = $1
+      ORDER BY d.uploaded_at`,
+    [applicationId],
+  );
+  return r.rows.map((row) => {
+    const ep = (row.extraction_payload ?? {}) as Record<string, unknown>;
+    return {
+      doc_id: String(row.doc_id),
+      doc_type: row.doc_type,
+      original_filename: row.original_filename,
+      gcs_uri: row.gcs_uri,
+      file_size_bytes: Number(row.file_size_bytes ?? 0),
+      extraction_status: row.extraction_status,
+      page_count: row.page_count ?? null,
+      confidence: row.confidence !== null ? Number(row.confidence) : null,
+      extracted_fields: (ep.extracted_fields ?? {}) as Record<string, unknown>,
+      citations: Array.isArray(ep.citations) ? ep.citations : [],
+      missing_required_fields: Array.isArray(row.missing_required) ? row.missing_required : [],
+      missing_preferred_fields: Array.isArray(ep.missing_preferred_fields) ? ep.missing_preferred_fields as string[] : [],
+      error_code: row.error_code ?? null,
+      error_message: row.error_message ?? null,
+      uploaded_at: row.uploaded_at?.toISOString?.() ?? String(row.uploaded_at ?? ""),
+      extracted_at: row.extracted_at?.toISOString?.() ?? (row.extracted_at ? String(row.extracted_at) : null),
+    };
+  });
+}
+
+export async function getReturnNoticeArtifact(applicationId: string): Promise<unknown | null> {
+  const pool = getPool();
+  const r = await pool.query(
+    `SELECT body FROM application_artifacts
+      WHERE application_id = $1 AND artifact_type = 'return_notice'
+      ORDER BY revision_number DESC
+      LIMIT 1`,
+    [applicationId],
+  );
+  if (r.rows.length === 0) return null;
+  return r.rows[0].body;
+}
+
+
 export async function getMemoArtifact(applicationId: string): Promise<MemoBody | null> {
   const pool = getPool();
   const r = await pool.query(

@@ -1,0 +1,13 @@
+{
+  "description": "Hospitality borrower (NAICS 72) at 4.0x Total Debt/EBITDA — exceeds the 3.5x hospitality leverage cap; breach expected",
+  "input": {
+    "naics_2digit": "72",
+    "leverage_ratio": 4.0
+  },
+  "expected_output": {
+    "within_threshold": false,
+    "max_leverage": 3.5,
+    "breach_severity": "breach"
+  },
+  "regulatory_basis": "Interagency Leveraged Lending Guidance (OCC/FRB/FDIC SR 13-3) — hospitality has a tighter 3.5x leverage cap given cyclical cash-flow risk"
+}

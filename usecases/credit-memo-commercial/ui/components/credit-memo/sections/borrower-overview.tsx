@@ -189,9 +189,27 @@ export const BorrowerOverviewSection: React.FC<Props> = ({ data }) => {
               Related-party transactions
             </p>
             <ul className="ml-5 mt-2 list-disc font-serif text-body-sm text-foreground leading-snug">
-              {data.related_party_transactions.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
+              {data.related_party_transactions.map((r, i) => {
+                // Drafter may emit either a string OR a structured object
+                // {party, nature, amount_usd}. Render either shape safely.
+                if (typeof r === "string") return <li key={i}>{r}</li>;
+                if (r && typeof r === "object") {
+                  const o = r as Record<string, unknown>;
+                  const party = o.party ?? o.counterparty ?? "";
+                  const nature = o.nature ?? o.description ?? "";
+                  const amount = typeof o.amount_usd === "number"
+                    ? `$${(o.amount_usd / 1_000_000).toFixed(2)}M`
+                    : (o.amount ?? "");
+                  return (
+                    <li key={i}>
+                      <strong>{String(party)}</strong>
+                      {nature ? ` — ${nature}` : ""}
+                      {amount ? ` (${amount})` : ""}
+                    </li>
+                  );
+                }
+                return <li key={i}>{String(r)}</li>;
+              })}
             </ul>
           </div>
         )}

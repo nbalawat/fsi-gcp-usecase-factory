@@ -1,0 +1,70 @@
+{
+  "borrower_id": "BRW-APEX-MFG",
+  "scenario_tag": "concentration-near-limit",
+  "loan_request": {
+    "amount_usd": 8000000,
+    "term_years": 5,
+    "facility_type": "term",
+    "purpose": "Equipment upgrade — CNC machining line replacement (Plant 2, Dayton OH)."
+  },
+  "financial_statements": {
+    "income_statement": {
+      "fy2023": {
+        "revenue": 78000000, "cogs": 56000000, "ebitda": 11200000,
+        "capex": 3500000, "depreciation": 2800000, "interest_expense": 950000,
+        "tax": 1700000, "net_income": 5750000
+      },
+      "fy2024": {
+        "revenue": 82000000, "cogs": 58500000, "ebitda": 11900000,
+        "capex": 3800000, "depreciation": 2950000, "interest_expense": 920000,
+        "tax": 1820000, "net_income": 6210000
+      },
+      "fy2025": {
+        "revenue": 85000000, "cogs": 60200000, "ebitda": 12300000,
+        "capex": 4100000, "depreciation": 3050000, "interest_expense": 880000,
+        "tax": 1900000, "net_income": 6470000
+      }
+    },
+    "balance_sheet": {
+      "fy2025": {
+        "total_assets": 64000000, "total_debt": 18500000, "total_equity": 28500000,
+        "current_assets": 24000000, "current_liabilities": 12500000,
+        "cash": 3200000, "inventory": 9800000, "ar": 8900000
+      }
+    },
+    "cash_flow": {
+      "fy2025": {"operating_cf": 9200000, "investing_cf": -4100000, "financing_cf": -3500000}
+    }
+  },
+  "borrower_metadata": {
+    "legal_name": "Apex Precision Components LLC",
+    "naics_code": "332710",
+    "hq_state": "MI",
+    "employee_count": 850,
+    "founded_year": 1962,
+    "fiscal_year_end": "12-31"
+  },
+  "customer_concentration": {
+    "top_5_pct": [0.18, 0.14, 0.10, 0.07, 0.05],
+    "top_1_pct": 0.18,
+    "hhi": 0.0654
+  },
+  "management": {
+    "ceo_name": "Margaret R. Holcomb",
+    "ceo_tenure_years": 14,
+    "cfo_name": "Daniel Park",
+    "cfo_tenure_years": 7,
+    "cfo_external_hire": false
+  },
+  "collateral_offered": [
+    {"type": "equipment", "estimated_value_usd": 7200000, "age_years": 1, "condition": "excellent"},
+    {"type": "equipment", "estimated_value_usd": 4500000, "age_years": 8, "condition": "good"}
+  ],
+  "principals_and_owners": [
+    {"name": "Holcomb Family Trust", "stake_pct": 0.62, "role": "Owner", "is_director": true},
+    {"name": "Margaret R. Holcomb", "stake_pct": 0.18, "role": "CEO", "is_director": true},
+    {"name": "Robert Holcomb Jr.", "stake_pct": 0.12, "role": "Director", "is_director": true},
+    {"name": "Daniel Park", "stake_pct": 0.04, "role": "CFO", "is_director": false},
+    {"name": "Outside investors (5)", "stake_pct": 0.04, "role": "Minority", "is_director": false}
+  ]
+}
