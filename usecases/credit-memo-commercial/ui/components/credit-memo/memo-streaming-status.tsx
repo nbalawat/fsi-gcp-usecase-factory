@@ -29,18 +29,18 @@ export const MemoStreamingStatus: React.FC<Props> = ({
     <div
       role="status"
       aria-live="polite"
-      className="mb-6 flex items-center gap-3 rounded-md border border-accent/40 bg-accent-tint/40 px-4 py-2.5"
+      className="mb-6 flex items-center gap-3 rounded-md border border-accent/40 bg-accent/40 px-4 py-2.5"
     >
       <Loader2
         aria-hidden
-        className="h-4 w-4 animate-spin text-accent-pressed"
+        className="h-4 w-4 animate-spin text-primary"
       />
-      <p className="font-mono text-mono-sm text-accent-pressed">
+      <p className="font-mono text-mono-sm text-primary">
         <span className="font-semi">
           Drafting section {draftingIndex} of {total}
         </span>
         {draftingSection && (
-          <span className="text-ink-2">
+          <span className="text-foreground/85">
             {" — "}
             {SECTION_LABELS[draftingSection]}…
           </span>

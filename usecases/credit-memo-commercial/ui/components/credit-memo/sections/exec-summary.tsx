@@ -94,7 +94,7 @@ export const ExecSummarySection: React.FC<Props> = ({ data }) => {
       }
     >
       {/* Header card with the big numbers */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-md border border-rule bg-paper-2 p-5 md:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-md border border-border bg-muted p-5 md:grid-cols-4">
         <Stat label="Borrower" value={data.borrower_name} />
         <Stat
           label="Industry"
@@ -127,8 +127,8 @@ export const ExecSummarySection: React.FC<Props> = ({ data }) => {
       </p>
 
       {/* Highlights */}
-      <div className="mt-6 rounded-md border border-rule p-5">
-        <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+      <div className="mt-6 rounded-md border border-border p-5">
+        <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           Underwriter highlights
         </p>
         <ul className="flex flex-col gap-2">
@@ -137,7 +137,7 @@ export const ExecSummarySection: React.FC<Props> = ({ data }) => {
             return (
               <li
                 key={i}
-                className="flex items-start gap-3 font-serif text-body text-ink-1 leading-snug"
+                className="flex items-start gap-3 font-serif text-body text-foreground leading-snug"
               >
                 <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                 <span>
@@ -161,22 +161,22 @@ const Stat: React.FC<{
   small?: boolean;
 }> = ({ label, value, sub, mono = false, small = false }) => (
   <div>
-    <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
       {label}
     </p>
     <p
       className={
         mono
-          ? "mt-1 font-mono text-mono tabular-nums text-ink-1"
+          ? "mt-1 font-mono text-mono tabular-nums text-foreground"
           : small
-            ? "mt-1 font-serif text-body-sm font-semi text-ink-1 leading-tight"
-            : "mt-1 font-serif text-h3 font-semi tabular-nums text-ink-1"
+            ? "mt-1 font-serif text-body-sm font-semi text-foreground leading-tight"
+            : "mt-1 font-serif text-h3 font-semi tabular-nums text-foreground"
       }
     >
       {value}
     </p>
     {sub && (
-      <p className="mt-0.5 font-mono text-mono-sm text-ink-3">{sub}</p>
+      <p className="mt-0.5 font-mono text-mono-sm text-muted-foreground">{sub}</p>
     )}
   </div>
 );

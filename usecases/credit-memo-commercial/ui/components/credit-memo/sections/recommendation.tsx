@@ -54,7 +54,7 @@ export const RecommendationSection: React.FC<Props> = ({ data }) => {
     >
       {data.narrative && <p>{data.narrative}</p>}
 
-      <div className="my-6 grid gap-4 rounded-md border border-rule p-5 md:grid-cols-3">
+      <div className="my-6 grid gap-4 rounded-md border border-border p-5 md:grid-cols-3">
         <Stat label="Amount" value={fmtUsdFull(t.amount_usd)} />
         <Stat label="Rate" value={t.rate} small />
         <Stat label="Term" value={`${termYears.toFixed(1)} years`} />
@@ -86,17 +86,17 @@ export const RecommendationSection: React.FC<Props> = ({ data }) => {
       </div>
 
       {data.conditions_precedent && data.conditions_precedent.length > 0 && (
-        <div className="my-6 rounded-md border border-rule p-5">
-          <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+        <div className="my-6 rounded-md border border-border p-5">
+          <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
             Conditions precedent
           </p>
           <ol className="flex flex-col gap-2">
             {data.conditions_precedent.map((cp, i) => (
               <li
                 key={i}
-                className="flex items-baseline gap-3 font-serif text-body text-ink-1 leading-snug"
+                className="flex items-baseline gap-3 font-serif text-body text-foreground leading-snug"
               >
-                <span className="font-mono text-mono-sm text-accent-pressed font-semi w-6 shrink-0">
+                <span className="font-mono text-mono-sm text-primary font-semi w-6 shrink-0">
                   {String(i + 1).padStart(2, "0")}.
                 </span>
                 <span>{cp}</span>
@@ -107,7 +107,7 @@ export const RecommendationSection: React.FC<Props> = ({ data }) => {
       )}
 
       {/* Closing line */}
-      <p className="mt-8 italic text-ink-2 border-l-2 border-accent pl-4">
+      <p className="mt-8 italic text-foreground/85 border-l-2 border-accent pl-4">
         Submitted for the consideration of the{" "}
         {data.approval_authority
           ? titleCase(data.approval_authority)
@@ -124,14 +124,14 @@ const Stat: React.FC<{
   small?: boolean;
 }> = ({ label, value, small }) => (
   <div>
-    <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
       {label}
     </p>
     <p
       className={
         small
-          ? "mt-1 font-serif text-body-sm text-ink-1 leading-snug"
-          : "mt-1 font-serif text-h3 font-semi tabular-nums text-ink-1"
+          ? "mt-1 font-serif text-body-sm text-foreground leading-snug"
+          : "mt-1 font-serif text-h3 font-semi tabular-nums text-foreground"
       }
     >
       {value}

@@ -47,25 +47,25 @@ export const MemoSection: React.FC<Props> = ({
       id={id}
       data-memo-section={id}
       className={cn(
-        "scroll-mt-[120px] border-t border-rule first:border-t-0 py-10",
+        "scroll-mt-[120px] border-t border-border first:border-t-0 py-10",
         className,
       )}
     >
       <CitationProvider prefill={prefillCitations}>
         <header className="mb-6">
-          <p className="text-eyebrow uppercase tracking-[0.08em] text-accent-pressed font-mono">
-            <span className="font-semi">{`§${number}`}</span>
-            {eyebrow && <span className="text-ink-3"> · {eyebrow}</span>}
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+            <span>{`§${number}`}</span>
+            {eyebrow && <span className="text-muted-foreground"> · {eyebrow}</span>}
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-4">
-            <h2 className="font-serif text-h2 font-semi tracking-tight text-ink-1">
+            <h2 className="font-serif text-h2 font-semibold tracking-tight text-foreground">
               {title}
             </h2>
             {kicker && <div className="shrink-0">{kicker}</div>}
           </div>
         </header>
         <SectionErrorBoundary label={title}>
-          <div className="memo-body font-serif text-body text-ink-1 leading-[1.55] [&>p]:mb-4 [&>p:last-child]:mb-0">
+          <div className="memo-body font-serif text-body text-foreground leading-[1.55] [&>p]:mb-4 [&>p:last-child]:mb-0">
             {children}
           </div>
         </SectionErrorBoundary>

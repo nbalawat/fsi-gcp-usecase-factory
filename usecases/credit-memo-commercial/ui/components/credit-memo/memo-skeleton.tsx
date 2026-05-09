@@ -28,12 +28,12 @@ export const MemoSectionSkeleton: React.FC<Props> = ({
     <section
       aria-busy="true"
       aria-label={`${title} loading`}
-      className="border-t border-rule first:border-t-0 py-10"
+      className="border-t border-border first:border-t-0 py-10"
     >
-      <p className="text-eyebrow uppercase tracking-[0.08em] text-ink-3 font-mono">
+      <p className="text-eyebrow uppercase tracking-[0.08em] text-muted-foreground font-mono">
         {`§${number}`}
       </p>
-      <h2 className="mt-1 font-serif text-h2 font-semi text-ink-3 opacity-60">
+      <h2 className="mt-1 font-serif text-h2 font-semi text-muted-foreground opacity-60">
         {title}
       </h2>
       <div className="mt-6 flex flex-col gap-3">
@@ -41,21 +41,21 @@ export const MemoSectionSkeleton: React.FC<Props> = ({
           <div
             key={i}
             className={cn(
-              "h-3.5 rounded-sm bg-paper-2 animate-pulse",
+              "h-3.5 rounded-sm bg-muted animate-pulse",
               i === paragraphs - 1 ? "w-2/3" : "w-full",
             )}
           />
         ))}
       </div>
       {table && (
-        <div className="mt-6 rounded-md border border-rule overflow-hidden">
-          <div className="h-9 bg-paper-2 border-b border-rule animate-pulse" />
+        <div className="mt-6 rounded-md border border-border overflow-hidden">
+          <div className="h-9 bg-muted border-b border-border animate-pulse" />
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
               className={cn(
-                "h-10 border-b border-rule last:border-b-0 animate-pulse",
-                i % 2 === 0 ? "bg-paper" : "bg-paper-2",
+                "h-10 border-b border-border last:border-b-0 animate-pulse",
+                i % 2 === 0 ? "bg-paper" : "bg-muted",
               )}
             />
           ))}

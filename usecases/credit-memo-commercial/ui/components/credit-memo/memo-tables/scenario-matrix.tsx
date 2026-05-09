@@ -30,7 +30,7 @@ const headroomTone = (pct: number): string => {
 const dscrTone = (dscr: number): string => {
   if (dscr < 1.0) return "text-semantic-danger font-semi";
   if (dscr < 1.25) return "text-semantic-warning font-semi";
-  return "text-ink-1";
+  return "text-foreground";
 };
 
 const labelFor = (s: CashFlowProjection["scenarios"][number]): string =>
@@ -46,13 +46,13 @@ const labelFor = (s: CashFlowProjection["scenarios"][number]): string =>
 
 export const ScenarioMatrix: React.FC<Props> = ({ scenarios }) => {
   return (
-    <div className="my-6 overflow-x-auto rounded-md border border-rule">
+    <div className="my-6 overflow-x-auto rounded-md border border-border">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-rule">
+          <tr className="border-b border-border">
             <th
               scope="col"
-              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Year-3 line item
             </th>
@@ -60,23 +60,23 @@ export const ScenarioMatrix: React.FC<Props> = ({ scenarios }) => {
               <th
                 key={s.name}
                 scope="col"
-                className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+                className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
               >
                 {labelFor(s)}
               </th>
             ))}
           </tr>
-          <tr className="border-b border-rule bg-paper-2">
+          <tr className="border-b border-border bg-muted">
             <th
               scope="row"
-              className="px-4 py-2 text-left font-mono text-mono-sm text-ink-3"
+              className="px-4 py-2 text-left font-mono text-mono-sm text-muted-foreground"
             >
               Revenue CAGR / EBITDA / rate shock
             </th>
             {scenarios.map((s) => (
               <td
                 key={`${s.name}-assumptions`}
-                className="px-4 py-2 text-right font-mono text-mono-sm tabular-nums text-ink-3"
+                className="px-4 py-2 text-right font-mono text-mono-sm tabular-nums text-muted-foreground"
               >
                 {fmtPctValue(s.revenue_cagr * 100, 1)} ·{" "}
                 {fmtPctValue(s.ebitda_margin * 100, 1)} ·{" "}
@@ -132,10 +132,10 @@ const Row: React.FC<{
   value: (s: CashFlowProjection["scenarios"][number]) => string;
   tone?: (s: CashFlowProjection["scenarios"][number]) => string;
 }> = ({ label, scenarios, value, tone }) => (
-  <tr className="border-b border-rule last:border-b-0">
+  <tr className="border-b border-border last:border-b-0">
     <th
       scope="row"
-      className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-ink-1"
+      className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-foreground"
     >
       {label}
     </th>
@@ -144,7 +144,7 @@ const Row: React.FC<{
         key={`${s.name}-${label}`}
         className={cn(
           "px-4 py-2.5 text-right font-mono text-mono tabular-nums",
-          tone ? tone(s) : "text-ink-1",
+          tone ? tone(s) : "text-foreground",
         )}
       >
         {value(s)}

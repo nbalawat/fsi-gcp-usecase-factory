@@ -43,17 +43,17 @@ export const TrendTable: React.FC<Props> = ({
   caption,
 }) => {
   return (
-    <div className="my-6 overflow-hidden rounded-md border border-rule">
+    <div className="my-6 overflow-hidden rounded-md border border-border">
       {caption && (
-        <p className="border-b border-rule bg-paper-2 px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+        <p className="border-b border-border bg-muted px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           {caption}
         </p>
       )}
       <table className="w-full text-mono">
         <thead>
-          <tr className="border-b border-rule">
+          <tr className="border-b border-border">
             <th
-              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
               scope="col"
             >
               Metric
@@ -62,14 +62,14 @@ export const TrendTable: React.FC<Props> = ({
               <th
                 key={p}
                 scope="col"
-                className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+                className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
               >
                 {p}
               </th>
             ))}
             <th
               scope="col"
-              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Trend
             </th>
@@ -79,11 +79,11 @@ export const TrendTable: React.FC<Props> = ({
           {rows.map((row, ri) => (
             <tr
               key={row.metric}
-              className={cn("border-b border-rule last:border-b-0")}
+              className={cn("border-b border-border last:border-b-0")}
             >
               <th
                 scope="row"
-                className="px-4 py-2 text-left font-serif text-body-sm font-semi text-ink-1"
+                className="px-4 py-2 text-left font-serif text-body-sm font-semi text-foreground"
               >
                 {row.metric}
               </th>
@@ -95,13 +95,13 @@ export const TrendTable: React.FC<Props> = ({
                 return (
                   <td
                     key={`${row.metric}-${vi}`}
-                    className="px-4 py-2 text-right font-mono text-mono tabular-nums text-ink-1"
+                    className="px-4 py-2 text-right font-mono text-mono tabular-nums text-foreground"
                   >
                     {display}
                   </td>
                 );
               })}
-              <td className="px-4 py-2 text-right font-mono text-mono-sm tabular-nums text-ink-2">
+              <td className="px-4 py-2 text-right font-mono text-mono-sm tabular-nums text-foreground/85">
                 {row.trend ?? "—"}
               </td>
             </tr>

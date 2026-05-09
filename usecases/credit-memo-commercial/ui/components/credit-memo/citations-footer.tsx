@@ -17,25 +17,25 @@ export const CitationsFooter: React.FC = () => {
   if (cites.length === 0) return null;
 
   return (
-    <div className="mt-8 border-t border-rule pt-4">
-      <p className="text-eyebrow uppercase tracking-[0.08em] text-ink-3">
+    <div className="mt-8 border-t border-border pt-4">
+      <p className="text-eyebrow uppercase tracking-[0.08em] text-muted-foreground">
         Sources
       </p>
       <ol className="mt-2 flex flex-col gap-1.5">
         {cites.map((c, i) => (
           <li
             key={`${c.source}-${i}`}
-            className="font-mono text-mono-sm text-ink-2 leading-snug"
+            className="font-mono text-mono-sm text-foreground/85 leading-snug"
           >
-            <span className="text-accent-pressed font-semi mr-1.5">
+            <span className="text-primary font-semi mr-1.5">
               {`[${i + 1}]`}
             </span>
-            <span className="text-ink-1 font-semi">{c.source}</span>
+            <span className="text-foreground font-semi">{c.source}</span>
             {c.page != null && (
-              <span className="text-ink-3"> · p.{c.page}</span>
+              <span className="text-muted-foreground"> · p.{c.page}</span>
             )}
-            {c.section && <span className="text-ink-3"> · {c.section}</span>}
-            <span className="text-ink-3"> — {c.claim}</span>
+            {c.section && <span className="text-muted-foreground"> · {c.section}</span>}
+            <span className="text-muted-foreground"> — {c.claim}</span>
           </li>
         ))}
       </ol>

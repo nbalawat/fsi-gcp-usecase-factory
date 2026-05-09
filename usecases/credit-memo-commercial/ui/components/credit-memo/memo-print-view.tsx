@@ -48,13 +48,13 @@ export const MemoPrintView: React.FC<Props> = ({
     <div className="memo-print-page mx-auto max-w-[760px] px-8 py-10">
       {/* Header banner */}
       <header className="mb-6 border-b-2 border-ink-1 pb-4">
-        <p className="text-eyebrow uppercase tracking-[0.08em] text-ink-3 font-mono">
+        <p className="text-eyebrow uppercase tracking-[0.08em] text-muted-foreground font-mono">
           Confidential — Commercial Credit Memo
         </p>
-        <h1 className="mt-2 font-serif text-h1 font-semi tracking-tight text-ink-1">
+        <h1 className="mt-2 font-serif text-h1 font-semi tracking-tight text-foreground">
           {borrower}
         </h1>
-        <div className="mt-2 flex flex-wrap justify-between gap-2 font-mono text-mono-sm text-ink-3">
+        <div className="mt-2 flex flex-wrap justify-between gap-2 font-mono text-mono-sm text-muted-foreground">
           <span>Application {applicationId}</span>
           {memo.drafted_at && (
             <span>
@@ -85,7 +85,7 @@ export const MemoPrintView: React.FC<Props> = ({
       <GlobalCitationsIndex memo={memo} />
 
       {/* Footer (printed once at end; @page running footer is unreliable). */}
-      <footer className="mt-12 border-t border-ink-1 pt-3 font-mono text-mono-sm text-ink-3">
+      <footer className="mt-12 border-t border-ink-1 pt-3 font-mono text-mono-sm text-muted-foreground">
         <div className="flex justify-between">
           <span>{borrower} · {applicationId}</span>
           <span>End of memo</span>
@@ -102,25 +102,25 @@ const GlobalCitationsIndex: React.FC<{
   if (all.length === 0) return null;
   return (
     <section className="mt-12 border-t-2 border-ink-1 pt-6">
-      <p className="text-eyebrow uppercase tracking-[0.08em] text-ink-3 font-mono">
+      <p className="text-eyebrow uppercase tracking-[0.08em] text-muted-foreground font-mono">
         Appendix
       </p>
-      <h2 className="mt-1 font-serif text-h2 font-semi text-ink-1">
+      <h2 className="mt-1 font-serif text-h2 font-semi text-foreground">
         Sources & Citations
       </h2>
       <ol className="mt-4 flex flex-col gap-2">
         {all.map((c, i) => (
           <li
             key={`${c.source}-${i}`}
-            className="font-mono text-mono-sm text-ink-2 leading-snug"
+            className="font-mono text-mono-sm text-foreground/85 leading-snug"
           >
-            <span className="font-semi text-ink-1 mr-2">{`[${i + 1}]`}</span>
-            <span className="font-semi text-ink-1">{c.source}</span>
+            <span className="font-semi text-foreground mr-2">{`[${i + 1}]`}</span>
+            <span className="font-semi text-foreground">{c.source}</span>
             {c.page != null && <span> · p.{c.page}</span>}
             {c.section && <span> · {c.section}</span>}
-            <span className="text-ink-3"> — {c.claim}</span>
+            <span className="text-muted-foreground"> — {c.claim}</span>
             {c.excerpt && (
-              <span className="block ml-6 mt-1 text-ink-3 italic">
+              <span className="block ml-6 mt-1 text-muted-foreground italic">
                 "{c.excerpt}"
               </span>
             )}

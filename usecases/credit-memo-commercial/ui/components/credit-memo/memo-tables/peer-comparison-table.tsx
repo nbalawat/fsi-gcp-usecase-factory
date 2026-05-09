@@ -50,12 +50,12 @@ export const PeerComparisonTable: React.FC<Props> = ({
   naics_code,
 }) => {
   return (
-    <div className="my-6 overflow-hidden rounded-md border border-rule">
-      <div className="flex items-center justify-between border-b border-rule bg-paper-2 px-4 py-2">
-        <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <div className="my-6 overflow-hidden rounded-md border border-border">
+      <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-2">
+        <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           Peer comparison
         </p>
-        <p className="text-eyebrow font-mono text-ink-3">
+        <p className="text-eyebrow font-mono text-muted-foreground">
           {[
             naics_code && `NAICS ${naics_code}`,
             peer_count && `n=${peer_count}`,
@@ -67,40 +67,40 @@ export const PeerComparisonTable: React.FC<Props> = ({
       </div>
       <table className="w-full">
         <thead>
-          <tr className="border-b border-rule">
+          <tr className="border-b border-border">
             <th
               scope="col"
-              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Metric
             </th>
             <th
               scope="col"
-              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Borrower
             </th>
             <th
               scope="col"
-              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               P25
             </th>
             <th
               scope="col"
-              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Median
             </th>
             <th
               scope="col"
-              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-right font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               P75
             </th>
             <th
               scope="col"
-              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+              className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
             >
               Position
             </th>
@@ -112,30 +112,30 @@ export const PeerComparisonTable: React.FC<Props> = ({
             return (
               <tr
                 key={row.metric}
-                className="border-b border-rule last:border-b-0"
+                className="border-b border-border last:border-b-0"
               >
                 <th
                   scope="row"
-                  className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-ink-1"
+                  className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-foreground"
                 >
                   {row.metric}
                 </th>
-                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-ink-1 font-semi">
+                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-foreground font-semi">
                   {row.borrower}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-ink-3">
+                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-muted-foreground">
                   {row.p25 ?? "—"}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-ink-2">
+                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-foreground/85">
                   {row.median}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-ink-3">
+                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-muted-foreground">
                   {row.p75 ?? "—"}
                 </td>
                 <td className="px-4 py-2.5 text-left">
                   {pos !== null ? (
                     <div className="flex items-center gap-2">
-                      <div className="relative h-2 w-32 rounded-full bg-paper-2 border border-rule">
+                      <div className="relative h-2 w-32 rounded-full bg-muted border border-border">
                         <span
                           aria-hidden
                           className="absolute top-1/2 h-3 w-1 -translate-y-1/2 -translate-x-1/2 rounded-sm bg-accent"
@@ -156,14 +156,14 @@ export const PeerComparisonTable: React.FC<Props> = ({
                             ? "text-semantic-success"
                             : pos < 0
                               ? "text-semantic-warning"
-                              : "text-ink-3",
+                              : "text-muted-foreground",
                         )}
                       >
                         {row.borrower_assessment ?? ""}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-ink-3 font-mono text-mono-sm">
+                    <span className="text-muted-foreground font-mono text-mono-sm">
                       {row.borrower_assessment ?? "—"}
                     </span>
                   )}

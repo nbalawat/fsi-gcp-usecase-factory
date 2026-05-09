@@ -58,13 +58,13 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
         </p>
       )}
 
-      <div className="my-6 overflow-hidden rounded-md border border-rule">
-        <p className="border-b border-rule bg-paper-2 px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+      <div className="my-6 overflow-hidden rounded-md border border-border">
+        <p className="border-b border-border bg-muted px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           Rating drivers
         </p>
         <table className="w-full">
           <thead>
-            <tr className="border-b border-rule">
+            <tr className="border-b border-border">
               <Th>Factor</Th>
               <Th>Assessment</Th>
               <Th>Evidence</Th>
@@ -74,11 +74,11 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
             {(data.drivers ?? []).map((d, i) => (
               <tr
                 key={`${d.factor}-${i}`}
-                className="border-b border-rule last:border-b-0 align-top"
+                className="border-b border-border last:border-b-0 align-top"
               >
                 <th
                   scope="row"
-                  className="px-4 py-3 text-left font-serif text-body-sm font-semi text-ink-1 whitespace-nowrap"
+                  className="px-4 py-3 text-left font-serif text-body-sm font-semi text-foreground whitespace-nowrap"
                 >
                   {d.factor}
                 </th>
@@ -87,7 +87,7 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
                     {titleCase(d.assessment)}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-left font-serif text-body-sm text-ink-1 leading-snug">
+                <td className="px-4 py-3 text-left font-serif text-body-sm text-foreground leading-snug">
                   {d.evidence}
                   {d.citation && <CitationSuperscript citation={d.citation} />}
                 </td>
@@ -98,8 +98,8 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
       </div>
 
       {data.identified_weaknesses && data.identified_weaknesses.length > 0 && (
-        <div className="my-6 rounded-md border border-rule p-5">
-          <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+        <div className="my-6 rounded-md border border-border p-5">
+          <p className="mb-3 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
             Identified weaknesses & mitigations
           </p>
           <ul className="flex flex-col divide-y divide-rule">
@@ -108,10 +108,10 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
                 key={i}
                 className="grid gap-1 py-3 first:pt-0 last:pb-0 md:grid-cols-2"
               >
-                <p className="font-serif text-body-sm font-semi text-ink-1 leading-snug">
+                <p className="font-serif text-body-sm font-semi text-foreground leading-snug">
                   {w.weakness}
                 </p>
-                <p className="font-serif text-body-sm text-ink-2 leading-snug">
+                <p className="font-serif text-body-sm text-foreground/85 leading-snug">
                   {w.mitigation}
                 </p>
               </li>
@@ -120,7 +120,7 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
         </div>
       )}
 
-      <p className="font-mono text-mono-sm text-ink-3">
+      <p className="font-mono text-mono-sm text-muted-foreground">
         Rating framework: {data.occ_handbook_citation ?? "OCC Comptroller's Handbook: Rating Credit Risk"}
       </p>
     </MemoSection>
@@ -130,7 +130,7 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
 const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <th
     scope="col"
-    className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+    className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
   >
     {children}
   </th>

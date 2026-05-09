@@ -36,10 +36,10 @@ export const CollateralSection: React.FC<Props> = ({ data }) => {
         </p>
       )}
 
-      <div className="my-6 overflow-hidden rounded-md border border-rule">
+      <div className="my-6 overflow-hidden rounded-md border border-border">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-rule">
+            <tr className="border-b border-border">
               <Th>Type</Th>
               <Th>Description</Th>
               <Th align="right">Appraised value</Th>
@@ -52,43 +52,43 @@ export const CollateralSection: React.FC<Props> = ({ data }) => {
             {(data.items ?? []).map((it, i) => (
               <tr
                 key={`${it.type}-${i}`}
-                className="border-b border-rule last:border-b-0 align-top"
+                className="border-b border-border last:border-b-0 align-top"
               >
-                <td className="px-4 py-2.5 text-left font-mono text-mono-sm tabular-nums text-ink-2 whitespace-nowrap">
+                <td className="px-4 py-2.5 text-left font-mono text-mono-sm tabular-nums text-foreground/85 whitespace-nowrap">
                   {titleCase(it.type)}
                 </td>
-                <td className="px-4 py-2.5 text-left font-serif text-body-sm text-ink-1 max-w-[280px]">
+                <td className="px-4 py-2.5 text-left font-serif text-body-sm text-foreground max-w-[280px]">
                   {it.description ?? "—"}
                   {it.citation && <CitationSuperscript citation={it.citation} />}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-ink-1">
+                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-foreground">
                   {fmtUsdFull(it.appraised_value_usd)}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-ink-3">
+                <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-muted-foreground">
                   {fmtPctFraction(it.haircut_pct, 0)}
                 </td>
-                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-ink-1 font-semi">
+                <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-foreground font-semi">
                   {fmtUsdFull(it.lendable_value_usd)}
                 </td>
-                <td className="px-4 py-2.5 text-left font-mono text-mono-sm text-ink-2 whitespace-nowrap">
+                <td className="px-4 py-2.5 text-left font-mono text-mono-sm text-foreground/85 whitespace-nowrap">
                   {it.lien_position ? titleCase(it.lien_position) : "—"}
                   {it.regulation && (
-                    <span className="block text-ink-3">{it.regulation}</span>
+                    <span className="block text-muted-foreground">{it.regulation}</span>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr className="bg-paper-2">
+            <tr className="bg-muted">
               <th
                 colSpan={4}
                 scope="row"
-                className="px-4 py-2.5 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3"
+                className="px-4 py-2.5 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
               >
                 Total lendable
               </th>
-              <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums font-semi text-ink-1">
+              <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums font-semi text-foreground">
                 {fmtUsdFull(data.total_pledged_usd)}
               </td>
               <td />
@@ -98,7 +98,7 @@ export const CollateralSection: React.FC<Props> = ({ data }) => {
       </div>
 
       {/* Coverage summary */}
-      <div className="my-6 grid gap-4 rounded-md border border-rule p-5 md:grid-cols-3">
+      <div className="my-6 grid gap-4 rounded-md border border-border p-5 md:grid-cols-3">
         <Stat label="Loan amount" value={fmtUsdFull(data.loan_amount_usd)} />
         <Stat
           label="Total lendable collateral"
@@ -135,7 +135,7 @@ const Th: React.FC<{
     scope="col"
     className={`${
       align === "right" ? "text-right" : "text-left"
-    } px-4 py-2 font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3`}
+    } px-4 py-2 font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground`}
   >
     {children}
   </th>
@@ -154,16 +154,16 @@ const Stat: React.FC<{
   tone?: "success" | "warning" | "danger";
 }> = ({ label, value, sub, tone }) => (
   <div>
-    <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
       {label}
     </p>
     <p
-      className={`mt-1 font-serif text-h3 font-semi tabular-nums ${tone ? toneClass[tone] : "text-ink-1"}`}
+      className={`mt-1 font-serif text-h3 font-semi tabular-nums ${tone ? toneClass[tone] : "text-foreground"}`}
     >
       {value}
     </p>
     {sub && (
-      <p className="mt-0.5 font-mono text-mono-sm text-ink-3">{sub}</p>
+      <p className="mt-0.5 font-mono text-mono-sm text-muted-foreground">{sub}</p>
     )}
   </div>
 );

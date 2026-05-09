@@ -45,7 +45,7 @@ export const CitationSuperscript: React.FC<Props> = ({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "ml-0.5 cursor-pointer align-super font-mono text-[0.65em] font-semi leading-none",
-          "text-accent-pressed hover:text-accent-hov focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded-[2px] px-0.5",
+          "text-primary hover:text-accent-hov focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded-[2px] px-0.5",
         )}
       >
         {idx}

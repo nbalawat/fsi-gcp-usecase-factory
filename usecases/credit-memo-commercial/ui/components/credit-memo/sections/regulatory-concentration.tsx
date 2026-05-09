@@ -62,7 +62,7 @@ export const RegulatoryConcentrationSection: React.FC<Props> = ({ data }) => {
           />
           <KV label="Cap" value={fmtPctFraction(sbl.cap_pct, 0)} />
           {cites[1] && (
-            <p className="mt-2 text-body-sm text-ink-3">
+            <p className="mt-2 text-body-sm text-muted-foreground">
               Exposure includes existing utilised facilities plus the proposed
               term loan.
               <CitationSuperscript citation={cites[1]} />
@@ -113,7 +113,7 @@ export const RegulatoryConcentrationSection: React.FC<Props> = ({ data }) => {
             />
           )}
           {cites[2] && (
-            <p className="mt-2 text-body-sm text-ink-3">
+            <p className="mt-2 text-body-sm text-muted-foreground">
               Screening was performed against the bank's insider register and
               the borrower's Schedule 13G filings.
               <CitationSuperscript citation={cites[2]} />
@@ -132,7 +132,7 @@ export const RegulatoryConcentrationSection: React.FC<Props> = ({ data }) => {
             }
           >
             {appraisal.rationale && (
-              <p className="font-serif text-body-sm text-ink-1 leading-snug">
+              <p className="font-serif text-body-sm text-foreground leading-snug">
                 {appraisal.rationale}
                 {cites[3] && <CitationSuperscript citation={cites[3]} />}
               </p>
@@ -155,7 +155,7 @@ export const RegulatoryConcentrationSection: React.FC<Props> = ({ data }) => {
             highlight
           />
           {cites[4] && (
-            <p className="mt-2 text-body-sm text-ink-3">
+            <p className="mt-2 text-body-sm text-muted-foreground">
               Pricing benchmarked against the syndicated commercial-loan band
               for the borrower's risk rating and tenor.
               <CitationSuperscript citation={cites[4]} />
@@ -190,7 +190,7 @@ export const RegulatoryConcentrationSection: React.FC<Props> = ({ data }) => {
               value={ofac.kyc_complete === false ? "No" : "Yes"}
             />
             {ofac.screening_notes && (
-              <p className="mt-2 font-serif text-body-sm text-ink-2 leading-snug">
+              <p className="mt-2 font-serif text-body-sm text-foreground/85 leading-snug">
                 {ofac.screening_notes}
                 {cites[5] && <CitationSuperscript citation={cites[5]} />}
               </p>
@@ -215,14 +215,14 @@ const Block: React.FC<{
   stateLabel: string;
   children: React.ReactNode;
 }> = ({ regulation, title, tone, stateLabel, children }) => (
-  <div className="rounded-md border border-rule p-5">
+  <div className="rounded-md border border-border p-5">
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h3 className="font-serif text-h4 font-semi text-ink-1">{title}</h3>
+      <h3 className="font-serif text-h4 font-semi text-foreground">{title}</h3>
       <Badge tone={toneBadge[tone]} dot>
         {stateLabel}
       </Badge>
     </div>
-    <p className="mt-1 font-mono text-mono-sm text-ink-3">{regulation}</p>
+    <p className="mt-1 font-mono text-mono-sm text-muted-foreground">{regulation}</p>
     <div className="mt-4 flex flex-col gap-2">{children}</div>
   </div>
 );
@@ -233,14 +233,14 @@ const KV: React.FC<{
   highlight?: boolean;
 }> = ({ label, value, highlight }) => (
   <div className="flex items-baseline justify-between gap-3">
-    <span className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <span className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
       {label}
     </span>
     <span
       className={
         highlight
-          ? "font-mono text-mono tabular-nums font-semi text-ink-1"
-          : "font-mono text-mono-sm tabular-nums text-ink-2"
+          ? "font-mono text-mono tabular-nums font-semi text-foreground"
+          : "font-mono text-mono-sm tabular-nums text-foreground/85"
       }
     >
       {value}

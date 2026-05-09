@@ -38,13 +38,13 @@ export const FinancialAnalysisSection: React.FC<Props> = ({ data }) => {
       {data.normalization_adjustments &&
         data.normalization_adjustments.length > 0 && (
           <div className="my-6">
-            <p className="mb-2 text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+            <p className="mb-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
               Normalisation adjustments
             </p>
-            <div className="overflow-hidden rounded-md border border-rule">
+            <div className="overflow-hidden rounded-md border border-border">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-rule">
+                  <tr className="border-b border-border">
                     <Th>Period</Th>
                     <Th>Line item</Th>
                     <Th align="right">Original</Th>
@@ -59,27 +59,27 @@ export const FinancialAnalysisSection: React.FC<Props> = ({ data }) => {
                     return (
                       <tr
                         key={`${a.period}-${a.line_item}-${i}`}
-                        className="border-b border-rule last:border-b-0 align-top"
+                        className="border-b border-border last:border-b-0 align-top"
                       >
-                        <td className="px-4 py-2.5 text-left font-mono text-mono-sm tabular-nums text-ink-2">
+                        <td className="px-4 py-2.5 text-left font-mono text-mono-sm tabular-nums text-foreground/85">
                           {a.period}
                         </td>
-                        <td className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-ink-1">
+                        <td className="px-4 py-2.5 text-left font-serif text-body-sm font-semi text-foreground">
                           {a.line_item}
                         </td>
-                        <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-ink-3">
+                        <td className="px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums text-muted-foreground">
                           {fmtUsdFull(a.original_value)}
                         </td>
-                        <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-ink-1">
+                        <td className="px-4 py-2.5 text-right font-mono text-mono tabular-nums text-foreground">
                           {fmtUsdFull(a.adjusted_value)}
                         </td>
                         <td
-                          className={`px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums ${delta > 0 ? "text-semantic-success" : delta < 0 ? "text-semantic-warning" : "text-ink-3"}`}
+                          className={`px-4 py-2.5 text-right font-mono text-mono-sm tabular-nums ${delta > 0 ? "text-semantic-success" : delta < 0 ? "text-semantic-warning" : "text-muted-foreground"}`}
                         >
                           {delta > 0 ? "+" : ""}
                           {fmtUsdFull(delta)}
                         </td>
-                        <td className="px-4 py-2.5 text-left font-serif text-body-sm text-ink-2 max-w-[360px]">
+                        <td className="px-4 py-2.5 text-left font-serif text-body-sm text-foreground/85 max-w-[360px]">
                           {a.rationale}
                           {a.citation && (
                             <CitationSuperscript citation={a.citation} />
@@ -108,7 +108,7 @@ export const FinancialAnalysisSection: React.FC<Props> = ({ data }) => {
       />
 
       {cites[2] && (
-        <p className="text-body-sm text-ink-3">
+        <p className="text-body-sm text-muted-foreground">
           Peer benchmarks sourced from{" "}
           {data.peer_comparison?.data_source ?? "RMA Annual Statement Studies"}.
           <CitationSuperscript citation={cites[2]} />
@@ -126,7 +126,7 @@ const Th: React.FC<{
     scope="col"
     className={`${
       align === "right" ? "text-right" : "text-left"
-    } px-4 py-2 font-mono text-mono-sm uppercase tracking-[0.04em] text-ink-3`}
+    } px-4 py-2 font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground`}
   >
     {children}
   </th>

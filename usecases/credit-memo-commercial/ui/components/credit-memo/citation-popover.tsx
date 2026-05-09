@@ -55,42 +55,42 @@ export const CitationPopover: React.FC<Props> = ({
       role="dialog"
       aria-label={`Citation ${index}: ${citation.source}`}
       className={cn(
-        "absolute z-50 w-[360px] rounded-md border border-rule bg-paper p-4 shadow-pop",
+        "absolute z-50 w-[360px] rounded-md border border-border bg-paper p-4 shadow-pop",
         "left-1/2 -translate-x-1/2 top-full mt-2",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-mono-sm font-semi text-accent-pressed">
+          <span className="font-mono text-mono-sm font-semi text-primary">
             {`[${index}]`}
           </span>
-          <p className="font-mono text-mono-sm font-semi text-ink-1 break-words">
+          <p className="font-mono text-mono-sm font-semi text-foreground break-words">
             {citation.source}
           </p>
         </div>
         <button
           type="button"
           aria-label="Close citation"
-          className="rounded-sm p-0.5 text-ink-3 hover:bg-paper-2 hover:text-ink-1"
+          className="rounded-sm p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={onClose}
         >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <p className="mt-1 font-mono text-mono-sm text-ink-3">
+      <p className="mt-1 font-mono text-mono-sm text-muted-foreground">
         {citation.page != null ? `Page ${citation.page}` : "Page —"}
         {citation.section ? ` · ${citation.section}` : ""}
         {citation.kind ? ` · ${citation.kind.replace(/_/g, " ")}` : ""}
       </p>
 
       {excerpt && (
-        <blockquote className="mt-3 border-l-2 border-accent pl-3 font-serif text-body-sm text-ink-2 leading-snug">
+        <blockquote className="mt-3 border-l-2 border-accent pl-3 font-serif text-body-sm text-foreground/85 leading-snug">
           {display}
           {truncated && (
             <button
               type="button"
-              className="ml-1 text-accent-pressed underline-offset-2 hover:underline"
+              className="ml-1 text-primary underline-offset-2 hover:underline"
               onClick={() => setExpanded(true)}
             >
               show more
@@ -99,18 +99,18 @@ export const CitationPopover: React.FC<Props> = ({
         </blockquote>
       )}
 
-      <div className="mt-3 border-t border-rule pt-2">
-        <p className="text-mono-sm font-mono uppercase tracking-[0.06em] text-ink-3">
+      <div className="mt-3 border-t border-border pt-2">
+        <p className="text-mono-sm font-mono uppercase tracking-[0.06em] text-muted-foreground">
           Supports claim
         </p>
-        <p className="mt-1 text-body-sm text-ink-2">{citation.claim}</p>
+        <p className="mt-1 text-body-sm text-foreground/85">{citation.claim}</p>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
           disabled
-          className="inline-flex items-center gap-1.5 text-body-sm text-ink-3 hover:text-ink-2 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground/85 disabled:opacity-60"
           aria-label="Open source document (not yet available)"
           title="Doc viewer coming soon"
         >

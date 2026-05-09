@@ -37,7 +37,7 @@ export const CashFlowProjectionSection: React.FC<Props> = ({ data }) => {
       </p>
 
       {/* Assumptions */}
-      <div className="my-6 grid gap-3 rounded-md border border-rule p-5 md:grid-cols-4">
+      <div className="my-6 grid gap-3 rounded-md border border-border p-5 md:grid-cols-4">
         {a.revenue_cagr != null && (
           <Stat label="Revenue CAGR" value={fmtPctFraction(a.revenue_cagr, 1)} />
         )}
@@ -60,7 +60,7 @@ export const CashFlowProjectionSection: React.FC<Props> = ({ data }) => {
       </div>
 
       {a.narrative && (
-        <p className="text-body-sm text-ink-2">
+        <p className="text-body-sm text-foreground/85">
           {a.narrative}
           {cites[1] && <CitationSuperscript citation={cites[1]} />}
         </p>
@@ -77,12 +77,12 @@ export const CashFlowProjectionSection: React.FC<Props> = ({ data }) => {
             return (
               <div
                 key={s.name}
-                className="rounded-md border border-rule p-4"
+                className="rounded-md border border-border p-4"
               >
-                <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+                <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
                   {s.label ?? s.name}
                 </p>
-                <p className="mt-2 font-serif text-body-sm text-ink-1 leading-snug">
+                <p className="mt-2 font-serif text-body-sm text-foreground leading-snug">
                   {s.interpretation}
                   {c && <CitationSuperscript citation={c} />}
                 </p>
@@ -100,14 +100,14 @@ const Stat: React.FC<{
   small?: boolean;
 }> = ({ label, value, small }) => (
   <div>
-    <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+    <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
       {label}
     </p>
     <p
       className={
         small
-          ? "mt-1 font-mono text-mono-sm tabular-nums text-ink-1"
-          : "mt-1 font-mono text-mono tabular-nums text-ink-1"
+          ? "mt-1 font-mono text-mono-sm tabular-nums text-foreground"
+          : "mt-1 font-mono text-mono tabular-nums text-foreground"
       }
     >
       {value}

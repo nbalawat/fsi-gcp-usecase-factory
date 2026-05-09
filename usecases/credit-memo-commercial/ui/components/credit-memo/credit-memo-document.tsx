@@ -154,12 +154,12 @@ export const CreditMemoDocument: React.FC<Props> = ({
     >
       {/* Header strip with metadata */}
       {memo && !compact && (
-        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-rule pb-4">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-4">
           <div>
-            <p className="text-eyebrow uppercase tracking-[0.08em] text-accent-pressed font-mono">
+            <p className="text-eyebrow uppercase tracking-[0.08em] text-primary font-mono">
               Confidential — Commercial Credit Memo
             </p>
-            <h1 className="mt-1 font-serif text-h1 font-semi tracking-tight text-ink-1">
+            <h1 className="mt-1 font-serif text-h1 font-semi tracking-tight text-foreground">
               {memo.executive_summary?.borrower_name ?? "Credit Memo"}
             </h1>
           </div>
@@ -185,12 +185,12 @@ export const CreditMemoDocument: React.FC<Props> = ({
               </Badge>
             )}
             {memo.revision_number != null && (
-              <span className="font-mono text-mono-sm text-ink-3">
+              <span className="font-mono text-mono-sm text-muted-foreground">
                 Rev {memo.revision_number}
               </span>
             )}
             {memo.drafted_at && (
-              <span className="font-mono text-mono-sm text-ink-3">
+              <span className="font-mono text-mono-sm text-muted-foreground">
                 Drafted {fmtDate(memo.drafted_at)}
               </span>
             )}
@@ -214,12 +214,12 @@ export const CreditMemoDocument: React.FC<Props> = ({
             Memo validation found {validationWarning.length}{" "}
             {validationWarning.length === 1 ? "issue" : "issues"}
           </p>
-          <ul className="mt-1 list-disc pl-6 text-body-sm text-ink-2 leading-snug">
+          <ul className="mt-1 list-disc pl-6 text-body-sm text-foreground/85 leading-snug">
             {validationWarning.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
           </ul>
-          <p className="mt-2 text-body-sm text-ink-3">
+          <p className="mt-2 text-body-sm text-muted-foreground">
             The memo is still useful for review; please address the issues
             before sign-off.
           </p>
@@ -261,18 +261,18 @@ export const CreditMemoDocument: React.FC<Props> = ({
           {memo?.appendices && Object.keys(memo.appendices).length > 0 && (
             <section
               id="appendices"
-              className="border-t border-rule py-10 scroll-mt-[120px]"
+              className="border-t border-border py-10 scroll-mt-[120px]"
             >
-              <p className="text-eyebrow uppercase tracking-[0.08em] text-accent-pressed font-mono">
+              <p className="text-eyebrow uppercase tracking-[0.08em] text-primary font-mono">
                 Appendix
               </p>
-              <h2 className="mt-1 font-serif text-h2 font-semi tracking-tight text-ink-1">
+              <h2 className="mt-1 font-serif text-h2 font-semi tracking-tight text-foreground">
                 Supporting exhibits
               </h2>
-              <ul className="mt-4 flex flex-col gap-1.5 font-serif text-body-sm text-ink-2">
+              <ul className="mt-4 flex flex-col gap-1.5 font-serif text-body-sm text-foreground/85">
                 {Object.keys(memo.appendices).map((k) => (
                   <li key={k}>
-                    <span className="font-mono text-mono-sm text-accent-pressed mr-2">
+                    <span className="font-mono text-mono-sm text-primary mr-2">
                       [A]
                     </span>
                     {k.replace(/_/g, " ")}
@@ -386,13 +386,13 @@ const SectionUnavailable: React.FC<{ number: number; title: string }> = ({
 }) => (
   <section className="my-12 scroll-mt-24">
     <div className="mb-4">
-      <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+      <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
         Section {number}
       </p>
-      <h2 className="mt-1 font-serif text-h2 font-semi text-ink-1">{title}</h2>
+      <h2 className="mt-1 font-serif text-h2 font-semi text-foreground">{title}</h2>
     </div>
-    <div className="rounded-md border border-rule bg-paper-2 p-5">
-      <p className="font-serif text-body-sm text-ink-2 leading-snug">
+    <div className="rounded-md border border-border bg-muted p-5">
+      <p className="font-serif text-body-sm text-foreground/85 leading-snug">
         This section was not produced for the current memo. The drafter agent
         completed without populating it; the underlying atomic-service
         outputs may not have provided sufficient detail. Open the audit

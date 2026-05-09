@@ -44,11 +44,11 @@ export const RiskFactorsSection: React.FC<Props> = ({ data }) => {
           return (
             <li
               key={f.name}
-              className="rounded-md border border-rule p-5"
+              className="rounded-md border border-border p-5"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <h3 className="font-serif text-h4 font-semi text-ink-1">
-                  <span className="mr-2 font-mono text-mono-sm text-ink-3">
+                <h3 className="font-serif text-h4 font-semi text-foreground">
+                  <span className="mr-2 font-mono text-mono-sm text-muted-foreground">
                     {String(i + 1).padStart(2, "0")}.
                   </span>
                   {f.name}
@@ -68,10 +68,10 @@ export const RiskFactorsSection: React.FC<Props> = ({ data }) => {
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+                  <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
                     Evidence
                   </p>
-                  <p className="mt-2 font-serif text-body-sm text-ink-1 leading-snug">
+                  <p className="mt-2 font-serif text-body-sm text-foreground leading-snug">
                     {f.evidence}
                     {f.citations?.[0] && (
                       <CitationSuperscript citation={f.citations[0]} />
@@ -82,10 +82,10 @@ export const RiskFactorsSection: React.FC<Props> = ({ data }) => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-eyebrow uppercase tracking-[0.06em] text-ink-3 font-mono">
+                  <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
                     Mitigation
                   </p>
-                  <p className="mt-2 font-serif text-body-sm text-ink-1 leading-snug">
+                  <p className="mt-2 font-serif text-body-sm text-foreground leading-snug">
                     {f.mitigation}
                     {f.citations?.[2] && (
                       <CitationSuperscript citation={f.citations[2]} />
@@ -118,7 +118,7 @@ const SeverityBar: React.FC<{ value: number }> = ({ value }) => {
           key={i}
           className={cn(
             "h-3 w-1.5 rounded-[1px]",
-            i < value ? fillClass : "bg-paper-3 border border-rule",
+            i < value ? fillClass : "bg-muted/70 border border-border",
           )}
         />
       ))}

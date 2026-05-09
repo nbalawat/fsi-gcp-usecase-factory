@@ -101,7 +101,7 @@ export const MemoToc: React.FC<Props> = ({
       aria-label="Memo table of contents"
       className="sticky top-[80px] flex flex-col gap-1 self-start"
     >
-      <p className="mb-2 text-eyebrow uppercase tracking-[0.08em] text-ink-3 font-mono">
+      <p className="mb-2 text-eyebrow uppercase tracking-[0.08em] text-muted-foreground font-mono">
         Contents
       </p>
       {SECTION_ORDER.map((id, i) => {
@@ -116,12 +116,12 @@ export const MemoToc: React.FC<Props> = ({
             className={cn(
               "group flex items-center gap-2.5 border-l-2 pl-3 py-1.5 text-body-sm transition-colors",
               isActive
-                ? "border-accent text-ink-1 font-semi"
-                : "border-transparent text-ink-3 hover:text-ink-1 hover:border-ink-4",
+                ? "border-accent text-foreground font-semi"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-ink-4",
             )}
           >
             <StatusDot status={s} />
-            <span className="font-mono text-mono-sm tabular-nums text-ink-3 group-aria-[current=true]:text-accent-pressed">
+            <span className="font-mono text-mono-sm tabular-nums text-muted-foreground group-aria-[current=true]:text-primary">
               {String(i + 1).padStart(2, "0")}
             </span>
             <span className="leading-snug">{SECTION_LABELS[id]}</span>
@@ -132,10 +132,10 @@ export const MemoToc: React.FC<Props> = ({
       {hasAppendices && (
         <a
           href="#appendices"
-          className="mt-3 flex items-center gap-2.5 border-l-2 border-transparent pl-3 py-1.5 text-body-sm text-ink-3 hover:text-ink-1 hover:border-ink-4"
+          className="mt-3 flex items-center gap-2.5 border-l-2 border-transparent pl-3 py-1.5 text-body-sm text-muted-foreground hover:text-foreground hover:border-ink-4"
         >
           <StatusDot status="complete" />
-          <span className="font-mono text-mono-sm text-ink-3">A.</span>
+          <span className="font-mono text-mono-sm text-muted-foreground">A.</span>
           <span>Appendices</span>
         </a>
       )}
