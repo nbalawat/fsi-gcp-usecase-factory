@@ -147,22 +147,34 @@ Capture the count into `decision.yaml: telemetry.cloud_run_services_torn_down`.
 
 ### 7d — Archive (forever) the losing options + comparator
 
+Archives live at the TOP-LEVEL `archives/design/<uc>/<TS>/` — out of
+`usecases/<uc>/` so the UC tree stays clean for IDE / grep / casual
+inspection. The winner's source directory STAYS at
+`usecases/<uc>/ui/proposals/option-<chosen>/` as the audit pin (proves
+which agent output produced the canonical `ui/components/`).
+
 ```bash
 TS=$(date -u +"%Y%m%dT%H%M%SZ")
-ARCHIVE=usecases/<uc>/ui/proposals/_archive/$TS
-mkdir -p $ARCHIVE
-mv usecases/<uc>/ui/proposals/_review.html $ARCHIVE/_review.html
+ARCHIVE="archives/design/<uc>/$TS"
+mkdir -p "$ARCHIVE"
+
+# Comparator HTML and rejected options → top-level archive
+mv usecases/<uc>/ui/proposals/_review.html "$ARCHIVE/_review.html"
 for opt in a b c d; do
   if [ "$opt" != "<chosen-lower>" ]; then
-    [ -d usecases/<uc>/ui/proposals/option-$opt ] && \
-      mv usecases/<uc>/ui/proposals/option-$opt $ARCHIVE/option-$opt
+    if [ -d "usecases/<uc>/ui/proposals/option-$opt" ]; then
+      mv "usecases/<uc>/ui/proposals/option-$opt" "$ARCHIVE/option-$opt"
+    fi
   fi
 done
-# Keep the WINNER's option directory in place so the audit trail
-# captures "which option was promoted from which agent output."
+
+# Winner stays in place as the audit pin (single source of truth
+# for "what the agent actually emitted before promotion"). The
+# promoted code at usecases/<uc>/ui/components/+app/ is canonical;
+# this pin is for forensics.
 ```
 
-Update `decision.yaml: archive_path` with the archive directory.
+Update `decision.yaml: archive_path` to `archives/design/<uc>/<TS>/`.
 
 ### 7e — Write decision.yaml (the contract)
 
@@ -191,8 +203,8 @@ rejected_options:
     diversity_score: <pairwise Jaccard vs winner; computed from components_used>
   ...
 
-archive_path: usecases/<uc>/ui/proposals/_archive/<TS>/
-comparator_html_path: usecases/<uc>/ui/proposals/_archive/<TS>/_review.html
+archive_path: archives/design/<uc>/<TS>/
+comparator_html_path: archives/design/<uc>/<TS>/_review.html
 canvas_checksum: <from preflight>
 canvas_path: onboarding/<uc>.yaml
 

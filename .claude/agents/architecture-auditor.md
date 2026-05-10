@@ -67,15 +67,22 @@ Skip path: if `usecases/{uc}/.no-design-rationale.txt` exists AND was created vi
 
 ### Architecture audit trail integrity
 
-`usecases/{uc}/ui/proposals/_archive/` must:
-- Be present when `decision.yaml` exists
-- Contain every rejected option's full directory (including manifest.yaml + rationale.md + tradeoffs.md)
-- Contain the comparator `_review.html` from the round that produced the winner
+Design archives live at the TOP LEVEL — `archives/design/<uc>/<TS>/` — NOT under `usecases/<uc>/`. This keeps the UC tree clean while preserving the regulator audit trail in one greppable location.
+
+For every UC with a `decision.yaml`:
+- The directory pointed at by `decision.yaml: archive_path` must exist (it's of the form `archives/design/<uc>/<TS>/`)
+- It must contain every rejected option's full directory (manifest.yaml + rationale.md + tradeoffs.md + components/ + app/)
+- It must contain the comparator `_review.html` from the round that produced the winner
 - Each rejected option's manifest.yaml must have `rejected: true` + `rejection_reason` stamped
+- The winner's source pin `usecases/<uc>/ui/proposals/option-<chosen>/` must still exist (separate from archive — single forensic pin for "what the agent emitted before promotion")
 
-Missing archive: FAIL — regulator audit trail is broken.
+Missing archive directory: FAIL — regulator audit trail is broken.
 
-Files removed from `_archive/` after the fact: FAIL with the exact files that were deleted.
+Missing winner pin: FAIL — cannot prove provenance of promoted code.
+
+Files removed from `archives/design/<uc>/<TS>/` after the fact: FAIL with the exact files that were deleted.
+
+Top-level `archives/` directory present but missing a `README.md` explaining the structure: WARN.
 
 ### Required artifacts
 

@@ -63,7 +63,13 @@ assert_eq() {
 }
 
 WORK="$(mktemp -d)"
-cleanup() { rm -rf "$WORK" "$REPO/onboarding/__test_design_proposals__.yaml" "$REPO/usecases/__test_design_proposals__"; rmdir "$REPO/onboarding" 2>/dev/null || true; }
+cleanup() {
+  rm -rf "$WORK"
+  rm -rf "$REPO/usecases/__test_design_proposals__"
+  rm -rf "$REPO/.fsi-state/__test_design_proposals__"
+  rm -f  "$REPO/onboarding/__test_design_proposals__.yaml"
+  rmdir  "$REPO/onboarding" 2>/dev/null || true
+}
 trap cleanup EXIT
 
 echo "─── Smoke test: UX-first lockdown ────────────────────────"
@@ -147,8 +153,13 @@ echo
 echo "8. Auditor's UX-first checks are wired:"
 assert_grep "UX-first design contract" ".claude/agents/architecture-auditor.md"  "UX-first section present"
 assert_grep "decision.yaml"             ".claude/agents/architecture-auditor.md"  "auditor cites decision.yaml"
-assert_grep "_archive"                  ".claude/agents/architecture-auditor.md"  "auditor cites _archive trail"
+assert_grep "archives/design"           ".claude/agents/architecture-auditor.md"  "auditor cites top-level archive trail"
 assert_grep "lock_level"                ".claude/agents/architecture-auditor.md"  "auditor enforces lock_level"
+echo
+
+echo "8b. archives/ directory present + documented:"
+assert_path "archives/README.md"                                                 "archives/README.md present"
+assert_path "archives/design/.gitkeep"                                           "archives/design/ committed"
 echo
 
 echo "9. /init-use-case Step 0 preflight is wired:"

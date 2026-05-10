@@ -118,7 +118,8 @@ properties:
   # ─── Archive trail (regulator audit) ───────────────────────────────────
   archive_path:
     type: string
-    description: relative path to usecases/<uc>/ui/proposals/_archive/<timestamp>/ holding all options + comparator + agent rationales.
+    pattern: "^archives/design/[a-z][a-z0-9-]*/[0-9TZ]+/$"
+    description: relative path archives/design/<uc>/<timestamp>/ holding the rejected options + comparator HTML + agent rationales. Top-level so the UC tree stays clean.
 
   comparator_html_path:
     type: string

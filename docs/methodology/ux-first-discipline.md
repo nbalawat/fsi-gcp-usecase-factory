@@ -109,11 +109,21 @@ Fields the rest of the factory cares about:
 Each designer agent emits this. Schema at `.claude/schemas/option-manifest.schema.yaml`.
 Used by the comparator + the diversity scorer + the audit trail.
 
-### `usecases/<uc>/ui/proposals/_archive/<TS>/`
+### `archives/design/<uc>/<TS>/`  (top-level)
 
-Forever-archive. Contains every rejected option + the comparator HTML
-that ran the round. Architecture-auditor refuses any commit that deletes
-files from here.
+Forever-archive. Lives at the TOP LEVEL — out of the per-UC tree — so
+the UC directory stays clean (no `_archive/` subdirectory cluttering
+every `ls usecases/<uc>/ui/`). One greppable place for all design
+forensics across all UCs.
+
+Contains every rejected option's full directory (manifest +
+rationale + tradeoffs + components + app + Dockerfile) plus the
+comparator `_review.html` from the round that produced the winner.
+
+Architecture-auditor refuses any commit that deletes or modifies files
+under `archives/`. The winning option's **source pin** lives separately
+at `usecases/<uc>/ui/proposals/option-<chosen>/` — see `archives/README.md`
+for the why.
 
 ---
 
