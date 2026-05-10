@@ -1,0 +1,74 @@
+# Fixture: a use case that fails the reuse-rate gate.
+# 5 net-new atomic services + 4 net-new agents — exactly the proliferation
+# pattern /fsi-onboard exists to prevent. Gate must exit 1 for this canvas.
+
+use_case_id: novel-thing
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: pipeline
+use_case_archetype: pipeline-originator@1.0
+
+hitl_gates:
+  - extraction_review
+  - rating_review
+  - draft_review
+  - final_approval
+  - none
+
+atomic_services_reused:
+  - financial-spreader
+
+net_new_atomic_services:
+  - name: thing-scorer
+    description: scores a thing by its attributes
+    justification: "no library service scores things"
+  - name: thing-classifier
+    description: classifies things into bins
+    justification: "thing classification is novel"
+  - name: thing-aggregator
+    description: aggregates thing exposure
+    justification: "thing exposure aggregation is novel"
+  - name: thing-validator
+    description: validates a thing
+    justification: "thing validation is novel"
+  - name: thing-comparator
+    description: compares two things
+    justification: "thing comparison is novel"
+
+multi_agent_pattern: extractor-spreader-rater-drafter@1.0
+
+agent_archetypes_reused:
+  - document-processor@1.0
+
+net_new_agents:
+  - name: thing-explainer
+    role: explainer
+    justification: "no library archetype explains a thing"
+  - name: thing-summarizer
+    role: summarizer
+    justification: "no library archetype summarizes a thing"
+  - name: thing-recommender
+    role: recommender
+    justification: "no library archetype recommends a thing"
+  - name: thing-narrator
+    role: narrator
+    justification: "no library archetype narrates a thing"
+
+shared_rules_reused: []
+
+net_new_rules:
+  - name: thing_threshold
+    citation: "internal policy v1"
+    inputs_sketch: "thing_value → ok | not_ok"
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available on Cloud Run SA"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled (Rule 2)"
+
+provider_prereqs_pending: []
+compliance_scope: lightweight
+eval_framework_wired: false

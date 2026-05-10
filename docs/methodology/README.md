@@ -13,8 +13,12 @@ Read in this order:
    case so you don't rediscover what's already battle-tested.
 5. **`product-build-discipline.md`** — the 37 rules paid for in real incidents,
    each with a CI gate. The "what NOT to do" doc.
-6. `onboard-new-use-case.md` — the runbook for starting use case #2, #3, …
-7. This file (when you're trying to do X → run Y)
+6. **`using-the-factory.md`** — the don't-spin-wheels guide. Decision tree
+   ("when you're trying to X → run Y"), the five wheel-spinning patterns and
+   their cures, escape hatches when blocked, and a 30-min onramp checklist.
+   Read this BEFORE your first UC; re-read quarterly.
+7. `onboard-new-use-case.md` — the runbook for starting use case #2, #3, …
+8. This file (when you're trying to do X → run Y)
 
 ---
 
@@ -22,7 +26,8 @@ Read in this order:
 
 | When you want to … | Run / read |
 |---|---|
-| Start a brand-new use case | `/init-use-case "<name>"` then `/new-use-case` |
+| Start a brand-new use case (RECOMMENDED entrypoint) | `/fsi-onboard <name>` (7-round AskUserQuestion journey, library-first) then `/init-use-case` then `/new-use-case` |
+| Skip the journey and scaffold directly (only if you've onboarded several UCs) | `/init-use-case "<name>"` then `/new-use-case` |
 | Author the REASONS canvas | `/fsi-reasons-canvas` (auto-loads when editing reasons.yaml) |
 | Search the libraries before building | `/fsi-search-library "<intent>"` |
 | Add a new atomic service | `/new-atomic-service` |

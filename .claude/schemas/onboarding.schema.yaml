@@ -1,0 +1,184 @@
+# Onboarding canvas schema — output of /fsi-onboard
+# JSON Schema-compatible (YAML representation). The schema is the contract
+# between /fsi-onboard (writer) and /init-use-case + /fsi-reasons-canvas
+# (readers). Keep this file backward-compatible — bump $schema_version on
+# breaking changes.
+
+$schema_version: "1.0.0"
+
+required:
+  - use_case_id
+  - schema_version
+  - created_at
+  - console_pattern
+  - use_case_archetype
+  - hitl_gates
+  - atomic_services_reused
+  - net_new_atomic_services
+  - multi_agent_pattern
+  - agent_archetypes_reused
+  - net_new_agents
+  - shared_rules_reused
+  - net_new_rules
+  - model_provider
+  - provider_prereqs_confirmed
+  - compliance_scope
+  - eval_framework_wired
+  - reuse_metrics
+
+properties:
+
+  use_case_id:
+    type: string
+    pattern: "^[a-z][a-z0-9-]+[a-z0-9]$"
+    description: kebab-case identifier; becomes usecases/<id>/ folder name.
+
+  schema_version:
+    type: string
+    enum: ["1.0.0"]
+
+  created_at:
+    type: string
+    format: date-time
+
+  # ─── Round 1 ───
+  console_pattern:
+    type: string
+    enum:
+      - real-time
+      - investigations
+      - pipeline
+      - surveillance
+      - run
+      - recommendations
+
+  # ─── Round 2 ───
+  use_case_archetype:
+    oneOf:
+      - type: string                  # e.g. "pipeline-originator@1.0"
+        pattern: "^[a-z][a-z0-9-]+@[0-9.]+$"
+      - type: "null"                  # only when archetype_skip_justification is set
+
+  archetype_skip_justification:
+    type: string
+    description: required when use_case_archetype is null; one-line reason.
+
+  # ─── Round 3 ───
+  hitl_gates:
+    type: array
+    items:
+      type: string
+      enum:
+        - extraction_review
+        - rating_review
+        - draft_review
+        - final_approval
+        - none
+    description: ordered list of human-in-the-loop callbacks. "none" means advisory output.
+
+  # ─── Round 4 ───
+  atomic_services_reused:
+    type: array
+    items:
+      type: string                    # name from services/atomic/
+    description: existing services this UC will compose.
+
+  net_new_atomic_services:
+    type: array
+    items:
+      type: object
+      required: [name, description, justification]
+      properties:
+        name: {type: string, pattern: "^[a-z][a-z0-9-]+$"}
+        description: {type: string, minLength: 10}
+        justification: {type: string, minLength: 20}
+    description: net-new services with mandatory justification.
+
+  # ─── Round 5 ───
+  multi_agent_pattern:
+    oneOf:
+      - type: string                  # e.g. "extractor-spreader-rater-drafter@1.0"
+        pattern: "^[a-z][a-z0-9-]+@[0-9.]+$"
+      - type: "null"
+
+  pattern_skip_justification:
+    type: string
+
+  agent_archetypes_reused:
+    type: array
+    items:
+      type: string                    # e.g. "document-processor@1.0"
+      pattern: "^[a-z][a-z0-9-]+@[0-9.]+$"
+
+  net_new_agents:
+    type: array
+    items:
+      type: object
+      required: [name, role, justification]
+      properties:
+        name: {type: string, pattern: "^[a-z][a-z0-9-]+$"}
+        role: {type: string}
+        justification: {type: string, minLength: 20}
+
+  # ─── Round 6 ───
+  shared_rules_reused:
+    type: array
+    items:
+      type: string                    # rule name from rules/<name>/
+
+  net_new_rules:
+    type: array
+    items:
+      type: object
+      required: [name, citation, inputs_sketch]
+      properties:
+        name: {type: string, pattern: "^[a-z][a-z0-9_]+$"}
+        citation: {type: string, minLength: 5}
+        inputs_sketch: {type: string}
+
+  # ─── Round 7 ───
+  model_provider:
+    type: string
+    enum: [vertex_gemini, anthropic_api, hybrid]
+
+  provider_prereqs_confirmed:
+    type: array
+    items: {type: string}
+
+  provider_prereqs_pending:
+    type: array
+    items:
+      type: object
+      required: [prereq, jira_ref]
+      properties:
+        prereq: {type: string}
+        jira_ref: {type: string}
+
+  compliance_scope:
+    type: string
+    enum: [full, lightweight, deferred]
+
+  eval_framework_wired:
+    type: boolean
+
+  # ─── Computed by check_reuse_rate.mjs ───
+  reuse_metrics:
+    type: object
+    required: [atomic_pct, agents_pct, rules_pct, hitl_count]
+    properties:
+      atomic_pct:        {type: number, minimum: 0, maximum: 1}
+      agents_pct:        {type: number, minimum: 0, maximum: 1}
+      rules_pct:         {type: number, minimum: 0, maximum: 1}
+      hitl_count:        {type: integer, minimum: 0}
+      gate_passed:       {type: boolean}
+      gate_failures:     {type: array, items: {type: string}}
+
+  # ─── Optional override ───
+  reuse_gate_override:
+    type: object
+    description: only set when arch-review explicitly approves a low reuse rate.
+    required: [approver, ticket, date]
+    properties:
+      approver: {type: string}
+      ticket:   {type: string}
+      date:     {type: string, format: date}

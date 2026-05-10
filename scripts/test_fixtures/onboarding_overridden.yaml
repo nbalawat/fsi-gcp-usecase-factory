@@ -1,0 +1,46 @@
+# Fixture: same proliferation pattern, but with arch-review override.
+# Gate must EXIT 0 (override path) and log the override metadata.
+
+use_case_id: novel-thing
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: pipeline
+use_case_archetype: pipeline-originator@1.0
+
+hitl_gates:
+  - final_approval
+
+atomic_services_reused:
+  - financial-spreader
+
+net_new_atomic_services:
+  - name: thing-scorer
+    description: scores a thing by its attributes
+    justification: "scoring this thing is genuinely novel — board-approved exception"
+  - name: thing-classifier
+    description: classifies things
+    justification: "novel — board-approved exception"
+  - name: thing-aggregator
+    description: aggregates thing exposure
+    justification: "novel — board-approved exception"
+
+multi_agent_pattern: extractor-spreader-rater-drafter@1.0
+agent_archetypes_reused:
+  - document-processor@1.0
+net_new_agents: []
+shared_rules_reused:
+  - single_borrower_exposure
+net_new_rules: []
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+provider_prereqs_pending: []
+compliance_scope: full
+eval_framework_wired: true
+
+reuse_gate_override:
+  approver: "arch-review-board@bank.com"
+  ticket: "ARCH-1042"
+  date: "2026-05-09"

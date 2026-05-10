@@ -1,0 +1,62 @@
+# Fixture: mortgage-origination — well-composed, all reuse gates green.
+# Used by scripts/test_fsi_onboard.sh as the happy-path assertion.
+
+use_case_id: mortgage-origination
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: pipeline
+
+use_case_archetype: pipeline-originator@1.0
+
+hitl_gates:
+  - draft_review
+  - final_approval
+
+atomic_services_reused:
+  - financial-spreader
+  - loan-serviceability
+  - peer-and-industry-context
+  - borrower-network
+  - collateral-valuator
+  - document-extractor
+
+net_new_atomic_services: []
+
+multi_agent_pattern: extractor-spreader-rater-drafter@1.0
+
+agent_archetypes_reused:
+  - document-processor@1.0
+  - analyst-multisection@1.0
+  - rater-with-covenant@1.0
+  - narrative-drafter@1.0
+  - memo-reviewer-v2@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - dscr_threshold_by_industry
+  - leverage_threshold_by_industry
+  - cre_concentration_limit
+  - geographic_concentration_limit
+
+net_new_rules:
+  - name: ltv_threshold_by_property_class
+    citation: "OCC Bulletin 2013-26 — Real estate lending standards"
+    inputs_sketch: "ltv_pct, property_class, occupancy_type → pass | watch | fail"
+
+model_provider: hybrid
+
+provider_prereqs_confirmed:
+  - "Vertex ADC available on Cloud Run SA"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled (Rule 2)"
+  - "Anthropic API key in Secret Manager"
+  - "VPC egress to api.anthropic.com allowed"
+
+provider_prereqs_pending: []
+
+compliance_scope: full
+
+eval_framework_wired: true
