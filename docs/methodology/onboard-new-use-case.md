@@ -219,6 +219,63 @@ artifact set.
    `gemini-2.5-pro` for reasoning agents, `gemini-2.5-flash` for cheap
    classifiers.
 
+8. **One writer per `application_state` column.** If two services subscribe
+   to the same Pub/Sub topic and both write `decision`, you'll get stale
+   "Approved" stamps before the workflow finalizes. Detach the redundant
+   subscriber. (Rule 29 in `product-build-discipline.md`.)
+
+9. **HITL callback bars need confirmation chips + `router.refresh()` +
+   404-as-success.** Without these, users click Approve 2-3 times per gate
+   and complain the system is broken. (Rule 30; reference impl in
+   `usecases/credit-memo-commercial/ui/components/checkpoint-actions/checkpoint-action-bar.tsx`.)
+
+10. **Workflow writes `current_stage` at every long-running step**, not
+    just HITL pauses. Otherwise the UI looks stuck while agents run for
+    60-90s. (Rule 31.)
+
+11. **Default-tab logic is data-aware.** When the primary artifact (memo,
+    decision) doesn't exist yet, default the tab to live progress
+    (pipeline activity), not to the empty artifact. (Rule 32.)
+
+12. **Per-application sessionStorage keys.** Global keys like
+    `case-tab.active` poison subsequent cases. Use
+    `case-tab.active.<applicationId>`. (Rule 33.)
+
+13. **Vendor schema converters are mandatory.** If you pass a
+    JSON-Schema-draft-07 schema to Vertex Gemini's `response_schema`,
+    convert `type: ["X","null"]` → `type: "X", nullable: true` first.
+    Otherwise SDK errors with `'list' object has no attribute 'upper'`.
+    (Rule 34; reference: `services/atomic/document-extractor/vendors/liteparse_gemini.py`.)
+
+14. **UI deploys via explicit Dockerfile + `gcloud builds submit`**, not
+    `gcloud run deploy --source` (which uses Buildpacks and breaks on
+    pnpm workspaces). (Rule 35; reference: `ui/apps/pipeline-console/Dockerfile`
+    + `cloudbuild.yaml`.)
+
+15. **Service URLs come from env vars in production.** `.fsi-state/*.url`
+    files are local-dev only — they're (correctly) excluded from Docker
+    images. Code that reads only from `.fsi-state` will silently fail on
+    Cloud Run. (Rule 36; reference: `ui/apps/pipeline-console/app/api/live/route.ts`.)
+
+16. **Build evals before optimizing prompts.** `evals/scorers/structural.py`
+    + `scripts/run_evals.py` + `scripts/eval_diff.py` give you a baseline.
+    Without measurement, every prompt edit is a guess. (Rule 37.)
+
+---
+
+## See also: factory-cookbook.md
+
+`docs/methodology/factory-cookbook.md` is the **forward-looking** companion to
+this runbook. It catalogs the 12 architecture patterns we battle-tested on
+credit-memo-commercial — HITL callbacks, three-pane case shell, multi-doc
+upload, vendor abstraction, JDM rules with `/evaluate_all`, auto-grounding,
+edit drawer with suggestions, eval framework, stage transparency, dynamic
+right rail, multi-stage Dockerfile, env-var service discovery — with code
+references to the working implementations.
+
+**Read it before scaffolding.** Reusing one of these patterns is typically a
+few hours of integration; rediscovering one is a week or two.
+
 ---
 
 ## Sanity check: is your use case ready to ship?

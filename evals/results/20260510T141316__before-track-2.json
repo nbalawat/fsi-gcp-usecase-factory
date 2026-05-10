@@ -1,0 +1,79 @@
+{
+  "run_id": "20260510T141316__before-track-2",
+  "git_sha": "5865bc8",
+  "label": "before-track-2",
+  "case_count": 1,
+  "average_across_cases": 3.9,
+  "total_cost_usd": 0.0133,
+  "results": [
+    {
+      "application_id": "7c56ae2e-1d8f-4e51-b47a-09d9383eef64",
+      "borrower_id": "BRW-BERKSHIRE-2024",
+      "run_id": "20260510T141316__before-track-2",
+      "git_sha": "5865bc8",
+      "average": 3.9,
+      "total_cost_usd": 0.0133,
+      "scores": [
+        {
+          "name": "section_completeness",
+          "value": 2.5,
+          "evidence": [
+            "\u26a0 cash_flow_projection: only 0 citation(s)",
+            "\u26a0 risk_factors: only 0 citation(s)",
+            "\u26a0 regulatory_concentration: only 0 words of prose, only 0 citation(s)",
+            "\u26a0 risk_rating_rationale: only 0 citation(s)",
+            "\u26a0 recommendation: only 0 citation(s)"
+          ],
+          "cost_usd": 0.0
+        },
+        {
+          "name": "citation_grounding",
+          "value": 3.85,
+          "evidence": [
+            "10/13 citations point at real (doc, page)",
+            "executive_summary: citation has no page",
+            "collateral: citation has no page",
+            "covenant_package: citation has no page"
+          ],
+          "cost_usd": 0.0
+        },
+        {
+          "name": "numeric_density",
+          "value": 4.17,
+          "evidence": [
+            "Total numeric claims: 25",
+            "  \u2022 borrower_overview: 0 numeric claim(s)",
+            "  \u2022 covenant_package: 0 numeric claim(s)",
+            "  \u2022 regulatory_concentration: 0 numeric claim(s)"
+          ],
+          "cost_usd": 0.0
+        },
+        {
+          "name": "schema_conformance",
+          "value": 5.0,
+          "evidence": [
+            "\u2713 Memo has all 10 sections + required top-level keys"
+          ],
+          "cost_usd": 0.0
+        },
+        {
+          "name": "depth_llm",
+          "value": 4.0,
+          "evidence": [
+            "Judge rationale: The memo shows excellent depth, naming numerous specific entities and quoting key disclosures, but it fails to address the 'subsequent events' section noted in the source documents, a potentially material omission that prevents a perfect score. Score: 4.",
+            "Named entities (9): GEICO, BNSF Railway, Berkshire Hathaway Energy, See's Candies, McLane, Walmart",
+            "Verbatim quotes (2)",
+            "  \u2022 ...after Greg Abel and I made a trip to Tokyo...\u2026",
+            "  \u2022 McLane\u2019s businesses have several significant customers, including Walmart, 7-Eleven, Yum! Brands and others.\u2026",
+            "\u26a0 Missed: The source document index indicates a 'subsequent_events' section was available in the 10-K, but the memo does not discuss or reference any subsequent events, which could be a material omission.",
+            "\u26a0 Missed: While noting McLane's customer concentration, the memo dismisses it as immaterial to the consolidated entity without further analysis, a missed opportunity for deeper risk assessment.",
+            "\u26a0 Missed: The peer comparison section is empty; while justified, adding comps for individual major segments (e.g., BNSF vs. other railroads) would have provided more depth.",
+            "\u2713 Strength: The Borrower Overview section provides significant texture, naming multiple key subsidiaries, customers of those subsidiaries, and the core management team including the designated successor.",
+            "\u2713 Strength: The Risk Factors section on 'Key Person Risk' is well-mitigated by citing specific evidence of the succession plan directly from the 10-K."
+          ],
+          "cost_usd": 0.0133
+        }
+      ]
+    }
+  ]
+}

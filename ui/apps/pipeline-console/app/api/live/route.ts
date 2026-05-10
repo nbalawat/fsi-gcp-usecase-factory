@@ -4,20 +4,28 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 /**
- * Live system status endpoint — pings the deployed Cloud Run services
- * to show whether the underwriting pipeline is actually up.
+ * Live system status endpoint — confirms whether the underwriting
+ * pipeline's services are deployed/reachable.
  *
- * Each service URL is pulled from .fsi-state/<service>.url (written by
- * scripts/deploy_service.sh). If a state file is missing, the service is
- * marked "unknown".
+ * Service URL discovery — two paths:
  *
- * The UI shows this as a live header strip: green = pipeline healthy,
- * amber = degraded (1+ services down), red = pipeline down.
+ *   1. Production (Cloud Run UI):  per-service env var FSI_<NAME>_URL,
+ *      injected at deploy time. e.g. FSI_FINANCIAL_SPREADER_URL=https://...
+ *      Set up by ui/apps/pipeline-console/cloudbuild.yaml + the
+ *      `gcloud run deploy --set-env-vars=...` invocation.
  *
- * NOTE: this fetches PUBLIC service metadata (just the resolved URL +
- * last_modified) — never service responses, since they require IAM auth.
- * The "live" indicator confirms the deployment is up; deeper health is
- * shown via Cloud Logging / Cloud Trace.
+ *   2. Local dev:  reads .fsi-state/<service>.url files written by
+ *      scripts/deploy_service.sh. The dev server has these on disk;
+ *      the deployed image does not (.fsi-state is gitignored AND
+ *      dockerignored).
+ *
+ * Either path produces "up" if the URL is known; "unknown" otherwise.
+ * The UI shows this as a header strip: green = healthy, amber =
+ * degraded, red = down.
+ *
+ * NOTE: returns PUBLIC metadata only (resolved URL + when we last
+ * saw it deployed). Never proxies service responses — they require
+ * IAM auth and that's a different surface.
  */
 
 import { readFileSync, existsSync, statSync } from "node:fs";
@@ -49,20 +57,49 @@ interface ServiceStatus {
   last_deployed?: string;
 }
 
+/** Convert "financial-spreader" → "FSI_FINANCIAL_SPREADER_URL". */
+function envVarName(serviceName: string): string {
+  return "FSI_" + serviceName.toUpperCase().replace(/-/g, "_") + "_URL";
+}
+
+function resolveServiceUrl(serviceName: string): {
+  url: string | null;
+  source: "env" | "file" | null;
+  last_seen: string | null;
+} {
+  // 1. Env var (production)
+  const envUrl = process.env[envVarName(serviceName)];
+  if (envUrl) {
+    return { url: envUrl, source: "env", last_seen: null };
+  }
+  // 2. .fsi-state file (local dev)
+  const urlFile = join(REPO_ROOT, ".fsi-state", `${serviceName}.url`);
+  if (existsSync(urlFile)) {
+    try {
+      return {
+        url: readFileSync(urlFile, "utf-8").trim(),
+        source: "file",
+        last_seen: statSync(urlFile).mtime.toISOString(),
+      };
+    } catch {
+      /* fallthrough */
+    }
+  }
+  return { url: null, source: null, last_seen: null };
+}
+
 export async function GET(): Promise<Response> {
   const statuses: ServiceStatus[] = SERVICES.map((s) => {
-    const urlFile = join(REPO_ROOT, ".fsi-state", `${s.name}.url`);
-    if (!existsSync(urlFile)) {
+    const r = resolveServiceUrl(s.name);
+    if (!r.url) {
       return { name: s.name, role: s.role, state: "unknown" };
     }
-    const url = readFileSync(urlFile, "utf-8").trim();
-    const mtime = statSync(urlFile).mtime.toISOString();
     return {
       name: s.name,
       role: s.role,
       state: "up",
-      url,
-      last_deployed: mtime,
+      url: r.url,
+      last_deployed: r.last_seen ?? undefined,
     };
   });
 

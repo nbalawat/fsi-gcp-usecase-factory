@@ -7,7 +7,14 @@ Read in this order:
 1. `architecture.md` — the 5-step paradigm and platform architecture
 2. `console_reference.md` — the six console patterns
 3. `methodology.md` — how the factory executes the methodology
-4. This file (when you're trying to do X → run Y)
+4. **`factory-cookbook.md`** — the 12 reusable architecture patterns proven on
+   credit-memo-commercial (HITL callbacks, case-tabbed shell, vendor
+   abstraction, eval framework, …). Read this before scaffolding a new use
+   case so you don't rediscover what's already battle-tested.
+5. **`product-build-discipline.md`** — the 37 rules paid for in real incidents,
+   each with a CI gate. The "what NOT to do" doc.
+6. `onboard-new-use-case.md` — the runbook for starting use case #2, #3, …
+7. This file (when you're trying to do X → run Y)
 
 ---
 

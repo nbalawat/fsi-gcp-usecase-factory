@@ -136,7 +136,7 @@ function collectAllCitations(memo: Partial<CreditMemoBody>): Citation[] {
   const out: Citation[] = [];
   const push = (c: Citation | undefined | null) => {
     if (!c) return;
-    const key = `${c.source}::${c.page ?? ""}::${c.claim.slice(0, 80)}`;
+    const key = `${c.source ?? ""}::${c.page ?? ""}::${(c.claim ?? "").slice(0, 80)}`;
     if (seen.has(key)) return;
     seen.add(key);
     out.push(c);

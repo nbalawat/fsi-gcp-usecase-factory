@@ -52,6 +52,15 @@ rules are flagged below and tracked as gaps to close.
 |26 | Process                | UX bar is set on day 1, not retrofitted |
 |27 | Process                | Document lessons, not project status |
 |28 | Process                | The gates are the lessons — every rule paired with a CI check |
+|29 | HITL & workflow        | One writer per state field — never let two services race on `application_state` |
+|30 | HITL & workflow        | HITL action bars must `router.refresh()` after success and treat 404 as success-already-applied |
+|31 | HITL & workflow        | Workflow writes `current_stage` at every major transition, not just HITL pauses |
+|32 | UX                     | Default-tab logic is data-aware (no memo → "build" tab, not empty "Memo") |
+|33 | UX                     | Per-application sessionStorage keys — never global, or one case poisons the next |
+|34 | Contracts              | Vendor adapters: JSON-Schema-draft-07 → OpenAPI/Gemini-shape converter is mandatory |
+|35 | Deploy & ops           | UI deploy: explicit Dockerfile + monorepo-root build context (not Buildpacks) |
+|36 | Deploy & ops           | Service-URL discovery via env var FIRST, file fallback for local dev |
+|37 | Eval & feedback        | Build the eval framework before optimizing prompts — no measurement, no improvement |
 
 ---
 
@@ -688,6 +697,260 @@ quarter, what's the gate?"
 `scripts/lint_lessons_have_gates.py` parses the index table and the
 `CI gate` lines in this doc; any rule whose gate is N/A or "aspirational"
 is reported as a backlog item.
+
+---
+
+## 29. One writer per state field — never let two services race on `application_state`
+
+**Rule.** For each column on `application_state` (current_stage, decision,
+risk_band, dscr_base, …), exactly **one** service is the authoritative
+writer. All other services either read or call the authoritative writer
+through a queue.
+
+**Why.** On credit-memo-commercial we ran the legacy `orchestrator-credit-memo`
+service in parallel with Cloud Workflows v3 for "safety." Both subscribed
+to the same Pub/Sub topic. Both wrote `decision=APPROVE` to
+`application_state`. The legacy service stamped the decision early
+(during enrichment, before any agents had run), and the case-detail page
+showed "Approved · Case closed" while the workflow was still mid-flight at
+`call_reviewer`. The user could not tell whether the case was actually
+done. Hours of debugging traced to "two writers."
+
+**Framework question.** "For each column on `application_state`, name
+exactly one service that writes it. If two writers exist (parallel-run,
+fallback, etc.), which one wins on conflict?"
+
+**CI gate.** `scripts/lint_state_writers.py` greps for SQL `UPDATE
+application_state` patterns across `services/` + `usecases/*/handler/`
+and fails if more than one service writes a given column.
+
+---
+
+## 30. HITL action bars must `router.refresh()` after success and treat 404 as success-already-applied
+
+**Rule.** Any client-side button that POSTs a workflow callback (HITL
+extraction-review, rating-review, draft-review, final-approval) MUST:
+1. Show a "✓ Submitted — workflow advancing…" confirmation chip in
+   place of the button immediately on 2xx response.
+2. Trigger `router.refresh()` ~600ms after the POST so the Server
+   Component re-fetches state.
+3. Treat HTTP 404 from the callback API as **success-already-applied**
+   ("workflow already advanced — reloading…"), not as an error.
+
+**Why.** Without #1+2 the user clicks "Approve," the button snaps back to
+"Approve," nothing visible changes for 3-5s, the user clicks again, the
+second click hits a checkpoint with no pending callback (workflow
+advanced), gets a 404, gets a red error toast, and concludes the system
+is broken. The first click was correct; the second was the user fighting
+a stale UI. We paid for this on credit-memo-commercial; users hit
+approve 2-3 times for every gate.
+
+**Framework question.** "What's the explicit ACK after each HITL click?
+Show me the confirmation chip + the refresh trigger."
+
+**CI gate.** `scripts/lint_callback_handlers.py` parses every component
+that POSTs to `/api/applications/*/callback/*` and asserts presence of
+(a) `useRouter().refresh()` call, (b) a `done` state branch in the
+component, (c) a 404-as-success branch in the fetch handler.
+
+---
+
+## 31. Workflow writes `current_stage` at every major transition, not just HITL pauses
+
+**Rule.** A Cloud Workflow that drives a multi-step lifecycle MUST POST
+to `audit-writer/state` with the new `current_stage` value at the
+START of each major step (analyzing, spreading, rating, drafting,
+reviewing, posting), not only when it pauses at HITL gates.
+
+**Why.** On credit-memo-commercial v3, the workflow only wrote
+`current_stage` at HITL pauses (extraction_review, rating_review,
+draft_review, approval). Between HITL gates, the stage stayed stuck on
+the prior pause's value. So while the drafter agent was running for
+60-90s, the case page kept showing "Awaiting your rating review · 89s
+in this stage" even though the workflow was already past that point.
+The user couldn't tell whether the workflow was running, paused, or
+broken.
+
+**Framework question.** "List every long-running step (≥10s) in the
+workflow. For each, what stage value does the UI show while it runs?"
+
+**CI gate.** `scripts/lint_workflow_stages.py` parses
+`usecases/<uc>/workflow*.yaml` and fails if any step with `timeout >
+10s` is not preceded by a stage-update step.
+
+---
+
+## 32. Default-tab logic is data-aware (no memo → "build" tab, not empty "Memo")
+
+**Rule.** Multi-tab case-detail pages MUST compute their default tab
+from the data state, not hardcode it.
+- If a primary artifact exists (memo, recommendation, decision) →
+  default to that tab.
+- Otherwise → default to a tab that shows live progress (pipeline
+  activity, processing panel) so the user sees motion, not a static
+  "60-90s" message.
+
+**Why.** Credit-memo-commercial defaulted every case to the "Credit
+memo" tab. While the workflow was mid-run, this tab showed an empty
+state with "Drafting…". Users assumed the page was stuck. Switching
+the default to the "How it was built" tab when no memo existed
+restored "I can see what's happening" within one render.
+
+**Framework question.** "For each tab on your case-detail page, in
+which states is its content meaningful? What's the default when each
+tab's content isn't there yet?"
+
+**CI gate.** `scripts/lint_case_tabs.py` requires the case page's
+default-tab expression to reference at least one piece of case data
+(memo, decision, stage), not a string literal.
+
+---
+
+## 33. Per-application sessionStorage keys — never global, or one case poisons the next
+
+**Rule.** Any client-side preference that varies by case (selected
+tab, density mode, expanded section, sort order on the queue, …) MUST
+key its sessionStorage / localStorage entry by the entity id —
+`<feature>.<applicationId>` or `<feature>.<userId>`. Global keys cause
+state from one entity to leak into another.
+
+**Why.** The case-detail tabbed shell stored "active tab" under a
+single global key `case-tab.active`. User opens case A (done, default
+"memo"), it persists. User opens case B (in-flight, defaulted to
+"build" by rule 32) — sessionStorage forces it back to "memo," they
+land on the empty memo screen. Switching to a per-application key
+fixed it instantly.
+
+**Framework question.** "List every sessionStorage / localStorage key
+your UI sets. Which are entity-scoped? If a key is global, is it
+genuinely a per-user preference?"
+
+**CI gate.** `scripts/lint_storage_keys.py` greps for
+`sessionStorage.setItem` / `localStorage.setItem` and reports any key
+that looks entity-bound (contains "case", "loan", "app", "borrower",
+"id") but doesn't include a variable in the key.
+
+---
+
+## 34. Vendor adapters: JSON-Schema-draft-07 → OpenAPI/Gemini-shape converter is mandatory
+
+**Rule.** When passing a JSON Schema to a vendor SDK that expects
+OpenAPI 3.x shape (Vertex Gemini `response_schema`, OpenAI `json_schema`,
+others), the schema must be **converted**, not handed through directly.
+The converter handles:
+- `type: ["X", "null"]` (draft-07 nullable) → `type: "X", nullable: true`
+- Drop unsupported keywords (`$schema`, `$id`, `additionalProperties`,
+  some `format` strings, `oneOf` unions)
+- Recurse into `properties` + `items`
+
+**Why.** On the LiteParse+Gemini fallback vendor for the
+document-extractor we passed our `10K.json` JSON Schema directly to
+`google-genai`. The SDK errored: `'list' object has no attribute
+'upper'` — it tried to uppercase the type name and choked on the
+`["number", "null"]` array. Two extractions failed with cryptic
+errors before the converter landed. See
+`services/atomic/document-extractor/vendors/liteparse_gemini.py:_jsonschema_to_gemini`.
+
+**Framework question.** "For each vendor SDK that accepts a schema,
+which schema dialect does it expect? Is your schema in that dialect or
+do you need an adapter?"
+
+**CI gate.** `scripts/lint_vendor_schemas.py` walks every call site
+that passes `response_schema` to `google-genai` / `anthropic` /
+`openai` and asserts the schema source is either inline-OpenAPI or
+piped through a converter function (no raw `.json` file load).
+
+---
+
+## 35. UI deploy: explicit Dockerfile + monorepo-root build context (not Buildpacks)
+
+**Rule.** Any non-trivial Next.js app (one that imports across pnpm
+workspaces, uses `@uc/*` aliases pointing outside `app/`, or needs
+`output: "standalone"`) MUST deploy via:
+1. A `Dockerfile` at `<app>/Dockerfile`
+2. A `cloudbuild.yaml` at `<app>/cloudbuild.yaml` that references the
+   Dockerfile with `--file`
+3. Build context = **repo root** (so Dockerfile sees both the workspace
+   root AND any sibling dirs the app imports from, e.g. `usecases/`)
+4. `gcloud builds submit . --config <app>/cloudbuild.yaml` then
+   `gcloud run deploy --image <pushed-tag>`
+
+Do NOT use `gcloud run deploy --source` for these apps — it triggers
+Buildpacks, which doesn't see your Dockerfile in a subdirectory and
+also doesn't understand pnpm workspaces.
+
+**Why.** First UI deploy attempt used `gcloud run deploy --source ui`.
+Buildpacks couldn't find the workspace lockfile, couldn't resolve
+`@fsi-bank/components`, and silently failed. Burned 30 minutes
+diagnosing before switching to explicit Dockerfile.
+
+**Framework question.** "Where does this app's Dockerfile live? What's
+the build context? If it imports from outside its own dir, does the
+context include those dirs?"
+
+**CI gate.** `scripts/lint_ui_deploy.py` enforces that every
+`ui/apps/*/` dir has a `Dockerfile` AND `cloudbuild.yaml`, and that the
+cloudbuild.yaml uses `--file` pointing at the Dockerfile (not letting
+docker auto-detect at the build context root).
+
+---
+
+## 36. Service-URL discovery via env var FIRST, file fallback for local dev
+
+**Rule.** Any code that needs a deployed service's URL (live-status
+indicator, integration tests, agent runtime config) MUST resolve it via:
+1. Environment variable `FSI_<SERVICE_NAME>_URL=https://...` —
+   primary path; works in Cloud Run / production / CI
+2. `.fsi-state/<service>.url` file fallback — local dev only;
+   excluded from container images via `.dockerignore`
+
+Code that ONLY reads from `.fsi-state/` will run fine on the dev
+machine and silently fail on Cloud Run.
+
+**Why.** First UI deploy showed "Pipeline down · 0/10 services up" on
+the homepage. The `/api/live` endpoint read `.fsi-state/*.url` files
+that exist in the dev workspace but are correctly excluded from the
+Docker image. The fix was a two-tier resolver (env first, file
+fallback). See `ui/apps/pipeline-console/app/api/live/route.ts:resolveServiceUrl`.
+
+**Framework question.** "List every place your code reads a service
+URL. For each: does it work in Cloud Run? Have you tested it there?"
+
+**CI gate.** `scripts/lint_service_url_lookups.py` greps for
+`.fsi-state/` references in `**/app/**`, `**/services/**`, and any
+runtime code path. Any reference must be guarded by a prior env-var
+check.
+
+---
+
+## 37. Build the eval framework before optimizing prompts — no measurement, no improvement
+
+**Rule.** Before rewriting an agent prompt to "improve depth /
+accuracy / grounding," there MUST be:
+1. A baseline eval run with structural scorers (deterministic) +
+   LLM-judge scorers (probabilistic)
+2. A `scripts/eval_diff.py` (or equivalent) tool that compares two
+   eval-run JSON files and prints per-scorer deltas
+3. A scoreable result on at least 3 representative borrowers / cases
+
+Then change the prompt. Then re-run evals. PRs that touch agent prompts
+without eval deltas are rejected.
+
+**Why.** Without evals, prompt changes are guesses. We added a
+"required citations per section" rule to the drafter prompt and didn't
+know if it actually moved citation density until we built
+`evals/scorers/structural.py:score_section_completeness` and ran it
+against a "before" + "after" memo. Score went 2.5/5 → 4.5/5 — change
+shipped. Without measurement, every prompt edit is a maybe.
+
+**Framework question.** "What evals will measure whether your next
+prompt change improved or regressed quality? Is there a baseline
+already captured?"
+
+**CI gate.** `scripts/lint_prompt_evals.py` runs on every PR that
+touches `usecases/*/agents/prompts/*.md`. It requires at least one
+modified file under `evals/` (new or updated golden case, scorer, or
+result JSON) in the same PR.
 
 ---
 

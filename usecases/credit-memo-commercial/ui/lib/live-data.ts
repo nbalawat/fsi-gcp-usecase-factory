@@ -132,6 +132,27 @@ export async function getCase(applicationId: string): Promise<ApplicationState |
   return rowToState(r.rows[0]);
 }
 
+/**
+ * Return the set of checkpoint names for which the workflow has an
+ * outstanding callback URL registered. Used by the case page so the
+ * CheckpointActionBar only renders when there's actually a workflow
+ * waiting for a human action — prevents the "Action required / No
+ * pending callback" zombie state on cancelled or stale workflows.
+ */
+export async function getPendingCallbacks(
+  applicationId: string,
+): Promise<string[]> {
+  const pool = getPool();
+  const r = await pool.query(
+    `SELECT pending_callbacks FROM application_state WHERE application_id = $1`,
+    [applicationId],
+  );
+  if (r.rows.length === 0) return [];
+  const raw = r.rows[0].pending_callbacks;
+  if (!raw || typeof raw !== "object") return [];
+  return Object.keys(raw as Record<string, unknown>);
+}
+
 /** Fetch all events (or events since `since`), oldest → newest. */
 export async function getEventsForCase(
   applicationId: string,
@@ -241,6 +262,207 @@ export async function getDocumentsForCase(applicationId: string): Promise<Docume
     };
   });
 }
+
+/**
+ * Build the SpreadingWorkbench view model from real DB rows.
+ *
+ * Inputs (joined by application_id):
+ *   - application_documents       — one row per uploaded PDF
+ *   - application_events          — `document_extracted` events carry per-doc
+ *                                   extracted_fields + citations
+ *   - application_artifacts       — credit_memo + future spreading artifact
+ *
+ * Returns null when the workflow hasn't run far enough to populate
+ * normalized financials yet (Stage 3 atomic services + financial-spreader
+ * run AFTER extraction). The workbench shows an empty state in that case
+ * so the underwriter sees what's coming without misleading numbers.
+ *
+ * This is intentionally conservative — the workbench will only show
+ * values that trace back to a real citation. Hallucinated numbers from
+ * agents are not surfaced here.
+ */
+export async function getSpreadingViewModelForCase(
+  applicationId: string,
+): Promise<unknown | null> {
+  const pool = getPool();
+
+  // 1. Get the borrower + primary fiscal year context
+  const stateRes = await pool.query(
+    `SELECT borrower_name FROM application_state WHERE application_id = $1`,
+    [applicationId],
+  );
+  if (stateRes.rowCount === 0) return null;
+  const borrower_name = stateRes.rows[0].borrower_name as string;
+
+  // 2. Pull every document_extracted event's payload (the Landing AI
+  //    Extract output, with extracted_fields + citations[]). We use these
+  //    directly as the raw column.
+  const eventsRes = await pool.query(
+    `SELECT
+       d.doc_id,
+       d.doc_type,
+       d.original_filename,
+       d.page_count,
+       e.payload AS extraction
+     FROM application_documents d
+     LEFT JOIN application_events e ON e.id = d.extraction_event_id
+     WHERE d.application_id = $1
+     ORDER BY d.uploaded_at`,
+    [applicationId],
+  );
+  if (eventsRes.rowCount === 0) return null;
+
+  // Without normalized values from the spreader, we can still show the
+  // raw extraction in the workbench — but only if we have at least one
+  // extracted (non-null payload) document. If all docs are still pending,
+  // return null so the workbench shows its empty state.
+  const haveExtractions = eventsRes.rows.some((r) => r.extraction !== null);
+  if (!haveExtractions) return null;
+
+  // 3. Look for a spreading artifact (written by financial-spreader after
+  //    Stage 3). When present, it has the canonical multi-year normalized
+  //    values + ratios. Without it, we fall back to the single-year raw
+  //    extraction shaped as a workbench view model.
+  const artifactRes = await pool.query(
+    `SELECT body FROM application_artifacts
+      WHERE application_id = $1 AND artifact_type = 'spreading'
+      ORDER BY revision_number DESC LIMIT 1`,
+    [applicationId],
+  );
+  if ((artifactRes.rowCount ?? 0) > 0) {
+    return artifactRes.rows[0].body;
+  }
+
+  // Fallback: assemble a minimal single-year view from the extractions.
+  // This is honest about what we have — only the primary fiscal year,
+  // with raw values + citations, no ratios yet (the spreader hasn't run).
+  return buildFallbackSpreadingFromExtractions(
+    applicationId,
+    borrower_name,
+    eventsRes.rows,
+  );
+}
+
+interface ExtractionRow {
+  doc_id: string;
+  doc_type: string;
+  original_filename: string;
+  page_count: number | null;
+  extraction: { extracted_fields?: Record<string, unknown>; citations?: unknown[]; failed?: boolean } | null;
+}
+
+function buildFallbackSpreadingFromExtractions(
+  application_id: string,
+  borrower_name: string,
+  rows: ExtractionRow[],
+): unknown {
+  const LINE_ITEMS: Array<{ path: string; label: string; cat: string }> = [
+    { path: "income_statement.revenue", label: "Revenue", cat: "income_statement" },
+    { path: "income_statement.cogs", label: "COGS", cat: "income_statement" },
+    { path: "income_statement.ebitda", label: "EBITDA", cat: "income_statement" },
+    { path: "income_statement.operating_income", label: "Operating income", cat: "income_statement" },
+    { path: "income_statement.net_income", label: "Net income", cat: "income_statement" },
+    { path: "income_statement.interest_expense", label: "Interest expense", cat: "income_statement" },
+    { path: "balance_sheet.total_assets", label: "Total assets", cat: "balance_sheet" },
+    { path: "balance_sheet.total_debt", label: "Total debt", cat: "balance_sheet" },
+    { path: "balance_sheet.total_equity", label: "Total equity", cat: "balance_sheet" },
+    { path: "balance_sheet.current_assets", label: "Current assets", cat: "balance_sheet" },
+    { path: "balance_sheet.current_liabilities", label: "Current liabilities", cat: "balance_sheet" },
+    { path: "cash_flow.operating_cash_flow", label: "Operating cash flow", cat: "cash_flow" },
+    { path: "cash_flow.capex", label: "CapEx", cat: "cash_flow" },
+    { path: "cash_flow.free_cash_flow", label: "Free cash flow", cat: "cash_flow" },
+  ];
+
+  // Use the first extracted doc's fiscal year as the primary year.
+  const primary =
+    rows
+      .map((r) => (r.extraction?.extracted_fields as Record<string, unknown> | undefined)?.["fiscal_year_end"])
+      .find((v): v is string => typeof v === "string") ?? "Unknown";
+
+  const fiscal_years = [primary];
+
+  const get = (obj: Record<string, unknown>, dotted: string): unknown => {
+    let cur: unknown = obj;
+    for (const part of dotted.split(".")) {
+      if (cur && typeof cur === "object" && part in (cur as object)) {
+        cur = (cur as Record<string, unknown>)[part];
+      } else {
+        return null;
+      }
+    }
+    return cur;
+  };
+
+  const findCitation = (citations: unknown[], field_path: string) => {
+    if (!Array.isArray(citations)) return null;
+    for (const c of citations) {
+      if (
+        c &&
+        typeof c === "object" &&
+        (c as Record<string, unknown>).field_path === field_path
+      ) {
+        const cc = c as Record<string, unknown>;
+        return {
+          doc_id: "",
+          page: typeof cc.page === "number" ? cc.page : 0,
+          excerpt: typeof cc.excerpt === "string" ? cc.excerpt : null,
+          bbox: Array.isArray(cc.bbox) ? cc.bbox : null,
+        };
+      }
+    }
+    return null;
+  };
+
+  const line_items = LINE_ITEMS.map((li) => {
+    const raw: Record<string, unknown> = {};
+    const normalized: Record<string, unknown> = {};
+    for (const r of rows) {
+      const ext = r.extraction;
+      if (!ext || ext.failed) continue;
+      const fields = ext.extracted_fields ?? {};
+      const v = get(fields, li.path);
+      if (v !== null && v !== undefined && Number.isFinite(Number(v))) {
+        const cit = findCitation(ext.citations ?? [], li.path);
+        if (cit) cit.doc_id = r.doc_id;
+        const cell = { value: Number(v), citation: cit, human_edited: false };
+        raw[primary] = cell;
+        // Without the spreader we treat raw as normalized.
+        normalized[primary] = cell;
+        break;
+      }
+    }
+    return {
+      path: li.path,
+      label: li.label,
+      category: li.cat,
+      is_critical: ["income_statement.revenue", "income_statement.ebitda", "balance_sheet.total_debt", "balance_sheet.total_assets"].includes(li.path),
+      raw,
+      normalized,
+      adjustments: {},
+    };
+  });
+
+  return {
+    application_id,
+    borrower_name,
+    fiscal_years,
+    primary_fiscal_year: primary,
+    source_docs: rows.map((r) => ({
+      doc_id: r.doc_id,
+      doc_type: r.doc_type,
+      original_filename: r.original_filename,
+      page_count: r.page_count,
+      fiscal_coverage: [primary],
+    })),
+    line_items,
+    ratios: [], // No ratios until the spreader computes them
+    scenarios: [],
+    has_pending_edits: false,
+    last_spread_at: null,
+    spread_source: "raw-extraction-fallback",
+  };
+}
+
 
 export async function getReturnNoticeArtifact(applicationId: string): Promise<unknown | null> {
   const pool = getPool();

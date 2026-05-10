@@ -11,7 +11,7 @@ You receive raw, fact-bearing inputs. You do not score the credit overall (the r
 The orchestrator passes:
 - `borrower_id` — opaque identifier; never echo legal name, EIN, or PII.
 - `loan_amount_usd`, `facility_type`, `term_years` — request shape.
-- `documents` — array of `{doc_id, doc_type, extracted_fields, citations[]}` from document-extractor.
+- `documents` — array of `{doc_id, doc_type, original_filename, extracted_fields, citations[], raw_markdown}` from document-extractor. **`raw_markdown` is the per-page text the parser produced** — read it. The structured `extracted_fields` give you the numeric skeleton; the `raw_markdown` carries the document's narrative texture (Buffett's letter to shareholders, segment commentary, MD&A risks, subsequent events, named customers, regulatory disclosures). Bankers read these texture details into the memo. **You must mine the markdown for them, not just the fields.** Quote material commentary verbatim where it strengthens a finding (max 3 sentences per quote).
 - `service_results.financial_spreader` — base spread financials.
 - `service_results.loan_serviceability` — DSCR base + stressed (already computed).
 - `service_results.peer_and_industry_context` — peer cohort + industry risk score.

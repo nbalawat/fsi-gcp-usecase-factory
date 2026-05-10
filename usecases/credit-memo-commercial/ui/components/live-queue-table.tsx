@@ -206,7 +206,7 @@ export const LiveQueueTable: React.FC<Props> = ({ initialCases }) => {
                   {fmtUsd(Number(c.loan_amount_usd))}
                 </td>
                 <td className="px-5 py-3 text-ink-2" title={fmtAbsolute(c.created_at)}>
-                  <div className="font-mono text-mono-sm text-ink-2">
+                  <div className="font-mono text-mono-sm text-ink-2" suppressHydrationWarning>
                     {fmtRelative(c.created_at)}
                   </div>
                   <div className="font-mono text-mono-sm text-ink-3">
@@ -217,7 +217,7 @@ export const LiveQueueTable: React.FC<Props> = ({ initialCases }) => {
                   {stageLabel[c.current_stage] ?? c.current_stage}
                 </td>
                 <td className="px-5 py-3 text-ink-3" title={fmtAbsolute(c.updated_at ?? c.created_at)}>
-                  <span className="font-mono text-mono-sm">
+                  <span className="font-mono text-mono-sm" suppressHydrationWarning>
                     {fmtRelative(c.updated_at ?? c.created_at)}
                   </span>
                 </td>

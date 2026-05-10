@@ -15,6 +15,7 @@
  */
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/ui";
 
 type Checkpoint =
@@ -27,6 +28,11 @@ interface Props {
   applicationId: string;
   currentStage: string;
   riskBand?: string | null;
+  /** Names of checkpoints that have a workflow callback URL registered.
+   *  When the action bar's checkpoint isn't in this set, we render
+   *  nothing — the workflow may have been cancelled or already advanced
+   *  past this state, so showing "Action required" would be misleading. */
+  pendingCheckpoints?: string[];
   className?: string;
   /** When provided, refreshes the case page after a successful callback. */
   onAfterAction?: () => void;
@@ -51,11 +57,21 @@ export function CheckpointActionBar({
   applicationId,
   currentStage,
   riskBand,
+  pendingCheckpoints,
   className,
   onAfterAction,
 }: Props): React.ReactElement | null {
   const checkpoint = CURRENT_STAGE_TO_CHECKPOINT[currentStage];
   if (!checkpoint) return null;
+  // If we know the registered callback set and our checkpoint isn't in
+  // it, the workflow isn't actually paused here — render nothing so the
+  // banker doesn't see a phantom "Action required" prompt.
+  if (
+    Array.isArray(pendingCheckpoints) &&
+    !pendingCheckpoints.includes(checkpoint)
+  ) {
+    return null;
+  }
 
   return (
     <aside
@@ -104,17 +120,33 @@ const LABELS: Record<Checkpoint, string> = {
 
 // ─── Helper: POST to callback ───────────────────────────────────────────────
 
+interface CallbackResult {
+  /** true = workflow accepted the decision; false = real error to show. */
+  ok: boolean;
+  /** true = the workflow had already advanced past this checkpoint when
+   *  we tried (404 with no_pending_callback). Treated as success: the
+   *  user's intent is satisfied; we just need to refresh the view. */
+  alreadyAdvanced?: boolean;
+  error?: string;
+}
+
 async function postCallback(
   applicationId: string,
   checkpoint: Checkpoint,
   body: Record<string, unknown>,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<CallbackResult> {
   const r = await fetch(`/api/applications/${applicationId}/callback/${checkpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const text = await r.text();
+  if (r.status === 404) {
+    // The workflow already moved past this checkpoint (or it's never
+    // been registered for this app). User's earlier click probably
+    // succeeded; we just need to refresh.
+    return { ok: true, alreadyAdvanced: true };
+  }
   if (!r.ok) {
     try {
       const parsed = JSON.parse(text) as { error?: string };
@@ -126,31 +158,80 @@ async function postCallback(
   return { ok: true };
 }
 
+/**
+ * Wraps a callback action with the standard UX:
+ *   - while pending: setBusy(label)
+ *   - on success: show "✓ Submitted — workflow advancing…" for ~4s,
+ *     then router.refresh() so the page re-fetches state
+ *   - on real error: surface the message
+ *   - on "already advanced": same as success, with a slightly softer
+ *     copy ("Workflow already moved on — reloading…")
+ *
+ * The success-state lingers briefly so the user gets confirmation
+ * BEFORE the page swaps to the next stage; without it, the bar would
+ * jump straight to the next "Action required" pill and feel like the
+ * click didn't register.
+ */
+function useCheckpointAction() {
+  const router = useRouter();
+  const [busy, setBusy] = React.useState<string | null>(null);
+  const [done, setDone] = React.useState<{ message: string } | null>(null);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  const run = React.useCallback(
+    async (
+      label: string,
+      action: () => Promise<CallbackResult>,
+    ): Promise<void> => {
+      setBusy(label);
+      setErr(null);
+      setDone(null);
+      const r = await action();
+      if (!r.ok) {
+        setBusy(null);
+        setErr(r.error ?? "Failed");
+        return;
+      }
+      setBusy(null);
+      setDone({
+        message: r.alreadyAdvanced
+          ? "Workflow already advanced — reloading…"
+          : "✓ Submitted — workflow advancing…",
+      });
+      // Give the user 600ms to see the confirmation, then refresh the
+      // RSC tree. The page re-fetches application_state and renders the
+      // next stage's bar (or hides it on terminal stages).
+      setTimeout(() => {
+        router.refresh();
+        // Clear the local "done" state shortly after refresh so if the
+        // user is somehow still on this stage, they see the action
+        // controls again.
+        setTimeout(() => setDone(null), 1500);
+      }, 600);
+    },
+    [router],
+  );
+
+  return { busy, done, err, run };
+}
+
 // ─── Per-checkpoint action sets ─────────────────────────────────────────────
 
 function ExtractionActions({
   applicationId,
-  onDone,
 }: {
   applicationId: string;
   onDone?: () => void;
 }): React.ReactElement {
-  const [busy, setBusy] = React.useState<string | null>(null);
-  const [err, setErr] = React.useState<string | null>(null);
+  const { busy, done, err, run } = useCheckpointAction();
 
-  async function approve() {
-    setBusy("approve");
-    setErr(null);
-    const r = await postCallback(applicationId, "extraction_review", {
-      decision: "approve",
-    });
-    setBusy(null);
-    if (!r.ok) {
-      setErr(r.error ?? "Failed");
-      return;
-    }
-    onDone?.();
+  function approve() {
+    void run("approve", () =>
+      postCallback(applicationId, "extraction_review", { decision: "approve" }),
+    );
   }
+
+  if (done) return <DoneChip message={done.message} />;
 
   return (
     <>
@@ -170,46 +251,45 @@ function ExtractionActions({
   );
 }
 
+/** Confirmation chip rendered in place of the action buttons after a
+ *  successful callback. Stays visible while router.refresh() pulls the
+ *  next state. */
+function DoneChip({ message }: { message: string }): React.ReactElement {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-900 ring-1 ring-emerald-300">
+      <span aria-hidden>✓</span>
+      {message}
+    </span>
+  );
+}
+
 function RatingActions({
   applicationId,
   currentBand,
-  onDone,
 }: {
   applicationId: string;
   currentBand: string | null;
   onDone?: () => void;
 }): React.ReactElement {
-  const [busy, setBusy] = React.useState<string | null>(null);
+  const { busy, done, err, run } = useCheckpointAction();
   const [override, setOverride] = React.useState<string>(currentBand ?? "");
-  const [err, setErr] = React.useState<string | null>(null);
 
-  async function approve() {
-    setBusy("approve");
-    setErr(null);
-    const r = await postCallback(applicationId, "rating_review", { decision: "approve" });
-    setBusy(null);
-    if (!r.ok) {
-      setErr(r.error ?? "Failed");
-      return;
-    }
-    onDone?.();
+  function approve() {
+    void run("approve", () =>
+      postCallback(applicationId, "rating_review", { decision: "approve" }),
+    );
   }
-
-  async function applyOverride() {
+  function applyOverride() {
     if (!override) return;
-    setBusy("override");
-    setErr(null);
-    const r = await postCallback(applicationId, "rating_review", {
-      decision: "override",
-      new_risk_band: override,
-    });
-    setBusy(null);
-    if (!r.ok) {
-      setErr(r.error ?? "Failed");
-      return;
-    }
-    onDone?.();
+    void run("override", () =>
+      postCallback(applicationId, "rating_review", {
+        decision: "override",
+        new_risk_band: override,
+      }),
+    );
   }
+
+  if (done) return <DoneChip message={done.message} />;
 
   return (
     <>
@@ -257,20 +337,15 @@ function DraftActions({
   applicationId: string;
   onDone?: () => void;
 }): React.ReactElement {
-  const [busy, setBusy] = React.useState<string | null>(null);
-  const [err, setErr] = React.useState<string | null>(null);
+  const { busy, done, err, run } = useCheckpointAction();
 
-  async function approve() {
-    setBusy("approve");
-    setErr(null);
-    const r = await postCallback(applicationId, "draft_review", { decision: "approve" });
-    setBusy(null);
-    if (!r.ok) {
-      setErr(r.error ?? "Failed");
-      return;
-    }
-    onDone?.();
+  function approve() {
+    void run("approve", () =>
+      postCallback(applicationId, "draft_review", { decision: "approve" }),
+    );
   }
+
+  if (done) return <DoneChip message={done.message} />;
 
   return (
     <>
@@ -292,27 +367,19 @@ function DraftActions({
 
 function ApprovalActions({
   applicationId,
-  onDone,
 }: {
   applicationId: string;
   onDone?: () => void;
 }): React.ReactElement {
-  const [busy, setBusy] = React.useState<string | null>(null);
-  const [err, setErr] = React.useState<string | null>(null);
+  const { busy, done, err, run } = useCheckpointAction();
 
-  async function send(decision: "APPROVE" | "DECLINE" | "RETURN_FOR_REVISION") {
-    setBusy(decision);
-    setErr(null);
-    const r = await postCallback(applicationId, "final_approval", {
-      decision,
-    });
-    setBusy(null);
-    if (!r.ok) {
-      setErr(r.error ?? "Failed");
-      return;
-    }
-    onDone?.();
+  function send(decision: "APPROVE" | "DECLINE" | "RETURN_FOR_REVISION") {
+    void run(decision, () =>
+      postCallback(applicationId, "final_approval", { decision }),
+    );
   }
+
+  if (done) return <DoneChip message={done.message} />;
 
   return (
     <>

@@ -35,9 +35,13 @@ const assessmentTone = (a: string): "success" | "warning" | "danger" => {
 };
 
 export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
-  const cites: Citation[] = (data.drivers ?? [])
-    .map((d) => d.citation)
-    .filter((c): c is Citation => Boolean(c));
+  const cites: Citation[] = [
+    ...(data.drivers ?? [])
+      .map((d) => d.citation)
+      .filter((c): c is Citation => Boolean(c)),
+    // Section-level citations (drafter-emitted or auto-grounded).
+    ...((data as { citations?: Citation[] }).citations ?? []),
+  ];
   return (
     <MemoSection
       id="risk_rating_rationale"
@@ -62,39 +66,48 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
         <p className="border-b border-border bg-muted px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           Rating drivers
         </p>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <Th>Factor</Th>
-              <Th>Assessment</Th>
-              <Th>Evidence</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data.drivers ?? []).map((d, i) => (
-              <tr
-                key={`${d.factor}-${i}`}
-                className="border-b border-border last:border-b-0 align-top"
-              >
-                <th
-                  scope="row"
-                  className="px-4 py-3 text-left font-serif text-body-sm font-semi text-foreground whitespace-nowrap"
-                >
-                  {d.factor}
-                </th>
-                <td className="px-4 py-3 text-left">
-                  <Badge tone={assessmentTone(d.assessment)} dot>
-                    {titleCase(d.assessment)}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-left font-serif text-body-sm text-foreground leading-snug">
-                  {d.evidence}
-                  {d.citation && <CitationSuperscript citation={d.citation} />}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full table-fixed">
+            <colgroup>
+              <col className="w-[38%]" />
+              <col className="w-[120px]" />
+              <col />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-border">
+                <Th>Factor</Th>
+                <Th>Assessment</Th>
+                <Th>Evidence</Th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data.drivers ?? []).map((d, i) => (
+                <tr
+                  key={`${d.factor}-${i}`}
+                  className="border-b border-border last:border-b-0 align-top"
+                >
+                  <th
+                    scope="row"
+                    className="px-4 py-3 text-left font-serif text-body-sm font-semi text-foreground"
+                  >
+                    {d.factor}
+                  </th>
+                  <td className="px-3 py-3 text-left">
+                    <Badge tone={assessmentTone(d.assessment)} dot>
+                      <span className="whitespace-nowrap">
+                        {titleCase(d.assessment)}
+                      </span>
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-left font-serif text-body-sm text-foreground leading-snug">
+                    {d.evidence}
+                    {d.citation && <CitationSuperscript citation={d.citation} />}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data.identified_weaknesses && data.identified_weaknesses.length > 0 && (
@@ -130,7 +143,7 @@ export const RiskRatingRationaleSection: React.FC<Props> = ({ data }) => {
 const Th: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <th
     scope="col"
-    className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground"
+    className="px-4 py-2 text-left font-mono text-mono-sm uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap"
   >
     {children}
   </th>

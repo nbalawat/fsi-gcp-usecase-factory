@@ -1,0 +1,24 @@
+# Keep the build context lean — the pipeline-console Dockerfile builds
+# from the repo root so it can see both ui/ and usecases/, but it
+# doesn't need any of these.
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/.cache
+**/coverage
+**/__pycache__
+**/.pytest_cache
+**/.git
+**/.DS_Store
+**/.env.local
+**/.env.dev*
+.venv
+keys/
+.fsi-state/
+infra/
+docs/
+evals/results/
+scripts/demo_applications/_raw_pdfs/
+**/.vscode
+**/.idea

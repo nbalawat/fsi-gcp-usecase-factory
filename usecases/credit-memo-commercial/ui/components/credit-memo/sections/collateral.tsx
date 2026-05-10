@@ -18,9 +18,14 @@ interface Props {
 }
 
 export const CollateralSection: React.FC<Props> = ({ data }) => {
-  const allCites: Citation[] = (data.items ?? [])
-    .map((i) => i.citation)
-    .filter((c): c is Citation => Boolean(c));
+  const allCites: Citation[] = [
+    ...(data.items ?? [])
+      .map((i) => i.citation)
+      .filter((c): c is Citation => Boolean(c)),
+    // Section-level citations (e.g. auto-grounded server-side from
+    // extracted balance-sheet/PP&E chunks).
+    ...((data as { citations?: Citation[] }).citations ?? []),
+  ];
   return (
     <MemoSection
       id="collateral"
@@ -36,8 +41,8 @@ export const CollateralSection: React.FC<Props> = ({ data }) => {
         </p>
       )}
 
-      <div className="my-6 overflow-hidden rounded-md border border-border">
-        <table className="w-full">
+      <div className="my-6 overflow-x-auto rounded-md border border-border">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-border">
               <Th>Type</Th>

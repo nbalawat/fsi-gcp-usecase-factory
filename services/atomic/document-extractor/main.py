@@ -215,6 +215,13 @@ def _handle_extract(request: Any) -> tuple[dict[str, Any], int]:
         page_count=vresult.page_count,
         latency_ms=latency_ms,
         warnings=[VendorWarning(**w) for w in vresult.warnings if isinstance(w, dict)],
+        # Pass the parser's per-page markdown through so the analyst /
+        # drafter agents can quote real document text instead of riffing
+        # on structured fields. Truncate to the field's 60K cap; if the
+        # parser already trimmed, keep what we have.
+        raw_markdown=(
+            (vresult.raw_markdown or "")[:60_000] if vresult.raw_markdown else None
+        ),
     )
 
     # 7. Write audit event (best-effort; no-op under pytest)

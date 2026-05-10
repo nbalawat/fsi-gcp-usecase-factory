@@ -41,8 +41,8 @@ export const FinancialAnalysisSection: React.FC<Props> = ({ data }) => {
             <p className="mb-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
               Normalisation adjustments
             </p>
-            <div className="overflow-hidden rounded-md border border-border">
-              <table className="w-full">
+            <div className="overflow-x-auto rounded-md border border-border">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className="border-b border-border">
                     <Th>Period</Th>

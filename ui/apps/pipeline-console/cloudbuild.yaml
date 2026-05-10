@@ -1,0 +1,31 @@
+# Cloud Build config for the pipeline-console Next.js app.
+#
+# Build context = repo root (so the image can see both ui/ and usecases/).
+# The Dockerfile lives at ui/apps/pipeline-console/Dockerfile.
+#
+# Submit:
+#   gcloud builds submit . --config ui/apps/pipeline-console/cloudbuild.yaml \
+#     --substitutions=_TAG=us-central1-docker.pkg.dev/$PROJECT_ID/fsi-services/pipeline-console:latest
+#
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - ui/apps/pipeline-console/Dockerfile
+      - --tag
+      - ${_TAG}
+      - --cache-from
+      - ${_TAG}
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args: [push, "${_TAG}"]
+
+images:
+  - ${_TAG}
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s

@@ -112,27 +112,63 @@ def write_extraction_event(
         print(f"[audit] could not connect to DB: {exc}", flush=True)
         return
 
-    sql = text(
+    insert_event_sql = text(
         """
         INSERT INTO application_events
           (application_id, event_type, service_name, payload, latency_ms, cost_usd)
         VALUES
           (:application_id, 'document_extracted', 'document-extractor', CAST(:payload AS jsonb), :latency_ms, :cost_usd)
+        RETURNING id
+        """
+    )
+
+    # Update the application_documents row so the UI sees the live status
+    # change from 'pending' → 'extracted'/'failed'. The page-count, confidence,
+    # and missing-field arrays land here too so the per-doc panel can render
+    # without joining application_events.
+    update_doc_sql = text(
+        """
+        UPDATE application_documents
+           SET extraction_status = :status,
+               page_count = :page_count,
+               confidence = :confidence,
+               missing_required_fields = CAST(:missing_required AS jsonb),
+               error_code = :error_code,
+               error_message = :error_message,
+               extraction_event_id = :event_id,
+               extracted_at = NOW()
+         WHERE doc_id = :doc_id AND application_id = :application_id
         """
     )
 
     try:
-        with engine.connect() as conn:
-            conn.execute(
-                sql,
+        with engine.begin() as conn:
+            event_row = conn.execute(
+                insert_event_sql,
                 {
                     "application_id": application_id,
                     "payload": json.dumps(payload),
                     "latency_ms": latency_ms,
                     "cost_usd": cost_usd,
                 },
+            ).first()
+            event_id = event_row[0] if event_row else None
+
+            failed = bool(payload.get("failed"))
+            conn.execute(
+                update_doc_sql,
+                {
+                    "doc_id": doc_id,
+                    "application_id": application_id,
+                    "status": "failed" if failed else "extracted",
+                    "page_count": payload.get("page_count"),
+                    "confidence": payload.get("confidence"),
+                    "missing_required": json.dumps(payload.get("missing_required_fields", [])),
+                    "error_code": payload.get("error_code"),
+                    "error_message": (payload.get("error_message") or "")[:2000] or None,
+                    "event_id": event_id,
+                },
             )
-            conn.commit()
     except Exception as exc:
         print(f"[audit] write_extraction_event failed for {doc_id}: {exc}", flush=True)
 
@@ -166,25 +202,47 @@ def write_vendor_failure_event(
         "status": "vendor_failure",
     }
 
-    sql = text(
+    insert_event_sql = text(
         """
         INSERT INTO application_events
           (application_id, event_type, service_name, payload, latency_ms)
         VALUES
           (:application_id, 'document_extraction_failed', 'document-extractor', CAST(:payload AS jsonb), :latency_ms)
+        RETURNING id
+        """
+    )
+    update_doc_sql = text(
+        """
+        UPDATE application_documents
+           SET extraction_status = 'failed',
+               error_code = :error_code,
+               error_message = :error_message,
+               extraction_event_id = :event_id,
+               extracted_at = NOW()
+         WHERE doc_id = :doc_id AND application_id = :application_id
         """
     )
 
     try:
-        with engine.connect() as conn:
-            conn.execute(
-                sql,
+        with engine.begin() as conn:
+            event_row = conn.execute(
+                insert_event_sql,
                 {
                     "application_id": application_id,
                     "payload": json.dumps(payload),
                     "latency_ms": latency_ms,
                 },
+            ).first()
+            event_id = event_row[0] if event_row else None
+            conn.execute(
+                update_doc_sql,
+                {
+                    "doc_id": doc_id,
+                    "application_id": application_id,
+                    "error_code": error_code,
+                    "error_message": error_message[:2000],
+                    "event_id": event_id,
+                },
             )
-            conn.commit()
     except Exception as exc:
         print(f"[audit] write_vendor_failure_event failed: {exc}", flush=True)

@@ -50,7 +50,7 @@ export const PeerComparisonTable: React.FC<Props> = ({
   naics_code,
 }) => {
   return (
-    <div className="my-6 overflow-hidden rounded-md border border-border">
+    <div className="my-6 overflow-x-auto rounded-md border border-border">
       <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-2">
         <p className="text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           Peer comparison
@@ -65,7 +65,7 @@ export const PeerComparisonTable: React.FC<Props> = ({
             .join(" · ")}
         </p>
       </div>
-      <table className="w-full">
+      <table className="w-full min-w-[640px]">
         <thead>
           <tr className="border-b border-border">
             <th

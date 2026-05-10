@@ -47,7 +47,7 @@ export const CitationProvider: React.FC<{
   counterRef.current = 0;
 
   const register = React.useCallback((c: Citation): number => {
-    const key = `${c.source}::${c.page ?? ""}::${c.claim.slice(0, 80)}`;
+    const key = `${c.source ?? ""}::${c.page ?? ""}::${(c.claim ?? "").slice(0, 80)}`;
     const existing = registryRef.current.get(key);
     if (existing) return existing.idx;
     counterRef.current += 1;
@@ -62,7 +62,10 @@ export const CitationProvider: React.FC<{
       .sort((a, b) => a.idx - b.idx)
       .map((v) => v.c);
     const extras = (prefill ?? []).filter(
-      (c) => !seen.has(`${c.source}::${c.page ?? ""}::${c.claim.slice(0, 80)}`),
+      (c) =>
+        !seen.has(
+          `${c.source ?? ""}::${c.page ?? ""}::${(c.claim ?? "").slice(0, 80)}`,
+        ),
     );
     return [...inline, ...extras];
   }, [prefill]);

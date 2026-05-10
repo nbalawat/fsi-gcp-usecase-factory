@@ -14,7 +14,7 @@ import { Button } from "../components/ui/button";
 import { LiveStatus } from "../components/live-status";
 import { LiveQueueTable } from "@uc/components/live-queue-table";
 import { PersonaSwitcher } from "../components/persona-switcher";
-import { DocumentDropzone } from "@uc/components/document-upload/document-dropzone";
+import { MultiDocUpload } from "@uc/components/document-upload/multi-doc-upload";
 import { getActiveCases, toCaseRecord } from "@uc/lib/live-data";
 import type { CaseRecord } from "@uc/lib/types";
 import { PERSONA_COOKIE, parsePersonaCookie, personaNav } from "../lib/personas";
@@ -200,7 +200,7 @@ export default async function HomePage(): Promise<JSX.Element> {
         </div>
       )}
 
-      {/* ── Document upload (hero) ─────────────────────────────── */}
+      {/* ── Multi-document upload (hero) ───────────────────────── */}
       <section className="px-6 pt-6">
         <Card className="border-accent/30 bg-paper">
           <CardHeader>
@@ -208,17 +208,20 @@ export default async function HomePage(): Promise<JSX.Element> {
               <div>
                 <CardTitle>Start a new application</CardTitle>
                 <CardDescription>
-                  Drop a real 10-K PDF and watch it move through the pipeline —
-                  spreading, policy, memo drafting, and your decision.
+                  Upload the full document set — 10-K + 10-Q + AR aging + board
+                  minutes as needed. Cloud Workflows extracts each PDF in
+                  parallel via Landing AI, then pauses at four checkpoints
+                  (extraction review, rating review, draft review, final
+                  approval) for your decision.
                 </CardDescription>
               </div>
               <Badge tone="accent" dot>
-                Hero demo
+                Workflows v3 · HITL
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <DocumentDropzone />
+            <MultiDocUpload />
           </CardContent>
         </Card>
       </section>

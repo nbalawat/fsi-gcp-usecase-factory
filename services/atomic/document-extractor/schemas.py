@@ -148,6 +148,18 @@ class ExtractResponse(BaseModel):
     error_code: str | None = Field(default=None)
     error_message: str | None = Field(default=None, max_length=2000)
 
+    # Raw document markdown — the per-page text the parser produced.
+    # Used by downstream agents (analyst, drafter) to write rich
+    # commentary that goes beyond the structured extracted_fields.
+    # Capped at 60_000 chars (~15k tokens) per doc to keep payloads
+    # manageable; the orchestrator will further trim/truncate when
+    # composing multi-doc agent inputs.
+    raw_markdown: str | None = Field(
+        default=None,
+        max_length=60_000,
+        description="Per-page text from the parser, joined with '--- Page N ---' separators. Capped at 60K chars.",
+    )
+
 
 class HealthResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")

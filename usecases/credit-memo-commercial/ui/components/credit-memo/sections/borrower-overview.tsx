@@ -39,8 +39,8 @@ export const BorrowerOverviewSection: React.FC<Props> = ({ data }) => {
           <p className="mb-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
             Ownership
           </p>
-          <div className="overflow-hidden rounded-md border border-border">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-md border border-border">
+            <table className="w-full min-w-[560px]">
               <thead>
                 <tr className="border-b border-border">
                   <Th>Beneficial owner</Th>
@@ -89,8 +89,8 @@ export const BorrowerOverviewSection: React.FC<Props> = ({ data }) => {
           <p className="mb-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
             Senior management
           </p>
-          <div className="overflow-hidden rounded-md border border-border">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-md border border-border">
+            <table className="w-full min-w-[560px]">
               <thead>
                 <tr className="border-b border-border">
                   <Th>Role</Th>

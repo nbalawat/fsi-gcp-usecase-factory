@@ -43,7 +43,7 @@ export const TrendTable: React.FC<Props> = ({
   caption,
 }) => {
   return (
-    <div className="my-6 overflow-hidden rounded-md border border-border">
+    <div className="my-6 overflow-x-auto rounded-md border border-border">
       {caption && (
         <p className="border-b border-border bg-muted px-4 py-2 text-eyebrow uppercase tracking-[0.06em] text-muted-foreground font-mono">
           {caption}

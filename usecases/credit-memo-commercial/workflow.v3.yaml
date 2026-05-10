@@ -259,7 +259,13 @@ main:
               return: "RETURN_FOR_REVISION"
 
     # ── Stage 3. Atomic services (parallel) ──────────────────────────
-    - stage_3_atomic_services:
+    # Five atomic services run in parallel against the reconciled
+    # extractions. Each service is best-effort — a failure on one
+    # doesn't block the others; we collect what we can and pass the
+    # composite to the rules engine + agents. Service URLs are
+    # hardcoded to the deployed Cloud Run revisions; these are the
+    # same URLs persisted to .fsi-state/<service>.url.
+    - stage_3_mark_running:
         call: http.post
         args:
           url: ${audit_writer_url + "/state"}
@@ -268,7 +274,130 @@ main:
             application_id: ${application_id}
             current_stage: spreading
 
+    # Cloud Workflows requires `shared` parallel variables to be
+    # declared before the parallel block. Initialize each to a stub
+    # body=null so the assign-step below can read .body unconditionally
+    # whether or not the branch fired (the per-branch try/except will
+    # overwrite this on success or controlled failure).
+    - stage_3_init_results:
+        assign:
+          - spread_result: {body: {}}
+          - dscr_result: {body: {}}
+          - peer_result: {body: {}}
+          - collateral_result: {body: {}}
+          - exposure_result: {body: {}}
+
+    - stage_3_atomic_services:
+        parallel:
+          shared: [spread_result, dscr_result, peer_result, collateral_result, exposure_result]
+          branches:
+            - financial_spreader:
+                steps:
+                  - call_financial_spreader:
+                      try:
+                        call: http.post
+                        args:
+                          url: "https://fsi-atomic-financial-spreader-v4uibzu6ga-uc.a.run.app/spread"
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            documents: ${extracted_docs}
+                          timeout: 60
+                        result: spread_result
+                      except:
+                        as: e
+                        assign:
+                          - spread_result: {body: {}}
+            - dscr_calculator:
+                steps:
+                  - call_dscr_calculator:
+                      try:
+                        call: http.post
+                        args:
+                          url: "https://fsi-atomic-dscr-calculator-v4uibzu6ga-uc.a.run.app/calculate"
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            loan_amount_usd: ${loan_amount_usd}
+                            documents: ${extracted_docs}
+                          timeout: 60
+                        result: dscr_result
+                      except:
+                        as: e
+                        assign:
+                          - dscr_result: {body: {}}
+            - peer_benchmarker:
+                steps:
+                  - call_peer_benchmarker:
+                      try:
+                        call: http.post
+                        args:
+                          url: "https://fsi-atomic-peer-benchmarker-v4uibzu6ga-uc.a.run.app/benchmark"
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            documents: ${extracted_docs}
+                          timeout: 60
+                        result: peer_result
+                      except:
+                        as: e
+                        assign:
+                          - peer_result: {body: {}}
+            - collateral_valuator:
+                steps:
+                  - call_collateral_valuator:
+                      try:
+                        call: http.post
+                        args:
+                          url: "https://fsi-atomic-collateral-valuator-v4uibzu6ga-uc.a.run.app/value"
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            documents: ${extracted_docs}
+                          timeout: 60
+                        result: collateral_result
+                      except:
+                        as: e
+                        assign:
+                          - collateral_result: {body: {}}
+            - exposure_aggregator:
+                steps:
+                  - call_exposure_aggregator:
+                      try:
+                        call: http.post
+                        args:
+                          url: "https://fsi-atomic-exposure-aggregator-v4uibzu6ga-uc.a.run.app/aggregate"
+                          auth: {type: OIDC}
+                          body:
+                            application_id: ${application_id}
+                            borrower_id: ${borrower_id}
+                          timeout: 60
+                        result: exposure_result
+                      except:
+                        as: e
+                        assign:
+                          - exposure_result: {body: {}}
+
+    # Compose service_results blob from the parallel outputs. Each
+    # branch's try/except above guarantees the *_result var is set
+    # to either the successful response (with .body) or {body: {}} on
+    # failure — so .body is always safe to access here. Field names
+    # match the rule-input builders in services/rules-service/main.py.
+    - stage_3_compose_service_results:
+        assign:
+          - service_results:
+              financial_spreader: ${spread_result.body}
+              loan_serviceability: ${dscr_result.body}
+              peer_and_industry_context: ${peer_result.body}
+              collateral_valuator: ${collateral_result.body}
+              borrower_network: ${exposure_result.body}
+
     # ── Stage 4. Rules ────────────────────────────────────────────────
+    # Passes both service_results (from Stage 3 atomic services) AND
+    # extracted_docs (raw extraction output) so the input builders can
+    # compute ratios from documents when atomic services haven't
+    # produced their outputs yet — otherwise most rules would SKIP on
+    # cases where Stage 3 returned empty bodies.
     - stage_4_rules:
         try:
           call: http.post
@@ -278,8 +407,10 @@ main:
             body:
               application_id: ${application_id}
               loan_amount_usd: ${loan_amount_usd}
-              service_results: {}
-            timeout: 60
+              naics_code: ${default(map.get(parsed, "naics_code"), "")}
+              service_results: ${service_results}
+              documents: ${extracted_docs}
+            timeout: 120
           result: rules_result
         except:
           as: e
@@ -289,6 +420,20 @@ main:
                   - rules_result: {body: {results: {}}}
 
     # ── Stage 5a. document_processor + analyst ────────────────────────
+    # Each agent step marks its stage so the UI's processing panel +
+    # right-rail "current_stage" field tracks live progress. Without
+    # these the stage stays stuck on the prior HITL marker (e.g.
+    # "extraction_review" through 30s of analyst work) which makes the
+    # case look stuck even when the workflow is humming along.
+    - mark_analyzing:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: analyzing
+
     - call_document_processor:
         call: http.post
         args:
@@ -311,11 +456,20 @@ main:
             borrower_id: ${borrower_id}
             reconciled_documents: ${doc_processor_result.body}
             documents: ${extracted_docs}
-            service_results: {}
+            service_results: ${service_results}
           timeout: 300
         result: analyst_result
 
     # ── Stage 5b. rater_and_covenant_designer ─────────────────────────
+    - mark_rating:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: rating
+
     - call_rater:
         call: http.post
         args:
@@ -381,6 +535,18 @@ main:
                   checkpoint: rating_review
 
     # ── Stage 5c. drafter ─────────────────────────────────────────────
+    # Mark current_stage so the UI shows "Drafting credit memo" in the
+    # processing panel + right rail instead of staying on the prior
+    # rating_review marker (which would look like a stuck workflow).
+    - mark_drafting:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: drafting
+
     - call_drafter:
         call: http.post
         args:
@@ -394,6 +560,15 @@ main:
             documents: ${extracted_docs}
           timeout: 600
         result: drafter_result
+
+    - mark_reviewing:
+        call: http.post
+        args:
+          url: ${audit_writer_url + "/state"}
+          auth: {type: OIDC}
+          body:
+            application_id: ${application_id}
+            current_stage: reviewing
 
     - call_reviewer:
         call: http.post

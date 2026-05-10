@@ -17,7 +17,7 @@ import {
   fmtUsdFull,
   titleCase,
 } from "../format";
-import type { Recommendation } from "../types";
+import type { Citation, Recommendation } from "../types";
 
 interface Props {
   data: Recommendation;
@@ -39,6 +39,7 @@ export const RecommendationSection: React.FC<Props> = ({ data }) => {
       number={10}
       eyebrow="Section 10"
       title="Recommendation"
+      prefillCitations={(data as { citations?: Citation[] }).citations ?? []}
       kicker={
         <div className="flex items-center gap-2">
           <Badge tone={decisionTone(data.action)} dot>
