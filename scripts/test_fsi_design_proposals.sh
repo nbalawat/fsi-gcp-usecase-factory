@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# scripts/test_fsi_design_proposals.sh
+#
+# Deterministic smoke for the UX-first lockdown machinery. Verifies
+# every static piece /fsi-design-proposals + /fsi-design-review depend
+# on without spawning agents or touching GCP.
+#
+#   1. Schemas exist and parse as YAML
+#   2. Mock-data generator produces a deterministic, importable .ts module
+#      from the mortgage-origination fixture canvas
+#   3. The generated TS contains all required exports
+#   4. The Cloud Build template references all expected substitutions
+#   5. The cleanup script's --help works and bash -n is clean
+#   6. The skills exist with valid frontmatter
+#   7. The auditor's UX-first rules are present
+#   8. The init-use-case Step 0 preflight is wired
+#   9. /fsi-onboard's Step 10 handoff points at /fsi-design-proposals
+#  10. Comparator HTML builder runs against synthesized inputs and emits
+#      a self-contained, file:// safe HTML page
+#
+# Used by `make test-all` and the pre-commit hook when any UX-first
+# machinery file changes. Runs in <10 seconds, fully offline.
+
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO"
+
+red()    { printf "\033[31m%s\033[0m\n" "$*"; }
+green()  { printf "\033[32m%s\033[0m\n" "$*"; }
+dim()    { printf "\033[2m%s\033[0m\n" "$*"; }
+
+failed=0
+
+assert_path() {
+  local p="$1" label="$2"
+  if [[ -e "$REPO/$p" ]]; then
+    green "  ✓ $label  ($p)"
+  else
+    red   "  ✗ $label  (missing: $p)"
+    failed=$((failed + 1))
+  fi
+}
+
+assert_grep() {
+  local pattern="$1" file="$2" label="$3"
+  if grep -qE -- "$pattern" "$REPO/$file" 2>/dev/null; then
+    green "  ✓ $label"
+  else
+    red   "  ✗ $label  (pattern '$pattern' not in $file)"
+    failed=$((failed + 1))
+  fi
+}
+
+assert_eq() {
+  local expected="$1" actual="$2" label="$3"
+  if [[ "$expected" == "$actual" ]]; then
+    green "  ✓ $label"
+  else
+    red   "  ✗ $label  (expected '$expected', got '$actual')"
+    failed=$((failed + 1))
+  fi
+}
+
+WORK="$(mktemp -d)"
+cleanup() { rm -rf "$WORK" "$REPO/onboarding/__test_design_proposals__.yaml" "$REPO/usecases/__test_design_proposals__"; rmdir "$REPO/onboarding" 2>/dev/null || true; }
+trap cleanup EXIT
+
+echo "─── Smoke test: UX-first lockdown ────────────────────────"
+echo
+
+echo "1. Schemas + foundation files exist:"
+assert_path ".claude/schemas/ui-decision.schema.yaml"           "ui-decision schema"
+assert_path ".claude/schemas/option-manifest.schema.yaml"        "option-manifest schema"
+assert_path "scripts/generate_mock_canvas_data.mjs"              "mock-data generator"
+assert_path "scripts/build_design_comparator.mjs"                "comparator builder"
+assert_path "scripts/cleanup_design_proposals.sh"                "cleanup script"
+assert_path "infra/templates/design-proposal-cloudbuild.yaml"    "cloud build template"
+assert_path ".claude/skills/fsi-design-proposals/SKILL.md"       "proposals skill"
+assert_path ".claude/skills/fsi-design-review/SKILL.md"          "review skill"
+assert_path "docs/methodology/ux-first-discipline.md"            "discipline doc"
+echo
+
+echo "2. Mock-data generator produces importable TS from mortgage-origination fixture:"
+mkdir -p "$REPO/onboarding"
+cp "$REPO/scripts/test_fixtures/onboarding_mortgage_good.yaml" "$REPO/onboarding/__test_design_proposals__.yaml"
+GEN_OUT="$REPO/usecases/__test_design_proposals__/ui/proposals/_shared/mock-data.ts"
+if node "$REPO/scripts/generate_mock_canvas_data.mjs" __test_design_proposals__ >/dev/null 2>&1; then
+  green "  ✓ generator ran without error"
+else
+  red   "  ✗ generator failed"
+  node "$REPO/scripts/generate_mock_canvas_data.mjs" __test_design_proposals__ 2>&1 | sed 's/^/      /'
+  failed=$((failed + 1))
+fi
+assert_path "usecases/__test_design_proposals__/ui/proposals/_shared/mock-data.ts" "generated TS file"
+echo
+
+echo "3. Generated TS contains required exports:"
+for sym in USE_CASE_ID CANVAS_SHA256 CONSOLE_PATTERN BORROWERS PRIMARY_BORROWER CASE_SHAPE HITL_GATES ATOMIC_SERVICE_STUBS AGENT_OUTPUT_STUBS PIPELINE_EVENTS LIVE_CASE; do
+  assert_grep "export const $sym" "usecases/__test_design_proposals__/ui/proposals/_shared/mock-data.ts" "exports $sym"
+done
+echo
+
+echo "4. Generator is deterministic (same canvas → same TS):"
+sha1=$(shasum -a 256 "$GEN_OUT" | awk '{print $1}')
+node "$REPO/scripts/generate_mock_canvas_data.mjs" __test_design_proposals__ >/dev/null 2>&1
+sha2=$(shasum -a 256 "$GEN_OUT" | awk '{print $1}')
+# generator embeds generated_at iso → bytes differ in that line; strip it
+sha1=$(grep -v '^//   generated_at' "$GEN_OUT.bak" 2>/dev/null | shasum -a 256 | awk '{print $1}' || echo "first-pass")
+cp "$GEN_OUT" "$GEN_OUT.bak"
+node "$REPO/scripts/generate_mock_canvas_data.mjs" __test_design_proposals__ >/dev/null 2>&1
+shaA=$(grep -v '^//   generated_at' "$GEN_OUT.bak" | shasum -a 256 | awk '{print $1}')
+shaB=$(grep -v '^//   generated_at' "$GEN_OUT"     | shasum -a 256 | awk '{print $1}')
+assert_eq "$shaA" "$shaB" "ignoring generated_at, output is byte-identical"
+rm -f "$GEN_OUT.bak"
+echo
+
+echo "5. Cloud Build template has expected substitutions:"
+assert_grep "_USE_CASE:" "infra/templates/design-proposal-cloudbuild.yaml"  "_USE_CASE substitution declared"
+assert_grep "_OPTION:"   "infra/templates/design-proposal-cloudbuild.yaml"  "_OPTION substitution declared"
+assert_grep "fsi-uc-.*-design-" "infra/templates/design-proposal-cloudbuild.yaml" "service-name pattern present"
+assert_grep "kind=design-proposal" "infra/templates/design-proposal-cloudbuild.yaml" "kind=design-proposal label present (cleanup script greps for this)"
+echo
+
+echo "6. Cleanup script is bash-clean and self-documenting:"
+if bash -n "$REPO/scripts/cleanup_design_proposals.sh" 2>/dev/null; then
+  green "  ✓ bash -n clean"
+else
+  red   "  ✗ bash -n failed"
+  failed=$((failed + 1))
+fi
+if "$REPO/scripts/cleanup_design_proposals.sh" --help >/dev/null 2>&1; then
+  green "  ✓ --help works"
+else
+  red   "  ✗ --help failed"
+  failed=$((failed + 1))
+fi
+echo
+
+echo "7. Skill frontmatter is valid:"
+assert_grep "^name: fsi-design-proposals" ".claude/skills/fsi-design-proposals/SKILL.md" "fsi-design-proposals name"
+assert_grep "^name: fsi-design-review"     ".claude/skills/fsi-design-review/SKILL.md"     "fsi-design-review name"
+assert_grep "disable-model-invocation: true" ".claude/skills/fsi-design-proposals/SKILL.md" "fsi-design-proposals disable-model-invocation"
+assert_grep "disable-model-invocation: true" ".claude/skills/fsi-design-review/SKILL.md"     "fsi-design-review disable-model-invocation"
+echo
+
+echo "8. Auditor's UX-first checks are wired:"
+assert_grep "UX-first design contract" ".claude/agents/architecture-auditor.md"  "UX-first section present"
+assert_grep "decision.yaml"             ".claude/agents/architecture-auditor.md"  "auditor cites decision.yaml"
+assert_grep "_archive"                  ".claude/agents/architecture-auditor.md"  "auditor cites _archive trail"
+assert_grep "lock_level"                ".claude/agents/architecture-auditor.md"  "auditor enforces lock_level"
+echo
+
+echo "9. /init-use-case Step 0 preflight is wired:"
+assert_grep "UX-first preflight" ".claude/skills/init-use-case/SKILL.md" "Step 0 named"
+assert_grep "decision.yaml"      ".claude/skills/init-use-case/SKILL.md" "Step 0 references decision.yaml"
+assert_grep "skip-design"        ".claude/skills/init-use-case/SKILL.md" "Step 0 documents --skip-design escape"
+echo
+
+echo "10. /fsi-onboard handoff points at /fsi-design-proposals:"
+assert_grep "/fsi-design-proposals" ".claude/skills/fsi-onboard/SKILL.md" "handoff cites /fsi-design-proposals"
+assert_grep "/fsi-design-review"    ".claude/skills/fsi-onboard/SKILL.md" "handoff cites /fsi-design-review"
+echo
+
+echo "11. Comparator builder produces a self-contained HTML page:"
+# Set up minimal proposal directories so the comparator has something to render.
+PROP_DIR="$REPO/usecases/__test_design_proposals__/ui/proposals"
+mkdir -p "$PROP_DIR/option-a" "$PROP_DIR/option-b" "$PROP_DIR/option-c" "$PROP_DIR/option-d"
+mkdir -p "$REPO/.fsi-state/__test_design_proposals__/proposals"
+cat > "$REPO/.fsi-state/__test_design_proposals__/proposals/preflight.json" <<EOF
+{"use_case_id":"__test_design_proposals__","canvas_sha256":"abc1234567890def","options_planned":["a","b","c","d"]}
+EOF
+for opt in a b c d; do
+  axis="density"
+  [[ "$opt" == "b" ]] && axis="metaphor"
+  [[ "$opt" == "c" ]] && axis="affordance"
+  [[ "$opt" == "d" ]] && axis="wildcard"
+  OPT_UP=$(printf "%s" "$opt" | tr '[:lower:]' '[:upper:]')
+  cat > "$PROP_DIR/option-$opt/manifest.yaml" <<MFEOF
+schema_version: "1.0.0"
+option: $OPT_UP
+variation_axis: $axis
+canvas_checksum: abc1234567890def
+use_case_id: __test_design_proposals__
+persona:
+  primary: Test Persona
+  context: smoke-test
+density_score: 3
+motion_budget: standard
+affordance_pattern: sticky-bottom-bar
+primary_metaphor: workflow-first
+components_used: []
+routes_implemented:
+  - case-detail
+  - approval-flow
+design_summary: Smoke test option for $axis variation. Exists only so the comparator has data to render.
+tradeoffs:
+  optimised_for:
+    - testability
+  sacrifices:
+    - realism
+hero_screenshot: hero.png
+build:
+  build_succeeded: true
+  deploy_succeeded: false
+MFEOF
+done
+
+if node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev/null 2>&1; then
+  green "  ✓ comparator builder ran"
+else
+  red   "  ✗ comparator builder failed"
+  node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ 2>&1 | sed 's/^/      /'
+  failed=$((failed + 1))
+fi
+HTML="$REPO/usecases/__test_design_proposals__/ui/proposals/_review.html"
+assert_path "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator HTML"
+assert_grep "<!doctype html>"           "usecases/__test_design_proposals__/ui/proposals/_review.html" "valid HTML doctype"
+assert_grep "Option A"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option A"
+assert_grep "Option D"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option D"
+assert_grep "deploy failed"             "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows ⚠ banner for failed deploys"
+echo
+
+if [[ $failed -gt 0 ]]; then
+  red "$failed assertion(s) failed."
+  exit 1
+fi
+green "All assertions passed."

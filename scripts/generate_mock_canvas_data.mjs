@@ -269,7 +269,10 @@ function buildEvents(canvas) {
   out.push({ at: tick(45), kind: "document_extracted", doc_type: "10-K", confidence: 0.94 });
   out.push({ at: tick(8),  kind: "document_extracted", doc_type: "AR_aging", confidence: 0.91 });
   for (const svc of canvas.atomic_services_reused ?? []) {
-    out.push({ at: tick(2),  kind: "service_invoked", service: svc, latency_ms: 240 + Math.floor(Math.random() * 800) });
+    // Deterministic latency keyed on service name (idempotency).
+    const seed = createHash("sha256").update(svc).digest("hex");
+    const latency = 240 + (parseInt(seed.slice(0, 4), 16) % 800);
+    out.push({ at: tick(2),  kind: "service_invoked", service: svc, latency_ms: latency });
   }
   for (const a of canvas.agent_archetypes_reused ?? []) {
     out.push({ at: tick(7),  kind: "agent_invoked", agent: a.replace(/@.+$/, ""), tokens_in: 8000, tokens_out: 3500 });
