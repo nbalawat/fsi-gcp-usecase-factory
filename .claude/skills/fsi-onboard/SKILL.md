@@ -305,12 +305,21 @@ HITL gates:       <count>
 Provider:         <provider>
 Compliance scope: <scope>
 
-Next:
-  1. /init-use-case <use_case>      — scaffold the directory tree (reads onboarding.yaml)
-  2. /fsi-reasons-canvas             — author reasons.yaml seeded from onboarding.yaml
-  3. /fsi-build-parallel             — fan-out builders for the 5-step DAG
-  4. /review-uc <use_case>           — full review before commit
-  5. /fsi-deploy <use_case> --env=dev — deploy to GCP
+Next (UX-first lockdown — DO NOT skip):
+  1. /fsi-design-proposals <use_case>   — spawns 4 parallel sealed designer agents
+                                         (density / metaphor / affordance / wildcard).
+                                         Each builds a working Next.js prototype on the
+                                         existing pipeline-console shell + deploys to its
+                                         own ephemeral Cloud Run URL. ~$10 + ~30 min.
+  2. /fsi-design-review <use_case>      — comparator HTML + AskUserQuestion pick.
+                                         Emits usecases/<uc>/ui/decision.yaml — the
+                                         design contract. /init-use-case refuses without it.
+  3. /init-use-case <use_case>          — scaffold the directory tree (reads
+                                         onboarding.yaml + decision.yaml)
+  4. /fsi-reasons-canvas                 — author reasons.yaml seeded from both
+  5. /fsi-build-parallel                 — fan-out builders for the 5-step DAG
+  6. /review-uc <use_case>               — full review before commit
+  7. /fsi-deploy <use_case> --env=dev    — deploy to GCP
 
 Cookbook patterns to read for this UC:
   - <pattern_id>: <one-liner>  (e.g., "Pattern 1: HITL via callbacks" if hitl_gates ≥ 2)
@@ -318,7 +327,11 @@ Cookbook patterns to read for this UC:
   ...
 ```
 
-The user runs `/init-use-case` next; that skill MUST read `onboarding/<use_case>.yaml` (already wired in `init-use-case/SKILL.md` if updated; if not, surface a TODO for the platform team).
+The user runs `/fsi-design-proposals` next, NOT `/init-use-case`. The UX-first lockdown is mandatory: backend code is wasted if the UX is wrong. Skipping it requires arch-review override captured in `decision.yaml: iteration_override`.
+
+If the user explicitly wants to skip the design phase (e.g. for a UC where UX is genuinely irrelevant — pure batch job, no humans), tell them:
+
+> The skip path is `/init-use-case <uc> --skip-design --reason="<why>"`. Captured into `usecases/<uc>/.no-design-rationale.txt` and surfaced in `/review-uc`. Use sparingly.
 
 ## Failure modes you must handle
 

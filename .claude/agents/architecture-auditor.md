@@ -55,6 +55,28 @@ For `ui/use_cases/{use_case}/config.json`:
 - `console` field is one of: `realtime`, `investigations`, `pipeline`, `surveillance`, `run`, `recommendations`
 - No custom React components introduced (check git diff against `ui/components/`)
 
+### UX-first design contract (BLOCKING)
+
+If `usecases/{uc}/ui/components/` contains any files:
+- `usecases/{uc}/ui/decision.yaml` MUST exist (else FAIL with: "UI files exist without locked design contract; run /fsi-design-proposals + /fsi-design-review")
+- `decision.yaml: canvas_checksum` MUST equal current `sha256(onboarding/{uc}.yaml)` (else FAIL with: "design locked against stale canvas; re-run /fsi-design-proposals after canvas changes")
+- `decision.yaml: archive_path` MUST resolve to a directory containing all rejected option directories + the comparator HTML (else FAIL with: "audit trail incomplete; archive directory missing or incomplete")
+- If `decision.yaml: lock_level == "full"` and the diff modifies layout shape (route additions, top-level structural changes), FAIL with: "lock_level=full forbids layout changes; either weaken lock_level after arch-review or re-run design proposals"
+
+Skip path: if `usecases/{uc}/.no-design-rationale.txt` exists AND was created via `/init-use-case --skip-design`, allow but WARN on every commit until arch-review signs off.
+
+### Architecture audit trail integrity
+
+`usecases/{uc}/ui/proposals/_archive/` must:
+- Be present when `decision.yaml` exists
+- Contain every rejected option's full directory (including manifest.yaml + rationale.md + tradeoffs.md)
+- Contain the comparator `_review.html` from the round that produced the winner
+- Each rejected option's manifest.yaml must have `rejected: true` + `rejection_reason` stamped
+
+Missing archive: FAIL — regulator audit trail is broken.
+
+Files removed from `_archive/` after the fact: FAIL with the exact files that were deleted.
+
 ### Required artifacts
 
 Every use case must have:
