@@ -1,0 +1,159 @@
+# Per-option manifest emitted by each designer agent.
+#
+# Lives at usecases/<uc>/ui/proposals/option-{a,b,c,d}/manifest.yaml.
+# Read by /fsi-design-review to render the comparator + scoring strip,
+# and by the diversity scorer to ensure the 4 options aren't converging.
+
+$schema_version: "1.0.0"
+
+required:
+  - schema_version
+  - option
+  - variation_axis
+  - canvas_checksum
+  - use_case_id
+  - persona
+  - density_score
+  - motion_budget
+  - components_used
+  - routes_implemented
+  - design_summary
+  - tradeoffs
+  - hero_screenshot
+
+properties:
+
+  schema_version:
+    type: string
+    enum: ["1.0.0"]
+
+  option:
+    type: string
+    enum: [A, B, C, D, E, F]
+
+  variation_axis:
+    type: string
+    enum: [density, metaphor, affordance, wildcard, respin]
+
+  use_case_id:
+    type: string
+    pattern: "^[a-z][a-z0-9-]+[a-z0-9]$"
+
+  # ─── Provenance: agent must echo back canvas SHA ───────────────────────
+  canvas_checksum:
+    type: string
+    pattern: "^[a-f0-9]{64}$"
+    description: REQUIRED echo-back of the canvas SHA the agent received. Mismatch = output rejected.
+
+  agent_id:
+    type: string
+    description: optional — the Anthropic agent / Claude Code subagent identifier
+
+  generated_at:
+    type: string
+    format: date-time
+
+  # ─── Persona this design is for ────────────────────────────────────────
+  persona:
+    type: object
+    required: [primary, context]
+    properties:
+      primary:
+        type: string
+        examples: ["Relationship Manager", "Chief Credit Officer", "Underwriter", "Compliance Analyst", "Senior Banker", "Regulator"]
+      secondary:
+        type: array
+        items: {type: string}
+      context:
+        type: string
+        description: free-form one-liner — "midnight forensic review", "exec breakfast scan", "10-minute approval window", etc.
+
+  # ─── Scoring strip values (renderable in comparator) ───────────────────
+  density_score:
+    type: integer
+    minimum: 1
+    maximum: 5
+    description: 1=sparse executive, 5=dense forensic
+
+  motion_budget:
+    type: string
+    enum: [none, minimal, standard, expressive]
+    description: how much animation / transition the design uses; standard = the platform default
+
+  affordance_pattern:
+    type: string
+    enum: [sticky-bottom-bar, inline-per-section, right-rail-panel, modal-drawer, command-palette, hybrid]
+
+  primary_metaphor:
+    type: string
+    enum: [document-first, workflow-first, data-first, conversation-first, dashboard-first, agent-stream-first]
+
+  # ─── Reuse evidence (pulls existing components, not net-new) ───────────
+  components_used:
+    type: array
+    items:
+      type: object
+      required: [name, source]
+      properties:
+        name: {type: string}
+        source:
+          type: string
+          enum: [shared, use-case, net-new]
+        path: {type: string}
+    description: |
+      The diversity scorer counts shared+use-case as reuse, net-new as proliferation.
+      Designs with >5 net-new components per route get a ⚠ in the comparator.
+
+  routes_implemented:
+    type: array
+    items:
+      type: string
+      enum: [case-detail, approval-flow, portfolio, persona-switcher, ingest, settings]
+    description: |
+      Per the agreed scope, options ship case-detail + approval-flow only.
+      Including more is allowed but doesn't earn extra credit.
+
+  # ─── Design rationale + tradeoffs ──────────────────────────────────────
+  design_summary:
+    type: string
+    minLength: 60
+    maxLength: 400
+    description: 1-2 paragraph summary suitable for comparator rendering.
+
+  tradeoffs:
+    type: object
+    required: [optimised_for, sacrifices]
+    properties:
+      optimised_for:
+        type: array
+        items: {type: string}
+      sacrifices:
+        type: array
+        items: {type: string}
+
+  # ─── Visual provenance ─────────────────────────────────────────────────
+  hero_screenshot:
+    type: string
+    description: relative path to a PNG of the case-detail screen at 1440x900. Comparator embeds.
+
+  approval_screenshot:
+    type: string
+
+  # ─── Build status (filled by /fsi-design-proposals after deploy) ───────
+  build:
+    type: object
+    properties:
+      tsc_clean:        {type: boolean}
+      lint_clean:       {type: boolean}
+      build_succeeded:  {type: boolean}
+      deploy_succeeded: {type: boolean}
+      ephemeral_url:    {type: string, format: uri}
+      cloud_run_service: {type: string}
+
+  # ─── Cost telemetry per option ─────────────────────────────────────────
+  cost:
+    type: object
+    properties:
+      llm_usd:           {type: number}
+      cloud_build_usd:   {type: number}
+      wallclock_s:       {type: integer}

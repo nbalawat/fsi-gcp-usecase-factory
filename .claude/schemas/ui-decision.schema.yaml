@@ -1,0 +1,153 @@
+# UX decision contract — output of /fsi-design-review.
+#
+# Every use case must have usecases/<uc>/ui/decision.yaml before /init-use-case
+# scaffolds anything UI-related. The architecture-auditor blocks any commit
+# that creates files under usecases/<uc>/ui/components/ without a present and
+# valid decision.yaml.
+#
+# The schema captures:
+#   - which option won (chosen_option)
+#   - why others lost (rejected_options[].rationale)
+#   - what the user wants kept / dropped / changed (annotations.{keep,drop,change})
+#   - what's locked (lock_level: full | layout-only | metaphor-only)
+#   - the canvas SHA at design-time so backend changes can detect drift
+#
+# Versioned. Bump $schema_version on breaking changes; older decisions are
+# auto-migrated by /fsi-design-review when re-opened.
+
+$schema_version: "1.0.0"
+
+required:
+  - schema_version
+  - use_case_id
+  - chosen_option
+  - variation_axis
+  - chosen_at
+  - locked_at
+  - iteration_count
+  - lock_level
+  - annotations
+  - rejected_options
+  - archive_path
+  - canvas_checksum
+
+properties:
+
+  schema_version:
+    type: string
+    enum: ["1.0.0"]
+
+  use_case_id:
+    type: string
+    pattern: "^[a-z][a-z0-9-]+[a-z0-9]$"
+
+  chosen_option:
+    type: string
+    enum: [A, B, C, D, E, F]    # E/F reserved for re-spin options
+
+  variation_axis:
+    type: string
+    enum: [density, metaphor, affordance, wildcard, respin]
+
+  chosen_at:
+    type: string
+    format: date-time
+
+  locked_at:
+    type: string
+    format: date-time
+    description: when /fsi-design-review promoted the winner; equal-or-later than chosen_at.
+
+  iteration_count:
+    type: integer
+    minimum: 0
+    maximum: 1
+    description: 0 = first round; 1 = one re-spin already used. ≥2 forbidden without arch-review override.
+
+  # ─── Lock semantics ────────────────────────────────────────────────────
+  lock_level:
+    type: string
+    enum:
+      - full            # any layout / metaphor / affordance change re-runs design
+      - layout-only     # metaphor + affordance can evolve; layout is frozen
+      - metaphor-only   # metaphor is frozen; layout + affordance can evolve
+    default: full
+    description: |
+      Controls when subsequent backend changes require re-running design proposals.
+      `full` is the safe default; loosen only for UCs where the metaphor is
+      genuinely the contract (e.g. "this UC is conversation-first").
+
+  # ─── User feedback on the winner ───────────────────────────────────────
+  annotations:
+    type: object
+    required: [keep, drop, change]
+    properties:
+      keep:
+        type: array
+        items: {type: string, minLength: 4}
+        description: aspects of the winning design to preserve as-is
+      drop:
+        type: array
+        items: {type: string, minLength: 4}
+      change:
+        type: array
+        items:
+          type: object
+          required: [from, to, reason]
+          properties:
+            from:   {type: string}
+            to:     {type: string}
+            reason: {type: string}
+
+  # ─── Why the others lost ───────────────────────────────────────────────
+  rejected_options:
+    type: array
+    items:
+      type: object
+      required: [option, variation_axis, rationale]
+      properties:
+        option:         {type: string, enum: [A, B, C, D, E, F]}
+        variation_axis: {type: string}
+        rationale:      {type: string, minLength: 10}
+        # If the option failed to build / deploy, capture that here so the
+        # archive trail explains why it wasn't a real candidate.
+        build_failed:   {type: boolean, default: false}
+        deploy_failed:  {type: boolean, default: false}
+        diversity_score: {type: number, minimum: 0, maximum: 1}
+
+  # ─── Archive trail (regulator audit) ───────────────────────────────────
+  archive_path:
+    type: string
+    description: relative path to usecases/<uc>/ui/proposals/_archive/<timestamp>/ holding all options + comparator + agent rationales.
+
+  comparator_html_path:
+    type: string
+
+  # ─── Drift detection ───────────────────────────────────────────────────
+  canvas_checksum:
+    type: string
+    pattern: "^[a-f0-9]{64}$"
+    description: SHA-256 of onboarding/<uc>.yaml at the moment design ran. Backend changes that bump this checksum trigger a re-design check.
+
+  canvas_path:
+    type: string
+    default: "onboarding/<uc>.yaml"
+
+  # ─── Optional override (when arch-review approves a 2nd re-spin) ───────
+  iteration_override:
+    type: object
+    description: only set when iteration_count ≥ 2 was approved.
+    required: [approver, ticket, date]
+    properties:
+      approver: {type: string}
+      ticket:   {type: string}
+      date:     {type: string, format: date}
+
+  # ─── Cost + time bookkeeping (telemetry; no enforcement) ───────────────
+  telemetry:
+    type: object
+    properties:
+      design_cost_usd:    {type: number}
+      design_wallclock_s: {type: integer}
+      respin_cost_usd:    {type: number}
+      cloud_run_services_torn_down: {type: integer}
