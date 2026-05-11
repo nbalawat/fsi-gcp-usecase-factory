@@ -232,6 +232,38 @@ assert_grep "Option D"                  "usecases/__test_design_proposals__/ui/p
 assert_grep "deploy failed"             "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows ⚠ banner for failed deploys"
 echo
 
+echo "12. Judge pass artifacts (Phase 0.1) are wired:"
+assert_path ".claude/skills/fsi-design-proposals/assets/judge-prompt.md"  "judge prompt template present"
+assert_grep "Stage 2.5 — Judge pass" ".claude/skills/fsi-design-proposals/SKILL.md" "Stage 2.5 named in skill"
+assert_grep "judge-report.json"      ".claude/skills/fsi-design-proposals/SKILL.md" "skill cites judge-report.json"
+assert_grep "judge:"                  ".claude/schemas/option-manifest.schema.yaml" "option manifest schema has judge field"
+echo
+
+echo "12b. Comparator renders judge row when judge fields populated:"
+# Inject judge into option-a manifest, regenerate, grep
+PROP_DIR_2="$REPO/usecases/__test_design_proposals__/ui/proposals"
+# Append judge block to option-a's manifest (already minimal, just append)
+cat >> "$PROP_DIR_2/option-a/manifest.yaml" <<JEOF
+judge:
+  composite_score: 4.2
+  ui_standards: 4.5
+  agentic_principles: 4.0
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 1
+  violations:
+    - "smoke test injected violation"
+  strengths:
+    - "smoke test injected strength"
+  recommended: true
+  ranking_position: 1
+JEOF
+node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev/null 2>&1
+assert_grep "judge pick"        "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders judge-pick badge"
+assert_grep "composite 4.2"     "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders composite score"
+assert_grep "1 violation"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders violation count"
+echo
+
 if [[ $failed -gt 0 ]]; then
   red "$failed assertion(s) failed."
   exit 1

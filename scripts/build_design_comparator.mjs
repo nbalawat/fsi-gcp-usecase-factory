@@ -116,6 +116,13 @@ const HTML_HEADER = (uc, sha) => `<!doctype html>
     .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
     .pill.warn { color: var(--warn); border-color: var(--warn); }
     .pill.ok { color: var(--ok); border-color: var(--ok); }
+    .judge-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+    .judge-score { font-family: var(--mono); font-size: 11px; }
+    .judge-score.high { color: var(--ok); }
+    .judge-score.mid  { color: var(--warn); }
+    .judge-score.low  { color: var(--error); }
+    .judge-badge { background: var(--ok); color: #001; padding: 1px 6px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+    .judge-violations { color: var(--error); font-size: 10px; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: stretch; }
     .modal.open { display: flex; }
     .modal iframe { flex: 1; border: 0; }
@@ -154,6 +161,20 @@ function renderPanel(opt) {
   const optimisedFor = (manifest.tradeoffs?.optimised_for ?? []).slice(0, 4);
   const sacrifices = (manifest.tradeoffs?.sacrifices ?? []).slice(0, 4);
 
+  // Judge row — populated when Stage 2.5 ran.
+  const j = manifest.judge ?? null;
+  const scoreClass = (s) => s == null ? "" : (s >= 4 ? "high" : s >= 3 ? "mid" : "low");
+  const judgeRow = j ? `
+    <div class="judge-row">
+      ${j.recommended ? '<span class="judge-badge">judge pick</span>' : ""}
+      <span class="judge-score ${scoreClass(j.composite_score)}">composite ${j.composite_score?.toFixed(1) ?? "—"}/5</span>
+      <span class="judge-score ${scoreClass(j.ui_standards)}">ui-std ${j.ui_standards?.toFixed(1) ?? "—"}</span>
+      <span class="judge-score ${scoreClass(j.agentic_principles)}">principles ${j.agentic_principles?.toFixed(1) ?? "—"}</span>
+      ${j.reuse_floor_met ? '<span class="pill ok">reuse ≥5</span>' : '<span class="pill warn">reuse &lt;5</span>'}
+      ${j.hitl_gates_wired ? '<span class="pill ok">HITL wired</span>' : '<span class="pill warn">HITL gap</span>'}
+      ${j.violations?.length ? `<span class="judge-violations">${j.violations.length} violation${j.violations.length === 1 ? "" : "s"}</span>` : ""}
+    </div>` : "";
+
   return `
     <section class="panel" data-option="${option}">
       <div class="panel-head">
@@ -178,6 +199,7 @@ function renderPanel(opt) {
           ${optimisedFor.map(o => `<span class="pill">+ ${htmlEscape(o)}</span>`).join("")}
           ${sacrifices.map(s => `<span class="pill warn">− ${htmlEscape(s)}</span>`).join("")}
         </div>
+        ${judgeRow}
       </div>
     </section>
   `;

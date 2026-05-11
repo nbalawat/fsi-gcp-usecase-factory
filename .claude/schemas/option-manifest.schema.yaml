@@ -157,3 +157,20 @@ properties:
       llm_usd:           {type: number}
       cloud_build_usd:   {type: number}
       wallclock_s:       {type: integer}
+
+  # ─── Judge pass results (Phase 0.1) ───────────────────────────────────
+  # Stamped by /fsi-design-proposals after the Stage 2.5 judge LLM call.
+  # Read by the comparator to render the judge row + violation badges.
+  judge:
+    type: object
+    properties:
+      composite_score:   {type: number, minimum: 0, maximum: 5}
+      ui_standards:      {type: number, minimum: 0, maximum: 5}
+      agentic_principles: {type: number, minimum: 0, maximum: 5}
+      reuse_floor_met:   {type: boolean}
+      hitl_gates_wired:  {type: boolean}
+      net_new_count:     {type: integer}
+      violations:        {type: array, items: {type: string}}
+      strengths:         {type: array, items: {type: string}}
+      recommended:       {type: boolean, default: false}
+      ranking_position:  {type: integer, minimum: 1, maximum: 4}

@@ -178,6 +178,38 @@ For each option directory:
 
 If all 4 options fail, halt: tell the user "0/4 designer agents produced compilable output. Run with `--respin` to retry, or use `--skip-deploy` for ASCII-only review." Print agent error logs.
 
+## Stage 2.5 — Judge pass (~3-5 min, single Agent call)
+
+Before any Cloud Build burns money, run the judge LLM call. It reads all 4 option directories + the bank's design contracts and emits an objective scorecard. The human still picks the winner; the judge surfaces signal (violations, reuse counts, convergence, recommended ranking).
+
+Spawn ONE Agent in a separate message (so it doesn't compete for slots with the 4 designers):
+
+- `subagent_type`: `general-purpose`
+- `model`: `opus`
+- `isolation`: `worktree` is NOT used — the judge is read-only across all 4 options + the design-contract docs, so it must work in the main worktree
+- `description`: `"Judge pass: score 4 design options against bank standards"`
+- `prompt`: copy `.claude/skills/fsi-design-proposals/assets/judge-prompt.md` verbatim, substituting `{USE_CASE}`, `{RUN_ID}` (timestamp-based), and `{CANVAS_SHA256}`
+
+The judge MUST write its output to `archives/design-tests/<run-id>/judge-report.json`. The `<run-id>` is the same timestamp the pre-flight stamped into `.fsi-state/<uc>/proposals/preflight.json`.
+
+### After the judge completes
+
+1. **Read** `archives/design-tests/<run-id>/judge-report.json`.
+2. **Validate** — file is present + valid JSON + `canvas_sha256` matches the pre-flight SHA.
+3. **Stamp each option's manifest.yaml** with `judge.composite_score`, `judge.violations`, `judge.reuse_floor_met`, `judge.hitl_gates_wired` from the report. The comparator reads these.
+4. **Surface signal in the per-option summary printed at hand-off**:
+   - "Recommended by judge: option-X (composite 4.2/5)"
+   - "Convergence detected: A ↔ C (Jaccard 0.72)" if `convergence_pairs` non-empty
+   - "Violations across options: <count>" with breakdown
+
+### Refusal handling
+
+If the judge fails (cost cap hit, file write fails, JSON malformed): proceed to Stage 3 anyway, but flag in the hand-off panel that the judge pass was incomplete. The user can still pick from the deployed options; they just lack the objective scoring layer.
+
+### Why no auto-promotion based on judge score?
+
+The judge is calibration, not authority. A high-scoring option that doesn't resonate with the human is still the wrong pick for that UC. The judge surfaces the floor (no violations, hits reuse threshold, wires HITL); the human picks the ceiling (which design actually fits the work).
+
 ## Stage 3 — Build + deploy (~10 min, parallel Cloud Builds)
 
 For each option that passed Stage 2 gates, submit one Cloud Build:
