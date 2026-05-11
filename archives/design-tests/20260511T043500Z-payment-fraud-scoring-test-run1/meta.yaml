@@ -1,0 +1,11 @@
+use_case_id: payment-fraud-scoring-test
+tier: 2
+canvas_sha256: cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1
+generated_at: "2026-05-11T04:35:00Z"
+test_run: 1
+console_pattern: real-time
+notes: |
+  Tier 2 run #2: real-time payment fraud scoring (real-time console).
+  Fundamentally different from pipeline + investigations: sub-second
+  decisions, no per-case staging, no HITL (advisory). Tests the chain
+  against a throughput-dominant + zero-human-gate shape.
