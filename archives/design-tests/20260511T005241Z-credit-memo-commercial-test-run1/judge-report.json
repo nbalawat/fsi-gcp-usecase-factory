@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "credit-memo-commercial-test",
+  "run_id": "20260511T005241Z-credit-memo-commercial-test-run1",
+  "canvas_sha256": "383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251",
+  "judged_at": "2026-05-11T00:55:00Z",
+
+  "scores": {
+    "A": {
+      "ui_standards": 3.6,
+      "agentic_principles": 2.0,
+      "reuse_count": 8,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ui-standards Rule 3.1 / Section 2: hand-rolled <header> in components/ExecutiveHeader.tsx replaces the required <AppShell> chrome — page is not AppShell-rooted",
+        "ui-standards Rule 1.6 (no arbitrary tokens): components/DecisionHero.tsx:53 uses 'text-[96px]' arbitrary Tailwind value; no matching type-ramp token",
+        "ui-standards Rule 4.12 (no Intl.NumberFormat in components/pages): app/case/[id]/page.tsx:22 calls 'new Intl.NumberFormat(\"en-US\")' inline — will hydrate inconsistently across SSR/CSR",
+        "agentic-ui Principle 1 (event-spine-first) is explicitly sacrificed — no live PipelineActivity/event-stream tile on the case page",
+        "agentic-ui Principle 3 (agent activity visible live) is explicitly sacrificed — no per-agent reasoning surface; citations only via collapsed <details>",
+        "agentic-ui Principle 2 (process metaphor) is thin — current stage shown only as a header badge, no stage rail"
+      ],
+      "strengths": [
+        "Cleanest 30-second-scan layout — DecisionHero with hero-sized recommendation word, short rationale, three-stat row",
+        "Components are pure presentation; lib/data.ts contains all data shaping and is the only place math could leak (none does)",
+        "All 4 HITL gates wired through the shared ApprovalGate primitive in ApprovalFlowClient, including a hard build-time assertion that no canvas gate is missing a surface",
+        "ApprovalFlowClient collapses decided gates to one-line strips so the active gate is the only attention sink — strongest single-column approval UX",
+        "Right-rail is the only navigator and every entry is a real <Link href> — no decorative chrome"
+      ]
+    },
+    "B": {
+      "ui_standards": 4.4,
+      "agentic_principles": 4.2,
+      "reuse_count": 13,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ui-standards Rule 1.6 (no arbitrary tokens): three arbitrary Tailwind values across components — StageRail.tsx:101 'text-[10px]', StageRail.tsx:133 'left-[18px] top-[34px]', PipelineSpine.tsx:133 'text-[11px]'",
+        "manifest declares 1 a11y violation (anchor without href) — confirm site of the offender before promotion",
+        "Agent activity surfaced as AgentMini (single-line agent chips) rather than the full four-state agent-activity tile from agent-activity-ui skill — partial credit on Principle 3"
+      ],
+      "strengths": [
+        "Highest shared-primitive density (8 distinct shared primitives: AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, StepProgress, AgentMini, ApprovalGate)",
+        "PipelineSpine on every screen is a textbook event-spine-first implementation — horizontal strip of events grouped by stage, not a drawer",
+        "StageRail + CurrentStageHero make process-as-primary-metaphor concrete: the 9 canvas stages drive the layout on both case and approval routes",
+        "Stage-anchored deep links (#stage-<id>, #gate-<id>) connect the rail to the body — every rail item is a real <a href>",
+        "GateChain renders all 4 canvas HITL gates sequentially with per-gate ApprovalRecommendation copy; live gate gets the full ApprovalGate, decided gates collapse to an audit summary",
+        "Defensive: PRIMARY_BORROWER_RAW ?? fallback, fmtFromExtracted handles missing paths, relativeTime pinned to mock 'now' for SSR determinism"
+      ]
+    },
+    "C": {
+      "ui_standards": 4.4,
+      "agentic_principles": 3.3,
+      "reuse_count": 13,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "CLAUDE.md 'Forbidden patterns' (business arithmetic in components): components/CaseMemo.tsx:85 computes '(h.revenue / 1000).toFixed(2)' (M→B unit conversion) in a Client component — should move to lib/format.ts shared with server",
+        "agentic-ui Principle 1 (event-spine-first) weak — no live pipeline activity surface; WorkflowStageRail shows stages but no event stream",
+        "components/SectionBodies.tsx:103, 266 dumps raw JSON via <pre>{JSON.stringify(stub, null, 2)}</pre> in CollateralBody / FinalBody — product-build-discipline Rule 8–10 forbids JSON dumps in user-facing fields",
+        "FastTrackApproval.tsx 'Approve all pending' button is a one-shot bulk approve — verify it routes through the audit-writer per Rule 5 (human in the loop with per-action attribution)"
+      ],
+      "strengths": [
+        "Strongest interpretation of agentic-ui Principle 5 (human in the loop): every memo section has inline approve / edit / request-revision / reject, with comment-required for non-approve",
+        "9 sections × 4 actions = the audit trail captures section-level judgments instead of one aggregated 'approve' — strong Principle 4",
+        "Uses AgentReasoningPanel from the shared library for the rating section — surfaces factors, weights, citations, confidence",
+        "FastTrackApproval mirrors the inline philosophy on the approval route: jump-back links return the officer to the exact section that still needs attention",
+        "Section-to-gate mapping in lib/data.ts is explicit and audit-traceable (every section declares its canvas HITL gate)"
+      ]
+    },
+    "D": {
+      "ui_standards": 4.6,
+      "agentic_principles": 4.3,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ui-standards Rule 1.6 (no arbitrary tokens): components/TranscriptRow.tsx:57 uses 'w-[68px]' arbitrary Tailwind value — pick a spacing token or widen via grid",
+        "ui-standards Section 2 (use shared primitives): root layout.tsx does NOT wrap pages in AppShell — pages render their own AppShell inline (works, but inconsistent with Section 3.1 'AppShell skeleton' which says pages should be AppShell-rooted via layout)",
+        "agentic-ui Principle 2 (process as primary metaphor): stage navigation is only a badge in the header — no visible workflow-stage rail; the conversation-first axis intentionally drops the spatial metaphor"
+      ],
+      "strengths": [
+        "Strongest event-spine-first implementation — every PIPELINE_EVENT becomes a transcript row; the spine IS the page",
+        "Strongest audit-trail-as-SOP: per-row actor (system/service/agent/human/gate), timestamp, decision, latency, tokens, confidence — examiner-ready by construction",
+        "Agent rows surface tokens_in/tokens_out/confidence — the only option that shows model-level activity at the row level",
+        "ActorFilterBar lets the reviewer scrub by actor type (all/agents/humans/services/gates) — clean tabs with onClick + aria-selected",
+        "GateRespondClient renders the conversation scope leading up to each gate, then the ApprovalGate inline at the bottom — disposition happens in the same view as the audit",
+        "Cleanest type-safety in the adapter (toTranscript: events → typed TranscriptRow union; no `any` leaks)",
+        "All 4 HITL gates wired with explicit per-gate recommendation, irrevocable flag on final_approval"
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["D", "B", "C", "A"],
+
+  "recommended_winner": "D",
+  "recommendation_rationale": "Option D scores highest on composite (~4.66) by being the cleanest UI-standards implementation (4.6 — no business logic, no Intl.NumberFormat, 6 shared primitives, defensive everywhere) AND the strongest agentic-UI implementation on three of the five principles: event-spine-first (the transcript IS the spine — every Pub/Sub event becomes a row), agent activity visible live (per-row tokens/latency/confidence), and audit-trail-as-SOP (the case page is already the audit export). Option B is a very close runner-up (~4.54) and is the strongest on process-as-primary-metaphor (StageRail + PipelineSpine + 9-stage layout); if the bank's primary persona is a workflow-aware analyst rather than a post-decision/audit reviewer, B is the better pick. Options A and C are strong on a single axis each (A: executive density, C: inline-per-section HITL) but A drops the AppShell chrome and explicitly sacrifices Principles 1 and 3, while C has a hard CLAUDE.md violation (arithmetic in a Client component) and JSON dumps in user-facing section bodies.",
+
+  "notes_for_human": [
+    "No convergence pairs at Jaccard >= 0.6 — the four designers genuinely produced four different artifacts; the highest pairwise overlap was B<->D at 0.33 (both lean on AppShell + BreadcrumbNav + MetricStrip + StatCard + StatusBadge + ApprovalGate as the framework chrome).",
+    "D and B are within 0.12 composite points and optimize for different personas (D: risk officer doing post-decision/live audit; B: workflow-aware analyst on a 1-pass commercial revolver). Recommend the human chooses based on which persona is primary for the production rollout.",
+    "Option A's hand-rolled <ExecutiveHeader> replacing <AppShell> is a layout violation per ui-standards Section 3.1 — even if the executive-density aesthetic is wanted, the fix is to compose AppShell with a compact density mode, not to bypass it.",
+    "Option C's CaseMemo.tsx:85 arithmetic ('(h.revenue / 1000).toFixed(2)') and SectionBodies.tsx JSON dumps must be fixed before any promotion regardless of winner — both are explicit CLAUDE.md / product-build-discipline violations.",
+    "Three of four options use arbitrary Tailwind values (text-[96px], text-[10px], text-[11px], w-[68px], left-[18px], top-[34px]) — the comparator should call this out so the winning option lands a token-extension PR alongside it.",
+    "Every option satisfied the reuse floor (>=5 components) and wired all 4 canvas HITL gates (extraction_review, rating_review, draft_review, final_approval) through the shared <ApprovalGate> primitive — this is the strongest signal that the canvas contract held across designers.",
+    "Manifest reuse counts are inflated by counting use-case-owned components in 'components_used' — true 'shared from ui/packages/components' counts are: A=3, B=8, C=7, D=6. Option B leads on shared-primitive density."
+  ]
+}

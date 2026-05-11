@@ -1,0 +1,96 @@
+schema_version: "1.0.0"
+option: D
+variation_axis: wildcard
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+use_case_id: credit-memo-commercial-test
+
+persona:
+  primary: "Risk officer doing post-decision review (or live audit of an in-flight case)"
+  context: |
+    Reads cases as stories. Needs to see, in chronological order, every
+    decision that was made — by which agent, on which input, against
+    which rule — and be able to dispose of HITL gates inline without
+    leaving the transcript.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: inline-per-section
+primary_metaphor: conversation-first
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: CaseTranscript
+    source: use-case
+  - name: TranscriptRow
+    source: use-case
+  - name: ActorFilterBar
+    source: use-case
+  - name: GateLedger
+    source: use-case
+  - name: GateRespondClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option D treats the case as a CONVERSATION TRANSCRIPT. Every agent
+  reasoning, every atomic service call, every rule verdict, every human
+  gate is one chronological row. The approval flow is the same
+  transcript, scoped to the slice that led to each gate, with the
+  ApprovalGate primitive rendered inline at the bottom of the scope.
+
+tradeoffs:
+  optimised_for:
+    - Story comprehension — the case reads top-to-bottom like a postmortem
+    - Audit explainability — every event is on screen with timestamp and actor
+    - Inline gate disposition — no separate "review-then-approve" hop
+    - Reuse — five shared primitives carry the foundation; novelty is in orchestration
+  sacrifices:
+    - Dense per-metric data (DSCR, leverage values) is summarised, not foregrounded
+    - Memo PDF is not the centerpiece — the conversation that produced it is
+    - Vertical scrolling dominates; less efficient than a fixed-grid layout for skimming many cases
+    - Pipeline-stage spatial metaphor (left-to-right rail) is intentionally absent
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true
+judge:
+  composite_score: 4.46
+  ui_standards: 4.6
+  agentic_principles: 4.3
+  reuse_count: 11
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 5
+  recommended: true
+  ranking_position: 1
+  violations:
+    - "ui-standards Rule 1.6 (no arbitrary tokens): components/TranscriptRow.tsx:57 uses 'w-[68px]' arbitrary Tailwind value — pick a spacing token or widen via grid"
+    - "ui-standards Section 2 (use shared primitives): root layout.tsx does NOT wrap pages in AppShell — pages render their own AppShell inline (works, but inconsistent with Section 3.1 'AppShell skeleton' which says pages should be AppShell-rooted via layout)"
+    - "agentic-ui Principle 2 (process as primary metaphor): stage navigation is only a badge in the header — no visible workflow-stage rail; the conversation-first axis intentionally drops the spatial metaphor"
+  strengths:
+    - "Strongest event-spine-first implementation — every PIPELINE_EVENT becomes a transcript row; the spine IS the page"
+    - "Strongest audit-trail-as-SOP: per-row actor (system/service/agent/human/gate), timestamp, decision, latency, tokens, confidence — examiner-ready by construction"
+    - "Agent rows surface tokens_in/tokens_out/confidence — the only option that shows model-level activity at the row level"
+    - "ActorFilterBar lets the reviewer scrub by actor type (all/agents/humans/services/gates) — clean tabs with onClick + aria-selected"
+    - "GateRespondClient renders the conversation scope leading up to each gate, then the ApprovalGate inline at the bottom — disposition happens in the same view as the audit"
+    - "Cleanest type-safety in the adapter (toTranscript: events → typed TranscriptRow union; no `any` leaks)"
+    - "All 4 HITL gates wired with explicit per-gate recommendation, irrevocable flag on final_approval"

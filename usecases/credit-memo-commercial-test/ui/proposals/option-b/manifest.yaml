@@ -1,0 +1,90 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+use_case_id: credit-memo-commercial-test
+persona:
+  primary: "Credit officer (Tier 2) + relationship-manager analyst"
+  context: "Underwriting a $25M revolver for a 1-pass manufacturing borrower; needs to know what stage the case is in, what just happened, and what to action next — without leaving the page."
+density_score: 3
+motion_budget: standard
+affordance_pattern: inline-per-section
+primary_metaphor: workflow-first
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: StepProgress
+    source: shared
+  - name: AgentMini
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: StageRail
+    source: use-case
+  - name: CurrentStageHero
+    source: use-case
+  - name: PipelineSpine
+    source: use-case
+  - name: RulesVerdictBand
+    source: use-case
+  - name: GateChain
+    source: use-case
+routes_implemented:
+  - case-detail
+  - approval-flow
+design_summary: |
+  Workflow-first: the nine canvas stages drive the layout. The current stage is the hero
+  (60% of the viewport), prior stages compress to a left rail with status pills (clickable
+  anchors), future stages are dimmed but visible. Pipeline activity is the SPINE of the
+  page — a horizontal event strip grouped by stage, not a drawer. The user always knows
+  what stage they're in, what just happened, and what to action next.
+tradeoffs:
+  optimised_for:
+    - "Always know what stage you're in"
+    - "Pipeline traceability is one glance — the spine shows every event grouped by stage"
+    - "Stage-anchored deep links: the rail's hrefs route to #stage-<id> on case, #gate-<id> on approval"
+    - "HITL gates are first-class — four-gate chain on the approval page renders one ApprovalGate per gate, with live + decided modes"
+    - "Reuse-first: 8 shared primitives carry the heavy lifting; UC code is composition and vocabulary"
+  sacrifices:
+    - "Less artifact-as-the-page — the credit memo body isn't the hero; the stage is"
+    - "Density score 3, not 4: keeps three structural bands (rail + hero + spine) visible always"
+    - "Approval page is gate-sequential rather than threshold-table — credit officers who prefer a single rule grid will need to scroll past the chain"
+    - "No artifact deep-edit in this proposal — that lives in option C/D"
+hero_screenshot: hero.png
+build:
+  a11y_violations: 1
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+    - "WCAG2A.Principle2.Guideline2_1.2_1_1: anchor without href"
+  reuse_count_net_new: 0
+  reuse_count_shared: 13
+  reuse_floor_met: true
+judge:
+  composite_score: 4.34
+  ui_standards: 4.4
+  agentic_principles: 4.2
+  reuse_count: 13
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 5
+  recommended: false
+  ranking_position: 2
+  violations:
+    - "ui-standards Rule 1.6 (no arbitrary tokens): three arbitrary Tailwind values across components — StageRail.tsx:101 'text-[10px]', StageRail.tsx:133 'left-[18px] top-[34px]', PipelineSpine.tsx:133 'text-[11px]'"
+    - "manifest declares 1 a11y violation (anchor without href) — confirm site of the offender before promotion"
+    - "Agent activity surfaced as AgentMini (single-line agent chips) rather than the full four-state agent-activity tile from agent-activity-ui skill — partial credit on Principle 3"
+  strengths:
+    - "Highest shared-primitive density (8 distinct shared primitives: AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, StepProgress, AgentMini, ApprovalGate)"
+    - "PipelineSpine on every screen is a textbook event-spine-first implementation — horizontal strip of events grouped by stage, not a drawer"
+    - "StageRail + CurrentStageHero make process-as-primary-metaphor concrete: the 9 canvas stages drive the layout on both case and approval routes"
+    - "Stage-anchored deep links (#stage-<id>, #gate-<id>) connect the rail to the body — every rail item is a real <a href>"
+    - "GateChain renders all 4 canvas HITL gates sequentially with per-gate ApprovalRecommendation copy; live gate gets the full ApprovalGate, decided gates collapse to an audit summary"
+    - "Defensive: PRIMARY_BORROWER_RAW ?? fallback, fmtFromExtracted handles missing paths, relativeTime pinned to mock 'now' for SSR determinism"

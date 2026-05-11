@@ -1,0 +1,27 @@
+{
+  "extends": "../../../../../ui/tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "noEmit": true,
+    "allowJs": true,
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@fsi-bank/components": ["../../../../../ui/packages/components/src/index.ts"],
+      "@fsi-bank/components/*": ["../../../../../ui/packages/components/src/*"],
+      "@fsi-bank/theme": ["../../../../../ui/packages/theme/src/index.ts"],
+      "@/*": ["./*"],
+      "@uc/*": ["../../*"]
+    },
+    "types": ["react", "node"]
+  },
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "../_shared/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

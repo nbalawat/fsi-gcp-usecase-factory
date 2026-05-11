@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design proposals · credit-memo-commercial-test</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #15181c;
+      --panel-2: #1c2026;
+      --border: #2a2f37;
+      --text: #e6e9ee;
+      --text-dim: #98a0aa;
+      --accent: #4f8cff;
+      --warn: #ffaa44;
+      --error: #ff5577;
+      --ok: #44dd99;
+      --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin: 0; }
+    a { color: var(--accent); }
+    .header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .header .sha { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+    .toolbar { display: flex; gap: 8px; }
+    .toolbar button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .toolbar button:hover { background: var(--border); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); height: calc(100vh - 65px); }
+    .panel { background: var(--panel); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .panel-head { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+    .panel-head .axis { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .panel-head .open { font-size: 11px; }
+    .panel-iframe { flex: 1 1 auto; background: white; min-height: 0; }
+    .panel-iframe iframe { width: 100%; height: 100%; border: 0; }
+    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); }
+    .panel-failed .badge { color: var(--error); font-weight: 600; }
+    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; }
+    .panel-summary .strip { display: flex; gap: 12px; color: var(--text-dim); margin-bottom: 6px; flex-wrap: wrap; }
+    .panel-summary .strip span { white-space: nowrap; }
+    .panel-summary p { margin: 4px 0; color: var(--text); }
+    .panel-summary .pillrow { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+    .pill.warn { color: var(--warn); border-color: var(--warn); }
+    .pill.ok { color: var(--ok); border-color: var(--ok); }
+    .judge-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+    .judge-score { font-family: var(--mono); font-size: 11px; }
+    .judge-score.high { color: var(--ok); }
+    .judge-score.mid  { color: var(--warn); }
+    .judge-score.low  { color: var(--error); }
+    .judge-badge { background: var(--ok); color: #001; padding: 1px 6px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+    .judge-violations { color: var(--error); font-size: 10px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: stretch; }
+    .modal.open { display: flex; }
+    .modal iframe { flex: 1; border: 0; }
+    .modal .close { position: absolute; top: 16px; right: 16px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 50vh); } }
+  </style>
+</head>
+<body><div class="header">
+      <h1>credit-memo-commercial-test · 4 design options · pick one via /fsi-design-review</h1>
+      <div class="sha">canvas 383ab8c261e3159b…</div>
+      <div class="toolbar">
+        <button onclick="document.querySelectorAll('iframe').forEach(f=>f.src=f.src)">↻ reload all</button>
+      </div>
+    </div>
+    <div class="grid">
+      
+    <section class="panel" data-option="a">
+      <div class="panel-head">
+        <h2>Option A <span class="axis">· density</span></h2>
+        <div>
+          
+        </div>
+      </div>
+      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
+      <div class="panel-summary">
+        <div class="strip">
+          <span>density ★☆☆☆☆</span>
+          <span>motion · minimal</span>
+          <span>aff · right-rail-panel</span>
+          <span>metaphor · document-first</span>
+          <span>persona · Credit Officer (final-approval authority)</span>
+        </div>
+        <p>|</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 8</span>
+          
+          <span class="pill">+ 30-second executive scan: decision word + rationale visible without scroll</span><span class="pill">+ Single-column approval flow keeps the active gate the only attention sink</span><span class="pill">+ Reuses shared primitives verbatim (ApprovalGate, StatusBadge, StatCard)</span>
+          <span class="pill warn">− No live event-stream tile on the case page (disclosure under &lt;details&gt;)</span><span class="pill warn">− No agent reasoning panel surfaced by default</span><span class="pill warn">− Analysts who need to spelunk the spread will need to descend into citations</span>
+        </div>
+        
+    <div class="judge-row">
+      
+      <span class="judge-score low">composite 2.8/5</span>
+      <span class="judge-score mid">ui-std 3.6</span>
+      <span class="judge-score low">principles 2.0</span>
+      <span class="pill ok">reuse ≥5</span>
+      <span class="pill ok">HITL wired</span>
+      <span class="judge-violations">6 violations</span>
+    </div>
+        
+    <div class="judge-row">
+      <span class="pill ok">a11y 0</span>
+      <span class="judge-score">static-heuristic</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="b">
+      <div class="panel-head">
+        <h2>Option B <span class="axis">· metaphor</span></h2>
+        <div>
+          
+        </div>
+      </div>
+      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
+      <div class="panel-summary">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · standard</span>
+          <span>aff · inline-per-section</span>
+          <span>metaphor · workflow-first</span>
+          <span>persona · Credit officer (Tier 2) + relationship-manager analyst</span>
+        </div>
+        <p>|</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 13</span>
+          
+          <span class="pill">+ Always know what stage you&#39;re in</span><span class="pill">+ Pipeline traceability is one glance — the spine shows every event grouped by stage</span><span class="pill">+ Stage-anchored deep links: the rail&#39;s hrefs route to #stage-&lt;id&gt; on case, #gate-&lt;id&gt; on approval</span><span class="pill">+ HITL gates are first-class — four-gate chain on the approval page renders one ApprovalGate per gate, with live + decided modes</span>
+          <span class="pill warn">− Less artifact-as-the-page — the credit memo body isn&#39;t the hero; the stage is</span><span class="pill warn">− Density score 3, not 4: keeps three structural bands (rail + hero + spine) visible always</span><span class="pill warn">− Approval page is gate-sequential rather than threshold-table — credit officers who prefer a single rule grid will need to scroll past the chain</span><span class="pill warn">− No artifact deep-edit in this proposal — that lives in option C/D</span>
+        </div>
+        
+    <div class="judge-row">
+      
+      <span class="judge-score high">composite 4.3/5</span>
+      <span class="judge-score high">ui-std 4.4</span>
+      <span class="judge-score high">principles 4.2</span>
+      <span class="pill ok">reuse ≥5</span>
+      <span class="pill ok">HITL wired</span>
+      <span class="judge-violations">3 violations</span>
+    </div>
+        
+    <div class="judge-row">
+      <span class="pill ok">a11y 1</span>
+      <span class="judge-score">static-heuristic</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="c">
+      <div class="panel-head">
+        <h2>Option C <span class="axis">· affordance</span></h2>
+        <div>
+          
+        </div>
+      </div>
+      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
+      <div class="panel-summary">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · minimal</span>
+          <span>aff · inline-per-section</span>
+          <span>metaphor · document-first</span>
+          <span>persona · Commercial credit analyst doing line-by-line memo review</span>
+        </div>
+        <p>|</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 13</span>
+          
+          <span class="pill">+ act on what you see immediately — no context-switching</span><span class="pill">+ every HITL gate maps to the section that informs it</span><span class="pill">+ audit trail captures section-level decisions, not bulk approvals</span><span class="pill">+ fast-track sign-off when all inline decisions are clean</span>
+          <span class="pill warn">− no single bulk &#39;approve everything&#39; button on the memo page</span><span class="pill warn">− longer vertical scroll than a tabbed/drawer design</span><span class="pill warn">− decision state is per-section, so partial saves matter</span><span class="pill warn">− approval officer must trust the analyst&#39;s inline trail or jump back</span>
+        </div>
+        
+    <div class="judge-row">
+      
+      <span class="judge-score mid">composite 3.9/5</span>
+      <span class="judge-score high">ui-std 4.4</span>
+      <span class="judge-score mid">principles 3.3</span>
+      <span class="pill ok">reuse ≥5</span>
+      <span class="pill ok">HITL wired</span>
+      <span class="judge-violations">4 violations</span>
+    </div>
+        
+    <div class="judge-row">
+      <span class="pill ok">a11y 0</span>
+      <span class="judge-score">static-heuristic</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="d">
+      <div class="panel-head">
+        <h2>Option D <span class="axis">· wildcard</span></h2>
+        <div>
+          
+        </div>
+      </div>
+      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
+      <div class="panel-summary">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · minimal</span>
+          <span>aff · inline-per-section</span>
+          <span>metaphor · conversation-first</span>
+          <span>persona · Risk officer doing post-decision review (or live audit of an in-flight case)</span>
+        </div>
+        <p>|</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 11</span>
+          
+          <span class="pill">+ Story comprehension — the case reads top-to-bottom like a postmortem</span><span class="pill">+ Audit explainability — every event is on screen with timestamp and actor</span><span class="pill">+ Inline gate disposition — no separate &quot;review-then-approve&quot; hop</span><span class="pill">+ Reuse — five shared primitives carry the foundation; novelty is in orchestration</span>
+          <span class="pill warn">− Dense per-metric data (DSCR, leverage values) is summarised, not foregrounded</span><span class="pill warn">− Memo PDF is not the centerpiece — the conversation that produced it is</span><span class="pill warn">− Vertical scrolling dominates; less efficient than a fixed-grid layout for skimming many cases</span><span class="pill warn">− Pipeline-stage spatial metaphor (left-to-right rail) is intentionally absent</span>
+        </div>
+        
+    <div class="judge-row">
+      <span class="judge-badge">judge pick</span>
+      <span class="judge-score high">composite 4.5/5</span>
+      <span class="judge-score high">ui-std 4.6</span>
+      <span class="judge-score high">principles 4.3</span>
+      <span class="pill ok">reuse ≥5</span>
+      <span class="pill ok">HITL wired</span>
+      <span class="judge-violations">3 violations</span>
+    </div>
+        
+    <div class="judge-row">
+      <span class="pill ok">a11y 0</span>
+      <span class="judge-score">static-heuristic</span>
+    </div>
+      </div>
+    </section>
+  
+    </div>
+  </div>
+  <script>
+    // Simple shortcuts: 1/2/3/4 to fullscreen each option
+    document.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "IFRAME" || e.target.tagName === "INPUT")) return;
+      const k = e.key;
+      if (["1","2","3","4"].includes(k)) {
+        const idx = parseInt(k, 10) - 1;
+        const panel = document.querySelectorAll(".panel")[idx];
+        const url = panel?.querySelector("iframe")?.src;
+        if (url) window.open(url, "_blank");
+      }
+    });
+  </script>
+</body>
+</html>
