@@ -1,0 +1,10 @@
+use_case_id: cre-surveillance-test
+tier: 3
+canvas_sha256: 6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a
+generated_at: "2026-05-11T05:30:00Z"
+test_run: 1
+console_pattern: surveillance
+notes: |
+  Tier 3 expansion #1: CRE portfolio surveillance.
+  Option C agent reported false success (worktree empty); 3 options
+  judged + deployed.

@@ -1,0 +1,60 @@
+# Test canvas — CECL quarterly allowance run (run console pattern).
+
+use_case_id: cecl-quarterly-run-test
+schema_version: "1.0.0"
+created_at: "2026-05-11T05:35:00Z"
+
+console_pattern: run
+use_case_archetype: periodic-deadline-driven-run@1.0
+
+# Run = periodic exercise toward a deadline. Pages: run-overview,
+# stage-progress, exception-queue, final-attestation. Not case-centric;
+# the RUN is the unit (one Q1, one Q2, ...).
+
+hitl_gates:
+  - name: approve_segment_methodology
+    irrevocable: false
+    description: "Methodology owner approves segment-level PD/LGD model selection"
+  - name: cfo_attest_run
+    irrevocable: true
+    description: "CFO attests the final allowance figure (regulator-visible)"
+
+atomic_services_reused:
+  - financial-spreader
+  - industry-risk-scorer
+
+net_new_atomic_services:
+  - name: cecl-pd-lgd-projector
+    purpose: "Apply chosen macro scenario + PD/LGD curves to each segment"
+
+multi_agent_pattern: classifier-extractor-decider@1.0
+
+agent_archetypes_reused: []
+
+net_new_agents:
+  - name: cecl-variance-narrator
+    purpose: "Plain-English narration of Q-over-Q allowance variance per segment"
+
+shared_rules_reused: []
+
+net_new_rules:
+  - name: cecl_segment_threshold
+    citation: "ASC 326 / SR 20-13 — CECL methodology"
+    inputs_sketch: "segment_size, vintage, macro_scenario → reserve_pct"
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled"
+provider_prereqs_pending: []
+compliance_scope: high
+eval_framework_wired: true
+
+notes: |
+  Run pattern test — proves factory handles deadline-driven periodic
+  exercises. The "unit" is a quarterly run, not a case. Watch for:
+  - Whether designer agents reach for stage-progress / countdown widgets
+  - Whether the regulatory deadline (30-day CECL clock) is visible
+  - Whether CFO attestation is wired as irrevocable HITL

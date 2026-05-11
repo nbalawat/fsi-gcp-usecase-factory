@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --accent: #86BC24;
+  --success: #4F8A1A;
+  --warning: #A86A1F;
+  --danger:  #A8341F;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0F0B0B;
+  font-family: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Atrium eyebrow — uppercase, tracked label. Used as `className="eyebrow"`
+   by vendored primitives (StatCard) and by option-A's own dense headers. */
+@layer components {
+  .eyebrow {
+    @apply font-mono text-eyebrow uppercase tracking-wider text-ink-3;
+  }
+}

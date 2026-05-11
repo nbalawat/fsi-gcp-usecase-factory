@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design proposals · cre-surveillance-test</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #15181c;
+      --panel-2: #1c2026;
+      --border: #2a2f37;
+      --text: #e6e9ee;
+      --text-dim: #98a0aa;
+      --accent: #4f8cff;
+      --warn: #ffaa44;
+      --error: #ff5577;
+      --ok: #44dd99;
+      --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin: 0; }
+    a { color: var(--accent); }
+    .header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .header .sha { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+    .toolbar { display: flex; gap: 8px; }
+    .toolbar button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .toolbar button:hover { background: var(--border); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); height: calc(100vh - 65px); }
+    .panel { background: var(--panel); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .panel-head { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+    .panel-head .axis { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .panel-head .open { font-size: 11px; }
+    /* Panel content area — dark by default; only the iframe + screenshot get a white background. */
+    .panel-iframe { flex: 1 1 auto; background: var(--bg); min-height: 0; }
+    .panel-iframe iframe { width: 100%; height: 100%; border: 0; background: white; }
+    .panel-iframe .hero-screenshot { width: 100%; height: auto; max-height: 100%; object-fit: contain; object-position: top; display: block; background: #fff; }
+    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); outline-offset: -2px; }
+    /* Higher-contrast error badge so axe-core / WCAG 2.1 contrast rule is satisfied (4.5+:1). */
+    .panel-failed .badge { background: rgba(255, 85, 119, 0.18); color: #ffb3c1; font-weight: 600; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--error); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    /* Static-review empty state — turns the dead iframe area into a useful evaluation surface. */
+    .static-review { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; gap: 12px; min-height: 0; overflow-y: auto; outline-offset: -2px; }
+    .static-review-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.08em; }
+    .static-review-body { color: var(--text); line-height: 1.55; font-size: 13px; white-space: pre-wrap; }
+    .static-review-footer { font-family: var(--mono); font-size: 10px; color: var(--text-dim); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: auto; }
+    .static-review-footer code { background: var(--panel-2); padding: 2px 5px; border-radius: 3px; }
+    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; outline-offset: -2px; }
+    .panel-summary:focus-visible { outline: 2px solid var(--accent); }
+    .panel-summary .strip { display: flex; gap: 12px; color: var(--text-dim); margin-bottom: 6px; flex-wrap: wrap; }
+    .panel-summary .strip span { white-space: nowrap; }
+    .panel-summary p { margin: 4px 0; color: var(--text); }
+    .panel-summary .pillrow { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+    .pill.warn { color: var(--warn); border-color: var(--warn); }
+    .pill.ok { color: var(--ok); border-color: var(--ok); }
+    .judge-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+    .judge-score { font-family: var(--mono); font-size: 11px; }
+    .judge-score.high { color: var(--ok); }
+    .judge-score.mid  { color: var(--warn); }
+    .judge-score.low  { color: var(--error); }
+    .judge-badge { background: var(--ok); color: #001; padding: 1px 6px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+    .judge-violations { color: var(--error); font-size: 10px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: stretch; }
+    .modal.open { display: flex; }
+    .modal iframe { flex: 1; border: 0; }
+    .modal .close { position: absolute; top: 16px; right: 16px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 50vh); } }
+  </style>
+</head>
+<body><header class="header">
+      <h1>cre-surveillance-test · 4 design options · pick one via /fsi-design-review</h1>
+      <div class="sha">canvas 6cbf4ad8f20b2710…</div>
+      <div class="toolbar">
+        <button onclick="document.querySelectorAll('iframe').forEach(f=>f.src=f.src)">↻ reload all</button>
+      </div>
+    </header>
+    <main class="grid" aria-label="Design option comparison">
+      
+    <section class="panel" data-option="a">
+      <div class="panel-head">
+        <h2>Option A <span class="axis">· density</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-cre-surveillance-test-design-a-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-cre-surveillance-test-design-a-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option A — density variant deployed at https://fsi-uc-cre-surveillance-test-design-a-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option A">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · —</span>
+          <span>aff · —</span>
+          <span>metaphor · —</span>
+          <span>persona · —</span>
+        </div>
+        <p></p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 6</span>
+          
+          
+          
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 9 ⚠</span>
+      <span class="pill ok">console 0</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 644ms</span>
+      <span class="judge-score">playwright · 3/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="b">
+      <div class="panel-head">
+        <h2>Option B <span class="axis">· metaphor</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-cre-surveillance-test-design-b-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-cre-surveillance-test-design-b-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option B — metaphor variant deployed at https://fsi-uc-cre-surveillance-test-design-b-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option B">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · minimal</span>
+          <span>aff · map-drill-then-inline</span>
+          <span>metaphor · geographic-map</span>
+          <span>persona · Chief Credit Officer scanning portfolio concentration; line risk officer following up on a flagged facility</span>
+        </div>
+        <p>Option B uses the GEOGRAPHIC MAP as the page spine. The home surface
+renders a 2x2 US census-region tile grid (Northeast / Midwest / South
+/ West), each tile colored by aggregate watchlist density (5-step
+heat scale, all from tokens — no arbitrary values). Below the tile
+grid, a state-cluster strip lets the user drill from &quot;where is the
+risk?&quot; to &quot;which facilities are driving it?&quot; without leaving the
+metaphor. The facility-detail and approval-flow pages keep the metaphor
+alive: every page opens with a FacilityLocator band that highlights
+the user&#39;s current region inside the 4-region map and li</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 11</span>
+          
+          <span class="pill">+ Spatial concentration discovery — &quot;where is the risk?&quot; answers in one glance</span><span class="pill">+ Drill continuity — every page repeats the locator band so the user never loses orientation</span><span class="pill">+ Token-only color discipline — heat scale is paper-2 → info-tint → warning-tint → danger-tint → riskBand-5-loss (no arbitrary values)</span><span class="pill">+ Reuse — six shared primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, ApprovalGate)</span>
+          <span class="pill warn">− True cartography is approximated by a 4-tile census-region grid (we don&#39;t ship a real US map SVG to keep the bundle slim)</span><span class="pill warn">− Time-series and stage-rail spatial metaphors are intentionally absent — geography is the only axis</span><span class="pill warn">− Dense per-facility tables (NOI, cap-rate ladder, valuation history) are summarised, not foregrounded</span>
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 6 ⚠</span>
+      <span class="pill ok">console 0</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 560ms</span>
+      <span class="judge-score">playwright · 3/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+<section class="panel"><div class="panel-failed"><div class="badge">option missing</div></div></section>
+
+    <section class="panel" data-option="d">
+      <div class="panel-head">
+        <h2>Option D <span class="axis">· —</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-cre-surveillance-test-design-d-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-cre-surveillance-test-design-d-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option D — — variant deployed at https://fsi-uc-cre-surveillance-test-design-d-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option D">
+        <div class="strip">
+          <span>density ★★★☆☆</span>
+          <span>motion · —</span>
+          <span>aff · —</span>
+          <span>metaphor · —</span>
+          <span>persona · —</span>
+        </div>
+        <p></p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 5</span>
+          
+          
+          
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 30 ⚠</span>
+      <span class="pill warn">console 12 ⚠</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 588ms</span>
+      <span class="judge-score">playwright · 2/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+    </main>
+  </div>
+  <script>
+    // Simple shortcuts: 1/2/3/4 to fullscreen each option
+    document.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "IFRAME" || e.target.tagName === "INPUT")) return;
+      const k = e.key;
+      if (["1","2","3","4"].includes(k)) {
+        const idx = parseInt(k, 10) - 1;
+        const panel = document.querySelectorAll(".panel")[idx];
+        const url = panel?.querySelector("iframe")?.src;
+        if (url) window.open(url, "_blank");
+      }
+    });
+  </script>
+</body>
+</html>

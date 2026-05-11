@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --paper: #FFFFFF;
+  --paper-2: #F4F4F2;
+  --paper-3: #ECECE8;
+  --ink-1: #0F0B0B;
+  --ink-2: #2C2A2A;
+  --ink-3: #6B6868;
+  --ink-4: #A09D9D;
+  --rule: #E5E3E0;
+  --accent: #86BC24;
+  --success: #4F8A1A;
+  --warning: #A86A1F;
+  --danger: #A8341F;
+  --info: #3D5266;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0F0B0B;
+  font-family: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Atrium ────────────────────────────────────────────────────────── */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Citation chain — used heavily by regulator-audit-first surfaces.
+   Renders an inline mono "chip" with a subtle bracket. Keeps the
+   audit citations visually consistent across all components. */
+.cite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.78125rem;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.cite::before {
+  content: "§";
+  color: var(--ink-3);
+  font-size: 0.85em;
+}
+
+/* Audit "page rule" — the regulatory horizontal rule between sections. */
+.audit-rule {
+  border-top: 1px solid var(--rule);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}

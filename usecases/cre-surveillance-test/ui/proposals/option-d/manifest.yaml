@@ -1,0 +1,106 @@
+option: D
+use_case: cre-surveillance-test
+console_pattern: surveillance
+canvas_checksum: 6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a
+
+# Wildcard variant — explicitly committed to.
+wildcard_variant: regulator-audit-first
+wildcard_position: |
+  The other three options take density / map / inline-action positions.
+  This option takes the OCC-examiner's view: every screen is the
+  supervisory exam log, every claim cites its policy section, every
+  reviewer disposition records the citation chain that authorized it.
+  The page IS the chain of custody an examiner would build by hand.
+
+# Top-level design choices.
+design_choices:
+  metaphor: "supervisory exam log / chain of custody"
+  navigation: "Three nav items map to exam workbench / facility / reserve booking. No filters; no map; no inline-action grid."
+  density: "Page-format prose — single column of ledger rows with citation chains. Examiner reads top-to-bottom."
+  citation_pattern: "Every event row, every threshold row, every HITL gate carries an inline .cite chip listing the regulator / interagency / bank-policy / loan-covenant references."
+  hitl_framing: "Reserve booking is framed as a supervisory finding requiring disposition. Irrevocable confirmation modal for `book_specific_reserve`."
+  time_format: "UTC ISO truncated to second — exam-report style. No locale-dependent formatters."
+
+# Routes implemented (exactly two — plus home as required by Rule 38).
+routes:
+  - path: "/"
+    role: "exam workbench cover sheet"
+    file: "app/page.tsx"
+  - path: "/case/[id]"
+    role: "facility detail (the regulator-audit-first metaphor in full)"
+    file: "app/case/[id]/page.tsx"
+  - path: "/approval/[id]"
+    role: "HITL reserve booking flow with gate-picker sidebar"
+    file: "app/approval/[id]/page.tsx"
+
+# Shared primitives from @fsi-bank/components — 5 distinct primitives used.
+components_used:
+  - name: AppShell
+    source: shared
+    where: ["app/page.tsx", "app/case/[id]/page.tsx", "app/approval/[id]/page.tsx"]
+  - name: BreadcrumbNav
+    source: shared
+    where: ["app/page.tsx", "app/case/[id]/page.tsx", "app/approval/[id]/page.tsx"]
+  - name: MetricStrip
+    source: shared
+    where: ["app/page.tsx", "app/case/[id]/page.tsx"]
+  - name: StatCard
+    source: shared
+    where: ["app/page.tsx", "app/case/[id]/page.tsx"]
+  - name: StatusBadge
+    source: shared
+    where:
+      - "app/page.tsx"
+      - "app/case/[id]/page.tsx"
+      - "app/approval/[id]/page.tsx"
+      - "components/AuditLedger.tsx"
+      - "components/ExamHeader.tsx"
+      - "components/GateRoster.tsx"
+      - "components/ReserveBookingClient.tsx"
+      - "components/ThresholdLedger.tsx"
+
+shared_primitive_count: 5
+
+# Net-new components specific to this option.
+net_new_components:
+  - name: CitationChain
+    role: "Inline § chips listing regulator / policy / loan-agreement references. Signature visual of the regulator-audit-first surface."
+  - name: ThresholdLedger
+    role: "Table of every rule with its authorized threshold, observed value, verdict, and citation chain. The bank-policy + regulatory authority for every flag."
+  - name: AuditLedger
+    role: "Page-format chain-of-custody log: every event with timestamp, kind badge, headline, detail, citations."
+  - name: ExamHeader
+    role: "Cover-page facility identity block — banker-readable run-id, region, NAICS, risk band — the way an exam report opens."
+  - name: GateRoster
+    role: "Compact roster of HITL gates with reversible / irrevocable badges and an open-link."
+  - name: ReserveBookingClient
+    role: "HITL surface for the irrevocable book_specific_reserve gate. Renders the auditor recommendation, the citation chain, the methodology, and a confirmation modal."
+
+net_new_component_count: 6
+
+# Model / provider chosen — inherited from canvas; no override here.
+model_provider: vertex_gemini
+compliance_scope: lightweight
+
+# Hard rules acknowledged.
+rules_compliance:
+  rule_2_response_schema: "n/a — UI proposal does not own structured-output agents."
+  rule_4_no_static_demo_data: "all data sourced from ../../_shared/mock-data.ts (canvas-derived); zero invented values."
+  rule_8_no_intermediate_state_in_user_fields: "every banker-facing string is either canvas-sourced or fixed copy; no JSON dumps."
+  rule_38_self_contained: "own package.json, next.config.mjs, Dockerfile, tailwind.config.ts, tsconfig.json, postcss.config.mjs; vendors @fsi-bank/components at COPY time."
+  tokens_only: "no arbitrary values (no w-[…], grid-cols-[…]); all colors from paper/ink/rule/accent/semantic/riskBand."
+  server_client_boundary: "ReserveBookingClient is the only \"use client\" component; pages are Server."
+
+# Build verification — see also tradeoffs.md.
+build_status: see-output
+build:
+  playwright_validated_at: "2026-05-11T05:46:12.932Z"
+  playwright_a11y_violations: 30
+  playwright_console_errors: 12
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 588
+  playwright_budgets_passed: 2
+  playwright_budgets_failed: 2
+  reuse_count_net_new: 0
+  reuse_count_shared: 5
+  reuse_floor_met: true

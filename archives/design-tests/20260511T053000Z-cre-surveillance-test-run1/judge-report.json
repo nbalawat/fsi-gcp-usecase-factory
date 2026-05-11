@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "cre-surveillance-test",
+  "run_id": "20260511T053000Z-cre-surveillance-test-run1",
+  "canvas_sha256": "6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a",
+  "judged_at": "2026-05-11T05:45:00Z",
+  "missing_options": ["c"],
+
+  "scores": {
+    "A": {
+      "ui_standards": 4.9,
+      "agentic_principles": 3.0,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "no live event-spine surface (SSE / agent-thinking tile) — tradeoffs explicitly defer this; surveillance pattern is daily-cadence so partial credit, but the 'agent activity visible live' principle is unmet"
+      ],
+      "strengths": [
+        "Most literal fit to canvas pattern: the 2D facility × risk-dimension grid IS the home page (60 cells, 12 facilities × 5 dimensions), matching the surveillance archetype precisely",
+        "Cleanest token discipline of the three: zero arbitrary Tailwind values in option code; bg-riskBand-* color language repeats from grid to cell-detail",
+        "Server-first discipline — only BookReserveClient is 'use client'; first-paint is fastest for the 30-second executive scan use case",
+        "Shared <ApprovalGate> primitive wired correctly for both HITL gates with reversibility badges; irrevocable book_specific_reserve flows through the same primitive",
+        "Defensive UI: getFacility falls back to FACILITIES[0] for unknown ids (Rule 14 honored)"
+      ]
+    },
+    "B": {
+      "ui_standards": 4.5,
+      "agentic_principles": 3.5,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "app/approval/[id]/page.tsx:66 — hardcoded 1.5% reserve coefficient (Math.round(facility.exposureUsd * 0.015)) computed in the Server page. The component comments call this 'NO business rule', but a percentage threshold computed in UI is exactly Rule 1 / no-business-logic territory; should come from canvas or thresholds table",
+        "components/RegionMapTile.tsx:54 — watchShare percentage computation in a render-only component (Math.round((watchCount/facilityCount)*100)); minor — display percentage, but it's still arithmetic on financial keys"
+      ],
+      "strengths": [
+        "Strongest cross-page metaphor preservation: FacilityLocator band repeats the 4-region map on every drill-in (case + approval), so the user never loses spatial orientation",
+        "Approval flow keeps map context alive while showing ApprovalGate inline — best inline-HITL ergonomics of the three; reviewer never leaves the geography that justifies the decision",
+        "Includes an explicit agent-activity event log on the case-detail page (agent_invoked + service_invoked events with tokens/latency) — closest the three options get to surfacing the event spine",
+        "Both HITL gates wired with status-appropriate affordances ('awaiting you' for the pending irrevocable gate; reversible vs irrevocable badges)",
+        "Uses 6 shared primitives + 5 net-new, all token-driven; whole tiles are Link-wrapped (no orphaned click affordances)"
+      ]
+    },
+    "C": {
+      "ui_standards": 0.0,
+      "agentic_principles": 0.0,
+      "reuse_count": 0,
+      "reuse_floor_met": false,
+      "net_new_count": 0,
+      "hitl_gates_wired": false,
+      "violations": [
+        "Option C was abandoned by its designer agent before producing any artifacts — no manifest, no rationale, no components, no app routes. Not judged."
+      ],
+      "strengths": []
+    },
+    "D": {
+      "ui_standards": 3.9,
+      "agentic_principles": 3.8,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "components/ReserveBookingClient.tsx — does NOT use the shared <ApprovalGate> primitive. Rolls its own HITL surface with five bare <button> elements (lines 168, 175, 186, 217, 224). This is the canonical Rule-1 (primitive reuse) violation in ui-standards.md — every HITL surface in the bank is supposed to flow through <ApprovalGate> so the auditor and the audit trail get consistent props",
+        "shared_primitive_count = 5 (vs 6 for A and B) — exactly because ApprovalGate is omitted; manifest acknowledges this without flagging it as a deduction"
+      ],
+      "strengths": [
+        "Best-in-class on 'Audit trail as SOP': every row in AuditLedger + ThresholdLedger carries a CitationChain with regulator/policy/loan-covenant references — explicitly visible signature of the regulator-audit-first wildcard position",
+        "Strongest event-spine treatment of the three: the AuditLedger renders the full chain-of-custody top-to-bottom with timestamps + kinds + headlines + citations, and the approval page slices it to just-up-to-the-gate so the reviewer sees the chain that led to the finding",
+        "Irrevocable book_specific_reserve gate gets a confirmation modal that explicitly names the GL impact in plain English ('A specific reserve of $3,500,000 will be booked to the ALLL ledger… This action cannot be undone.') — strongest irrevocable-action ergonomics of the three",
+        "Auditor-pack-export path is implicit in the page shape: the page already reads like an exam report, so PDF export becomes 'render to print stylesheet' — a real production economy",
+        "Banker-readable rule names + plain-English methodology paragraphs on every threshold/finding"
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["B", "A", "D", "C"],
+
+  "recommended_winner": "B",
+  "recommendation_rationale": "Option B edges Option A by a hair (composite 4.30 vs 4.26) and is well clear of D (4.08). B wins on agentic_principles (3.5 vs A's 3.0) because the geographic metaphor extends to every drill-in surface — the FacilityLocator band repeats across case-detail and approval, the case page surfaces an agent-activity event log, and the approval flow keeps the spatial anchor alive while still flowing through the shared <ApprovalGate>. A wins on ui_standards (4.9 vs B's 4.5) because A has zero arbitrary values and no business-logic-in-UI smell — but A pays for that purity with a thinner agent-activity / event-spine surface. The composite favors B because the agentic principles weight half the score and B fields a real (if static) event log; A is the disciplined, executive-scan choice if the human cares more about pixel density and pure standards.",
+
+  "notes_for_human": [
+    "TIE BAND: B and A are within 0.04 of each other (B 4.30, A 4.26) — well inside the 0.2 tie window. The human should break this on subjective preference: do you want the most literal pattern fit (A — the 2D grid IS the page, faithful to surveillance archetype) or the richest cross-page metaphor with inline-HITL ergonomics (B — geography spine, locator band on every drill-in)?",
+    "PATTERN FIT NOTE: The canvas explicitly says 'surveillance = 2D state grid, the page IS the grid'. Option A takes this most literally with a 12×5 cell heatmap. Option B reinterprets the 2D grid as geographic (4-region tile + state-cluster strip). Option D abandons the grid metaphor entirely for a regulator-audit log. If the human's reviewer was the Chief Credit Officer (per canvas persona implication), the literal grid (A) is arguably the truer fit; if the reviewer was the line risk officer who thinks spatially, B is the truer fit; D serves a different persona (OCC examiner) than the canvas implies.",
+    "OPTION C: Abandoned by its designer agent before producing any artifacts — no manifest, no components. Reported as missing_options:['c']. Diversity remained good across the three judged options; no convergence pairs detected.",
+    "OPTION D PRIMITIVE-REUSE REGRESSION: D's ReserveBookingClient bypasses the shared <ApprovalGate> primitive (five bare <button> elements) — the only option of the three to do so. This is a regression from credit-memo-commercial discipline. D's wildcard position (regulator-audit-first) is genuinely valuable and earns the highest agentic_principles score on audit-trail-as-SOP, but the human should weigh whether the bank wants a parallel HITL surface or insist D be retrofitted to wrap <ApprovalGate>.",
+    "DIVERSITY: Strong — no convergence pairs (all three Jaccards on components_used are between 0.29 and 0.38). The three options genuinely explore different positions (density, metaphor, wildcard).",
+    "EVENT-SPINE GAP: None of the three options ship a live SSE / agent-thinking tile. All three are static rollups, acknowledged in each tradeoffs.md. Surveillance pattern is daily-cadence so this is acceptable for prototype, but a real production deployment will need to add live-event surfaces (Rule 13)."
+  ]
+}

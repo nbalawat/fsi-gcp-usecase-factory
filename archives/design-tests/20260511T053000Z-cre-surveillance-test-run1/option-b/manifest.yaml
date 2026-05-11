@@ -1,0 +1,81 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+canvas_checksum: 6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a
+use_case_id: cre-surveillance-test
+console_pattern: surveillance
+
+persona:
+  primary: "Chief Credit Officer scanning portfolio concentration; line risk officer following up on a flagged facility"
+  context: |
+    The CCO needs to answer "where is our CRE risk concentrating?" in
+    one glance. The map IS the answer. From the map, drilling into a
+    facility preserves the spatial metaphor — a state cluster strip and
+    a region-highlighted band keep the user oriented while they read
+    the facility detail or book a reserve.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: map-drill-then-inline
+primary_metaphor: geographic-map
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: RegionMapTile
+    source: use-case
+  - name: RiskMap
+    source: use-case
+  - name: StateClusterRow
+    source: use-case
+  - name: FacilityLocator
+    source: use-case
+  - name: ReserveApprovalClient
+    source: use-case
+
+routes_implemented:
+  - facility-detail
+  - approval-flow
+
+design_summary: |
+  Option B uses the GEOGRAPHIC MAP as the page spine. The home surface
+  renders a 2x2 US census-region tile grid (Northeast / Midwest / South
+  / West), each tile colored by aggregate watchlist density (5-step
+  heat scale, all from tokens — no arbitrary values). Below the tile
+  grid, a state-cluster strip lets the user drill from "where is the
+  risk?" to "which facilities are driving it?" without leaving the
+  metaphor. The facility-detail and approval-flow pages keep the metaphor
+  alive: every page opens with a FacilityLocator band that highlights
+  the user's current region inside the 4-region map and lists sibling
+  facilities in the state cluster as chips. The approval flow embeds
+  the shared ApprovalGate primitive inline — the reviewer never leaves
+  the geographic anchor.
+
+tradeoffs:
+  optimised_for:
+    - Spatial concentration discovery — "where is the risk?" answers in one glance
+    - Drill continuity — every page repeats the locator band so the user never loses orientation
+    - Token-only color discipline — heat scale is paper-2 → info-tint → warning-tint → danger-tint → riskBand-5-loss (no arbitrary values)
+    - Reuse — six shared primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, ApprovalGate)
+    - Server Components by default; "use client" only on the approval island
+  sacrifices:
+    - True cartography is approximated by a 4-tile census-region grid (we don't ship a real US map SVG to keep the bundle slim)
+    - Time-series and stage-rail spatial metaphors are intentionally absent — geography is the only axis
+    - Dense per-facility tables (NOI, cap-rate ladder, valuation history) are summarised, not foregrounded
+
+build:
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true
+  shared_primitive_count: 6
+  net_new_component_count: 5

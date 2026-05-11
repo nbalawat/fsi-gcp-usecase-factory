@@ -1,0 +1,85 @@
+option: a
+use_case: cre-surveillance-test
+console_pattern: surveillance
+variation_axis: density
+canvas_checksum: 6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a
+
+intent: >
+  Designed for an executive who scans the screen in 30 seconds. The 2D
+  facility × risk-dimension grid IS the page; chrome compresses to the
+  AppShell header strip + a tiny right rail. Cells are color-banded by
+  the OCC risk band (pass → loss); hovering surfaces a one-line tooltip;
+  clicking drills into the cell detail. Every pixel earns its place.
+
+design_choices:
+  layout:
+    home: dense grid (3 of 4 lg columns) + 1-column right rail (band legend + canvas pin)
+    case: stacked dense — header strip, MetricStrip, then a 3-col cell-detail block + right rail (gates, rule verdicts, canvas pin)
+    approval: 2-col — gate dispatcher in main, facility context + ledger in right rail
+  density: high; row height 28px on grid; mono labels for identifiers
+  color_language: paper-1/2 anchors; cells driven exclusively by riskBand tokens
+  typography: Inter Tight (UI), Source Serif 4 (display), JetBrains Mono (identifiers)
+  motion: zero non-essential — only native :hover and Next.js routing
+  interactivity_boundary: server components everywhere except BookReserveClient
+  no_arbitrary_values: tokens-only; w-64 / lg:grid-cols-4, etc.
+
+routes:
+  - /
+  - /case/[id]
+  - /approval/[id]
+
+components_used:
+  - name: AppShell
+    source: "@fsi-bank/components"
+    usage: home, case, approval — top chrome strip
+  - name: BreadcrumbNav
+    source: "@fsi-bank/components"
+    usage: case, approval — breadcrumb toolbar
+  - name: MetricStrip
+    source: "@fsi-bank/components"
+    usage: home (5 KPIs), case (5 facility KPIs)
+  - name: StatCard
+    source: "@fsi-bank/components"
+    usage: case (canvas pin), approval (watch/breach cells, canvas pin)
+  - name: StatusBadge
+    source: "@fsi-bank/components"
+    usage: gates, rule verdicts, peer-row tones, facility status
+  - name: ApprovalGate
+    source: "@fsi-bank/components"
+    usage: approval — wrapped by BookReserveClient
+
+shared_primitive_count: 6
+
+new_components:
+  - name: GridHeatmap
+    purpose: the 2D facility × risk-dimension table, server-rendered
+    file: components/GridHeatmap.tsx
+  - name: BandLegend
+    purpose: the tiny right-rail legend with per-band cell counts
+    file: components/BandLegend.tsx
+  - name: CellDetail
+    purpose: cell-detail surface — 5 dimension cards + same-NAICS peers
+    file: components/CellDetail.tsx
+  - name: GateLedger
+    purpose: human-in-the-loop gate list with reversibility indicator
+    file: components/GateLedger.tsx
+  - name: BookReserveClient
+    purpose: client wrapper around ApprovalGate for the HITL flow
+    file: components/BookReserveClient.tsx
+
+data_layer:
+  source_of_truth: ../../_shared/mock-data.ts
+  facilities_derived_from: BORROWERS (12 facilities, deterministic banding ±1 step around the canvas anchor)
+  risk_dimensions: dscr, ltv, cap_rate, occupancy, concentr (5)
+  total_cells: 60
+  no_business_logic_in_ui: confirmed — pure shape transforms only
+
+discipline:
+  rule_4_no_arbitrary_values: clean (no w-[…], no grid-cols-[…], no text-[…])
+  rule_14_defensive_ui: getFacility falls back to FACILITIES[0] for unknown ids
+  server_first: only BookReserveClient is "use client"
+  no_server_to_server_inline_functions: gate-click handlers live in the client wrapper
+build:
+  reuse_count_net_new: 0
+  reuse_count_shared: 0
+  reuse_floor_met: false

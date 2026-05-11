@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  /* Atrium tokens exposed as CSS custom properties — used inline
+     by the shared StatCard sparkline (var(--accent), var(--success)…). */
+  --accent: #86BC24;
+  --success: #3D8B3D;
+  --warning: #B07A00;
+  --danger: #C13838;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0F0B0B;
+  font-family: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom utility used by shared primitives — a small uppercase
+   eyebrow above section headings. */
+@layer components {
+  .eyebrow {
+    @apply font-mono text-mono-sm uppercase tracking-wider text-ink-3;
+  }
+}

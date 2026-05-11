@@ -1,0 +1,83 @@
+schema_version: "1.0.0"
+use_case_id: cre-surveillance-test
+chosen_option: B
+variation_axis: metaphor
+chosen_at: "2026-05-11T05:50:00Z"
+locked_at: "2026-05-11T05:50:00Z"
+iteration_count: 0
+lock_level: layout-only
+
+decision_rationale: |
+  Judge LLM (source-only) ranked **B (4.30) > A (4.26) > D (4.08)**.
+  B + A inside 0.2 tie band — runtime broke the tie.
+
+  Playwright runtime against deployed services:
+    A: a11y 9,  LCP 644ms, CLS 0.00, 0 console errors, 4 failed requests, 3/4 budgets
+    B: a11y 6,  LCP 560ms, CLS 0.00, 0 console errors, 0 failed requests, 3/4 budgets  ← cleanest
+    D: a11y 30, LCP 588ms, CLS 0.00, 12 console errors, 6 failed requests, 2/4 budgets
+
+  Option C abandoned by designer agent (reported false success — files
+  missing from worktree). Codified as **Rule 46 — designer agent self-
+  reports must be verified before downstream stages run** (cheap to
+  catch via `find /worktree/usecases/<uc>/ui/proposals/option-<x> -type f | wc -l > N`).
+
+  B (geographic-map metaphor) wins both signals:
+    - Judge's #1 on composite (richest cross-page metaphor; FacilityLocator
+      repeats on every drill-in; inline-HITL keeps spatial anchor)
+    - Playwright cleanest (6 a11y just over budget 5; 0 console errors;
+      0 failed requests; LCP 560ms fastest)
+
+  A (density grid) close second — highest ui_standards (4.9/5) and most
+  literal canvas-pattern fit. Lost on cross-page metaphor depth.
+
+  D (regulator-audit-first wildcard) disqualified by 12 console errors
+  at runtime + rolled its own HITL surface (bare buttons instead of
+  shared ApprovalGate primitive — Rule-1 reuse regression).
+
+annotations:
+  keep:
+    - "Geographic 2×2 census-region tile grid colored by aggregate watchlist heat"
+    - "FacilityLocator strip repeated on every drill-in page for spatial continuity"
+    - "Inline HITL escalation (watchlist) from state-cluster rows"
+    - "ApprovalGate primitive wrapped by ReserveApprovalClient for committee-tier irrevocable reserves"
+    - "MetricStrip + StatCard + StatusBadge consistent across all 3 routes (11 shared primitives)"
+  drop: []
+  change:
+    - from: "6 axe-core a11y violations at runtime (just over budget 5)"
+      to: "Re-audit color contrast on heat-tile labels + state-cluster row chips; lift to WCAG AA 4.5:1"
+      reason: "Same recurring pattern across all 3 tiers — token-level fix in ui/packages/theme would help every future UC."
+    - from: "Hardcoded `* 0.015` reserve coefficient in approval Server page (judge flag)"
+      to: "Lift coefficient to a JDM rule input + fetch via rules-service.evaluate at render time"
+      reason: "Rule-1 of bank policy: business rules in JDM. Currently hardcoded in UI defeats the purpose."
+
+rejected_options:
+  - option: A
+    judge_score: 4.26
+    playwright_score: 3/4 budgets passed; 0 console errors, 9 a11y
+    reason: "Highest ui_standards score but lost to B on cross-page metaphor depth and inline-HITL ergonomics. Density grid is correct shape but B's geographic map carries the metaphor further (drill-in pages keep FacilityLocator). Save for future iteration as 'density-mode' variant."
+  - option: C
+    judge_score: null
+    playwright_score: null
+    reason: "Designer agent reported false success. Worktree usecases/cre-surveillance-test/ui/proposals/option-c was empty after agent reported completion with detailed file list. Codified as Rule 46 (verify worktree contents before trusting agent reports)."
+  - option: D
+    judge_score: 4.08
+    playwright_score: 2/4 budgets passed; 12 console errors, 30 a11y
+    reason: "Regulator-audit-first metaphor was interesting (citation chains, audit ledger) but 12 console errors at runtime indicate broken JS behavior. Also rolled own HITL surface with bare buttons instead of shared ApprovalGate — Rule-1 reuse regression. Worth re-running with proper primitive reuse + RSC-clean implementation."
+
+dual_signal_lesson: |
+  Tier 3 (surveillance pattern) confirms dual-signal validation again:
+    - Judge ranked B first → confirmed cleanest by Playwright
+    - Judge ranked A second → confirmed clean by Playwright (close 2nd)
+    - Judge ranked D third → disqualified by 12 runtime console errors
+  Judge and Playwright agreed on B as the winner; runtime broke the tie
+  between B (4.30) and A (4.26) by showing B was cleaner. Different from
+  Tier 1 (B failed at runtime entirely) and Tier 2 expansion (judge's #2
+  D failed build entirely). The protocol handles all three failure modes.
+
+canvas_sha256: 6cbf4ad8f20b2710ddb398c3f1f91cde2a92ea058c90718905df1830a3b0144a
+run_id: 20260511T053000Z-cre-surveillance-test-run1
+
+abandoned_options:
+  - option: C
+    reason: "Designer agent reported false success — files missing from worktree"
+    follow_up: "Codified as Rule 46 in product-build-discipline.md (verify-before-trust gate for designer agents)"

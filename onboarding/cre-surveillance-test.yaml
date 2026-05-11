@@ -1,0 +1,67 @@
+# Test canvas — CRE portfolio surveillance (surveillance console pattern).
+
+use_case_id: cre-surveillance-test
+schema_version: "1.0.0"
+created_at: "2026-05-11T05:30:00Z"
+
+console_pattern: surveillance
+use_case_archetype: continuous-portfolio-monitor@1.0
+
+# Surveillance = 2D state grid, continuous re-evaluation.
+# Rows = facilities; columns = risk dimensions. Cells re-color as
+# inputs (rate curves, NOI updates, tenant rolls) shift. NO per-case
+# staging; the page IS the grid.
+
+hitl_gates:
+  - name: escalate_to_watchlist
+    irrevocable: false
+    description: "Reviewer escalates a facility to watchlist (reversible)"
+  - name: book_specific_reserve
+    irrevocable: true
+    description: "Credit committee books a specific reserve (irrevocable)"
+
+atomic_services_reused:
+  - industry-risk-scorer
+  - peer-and-industry-context
+  - exposure-aggregator
+
+net_new_atomic_services:
+  - name: cre-noi-recompute
+    purpose: "Recompute facility-level NOI from latest rent rolls + tenant data"
+
+multi_agent_pattern: classifier-extractor-decider@1.0
+
+agent_archetypes_reused:
+  - market-context-narrator@1.0
+
+net_new_agents:
+  - name: cre-cell-explainer
+    purpose: "When a reviewer hovers a cell, produce a 1-paragraph plain-English explanation of why it's that color today"
+
+shared_rules_reused:
+  - cap_rate_band_check
+  - dscr_threshold
+
+net_new_rules:
+  - name: cre_watchlist_trigger
+    citation: "Bank Policy POL-CRE-2024-12 — CRE watchlist escalation criteria"
+    inputs_sketch: "dscr, ltv, occupancy, lease_expiry_concentration → watchlist | normal"
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled"
+provider_prereqs_pending: []
+compliance_scope: lightweight
+eval_framework_wired: true
+
+notes: |
+  Surveillance pattern test — proves the factory handles 2D state grids
+  with no per-case staging. The shape is fundamentally different from
+  pipeline (1D progression), investigations (case-centric), and real-time
+  (event stream). Watch for:
+  - Whether designer agents instinctively reach for case-detail layout
+  - Whether the grid metaphor survives the canvas
+  - Whether reviewer-hover interaction is wired (HITL but reversible)
