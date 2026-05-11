@@ -17,8 +17,18 @@ Read in this order:
    ("when you're trying to X → run Y"), the five wheel-spinning patterns and
    their cures, escape hatches when blocked, and a 30-min onramp checklist.
    Read this BEFORE your first UC; re-read quarterly.
-7. `onboard-new-use-case.md` — the runbook for starting use case #2, #3, …
-8. This file (when you're trying to do X → run Y)
+7. **`ux-first-discipline.md`** — why backend code is locked behind a
+   `ui/decision.yaml` contract, the 7-stage pipeline (`/fsi-onboard` →
+   `/fsi-design-proposals` → `/fsi-design-review` → `/init-use-case` …),
+   when to re-spin, lock-level semantics, cost budget.
+8. **`onboarding-walkthrough.md`** — **the concrete follow-along.** 4-5 hour
+   end-to-end transcript with exact commands, expected console output,
+   sample AskUserQuestion answers (mortgage-origination as worked example),
+   "what to verify before continuing" checks after every step, and a
+   troubleshooting table. **Read this when you're actually building.**
+9. `onboard-new-use-case.md` — the older reference runbook (inventory of
+   what's reusable + 15 known pitfalls). Reads more like a checklist.
+10. This file (when you're trying to do X → run Y)
 
 ---
 

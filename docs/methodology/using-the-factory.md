@@ -215,6 +215,12 @@ After 30 minutes, you should be able to answer:
 
 If you can't answer those five, re-read. If you can, you're calibrated to start with `/fsi-onboard` for your first UC.
 
+## When you're actually building your first UC
+
+After the 30-min onramp, open `docs/methodology/onboarding-walkthrough.md` and follow it linearly. It's a 4-5-hour transcript covering every step from `gcloud auth login` to the first smoke test in the browser — with exact commands, expected output, what-to-verify-before-continuing checks, and a troubleshooting table.
+
+Keep that doc open in a side window while you work. The walkthrough's "Common pitfalls" table catches almost every first-build failure.
+
 ---
 
 ## Signals you're spinning your wheels
