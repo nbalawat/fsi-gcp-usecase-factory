@@ -66,7 +66,34 @@ function loadOption(uc, option) {
   const heroScreenshot = manifest.hero_screenshot
     ? join("usecases", uc, "ui", "proposals", `option-${option}`, manifest.hero_screenshot)
     : null;
-  return { option, dir, manifest, rationale, tradeoffs, url, heroScreenshot };
+  // Playwright report — written by scripts/validate_with_playwright.mjs into
+  // either the proposals dir (for live comparator) or the archive (for trail).
+  // Comparator looks in both locations and prefers the proposals copy when
+  // both exist (it's the most recent).
+  let playwright = null;
+  let playwrightScreenshot = null;
+  for (const candidate of [
+    join(dir, "playwright-report.json"),
+    join(REPO, "archives/design-tests", "_latest", `option-${option}`, "playwright-report.json"),
+  ]) {
+    if (existsSync(candidate)) {
+      try {
+        playwright = JSON.parse(readFileSync(candidate, "utf-8"));
+        const screenshotsDir = join(dirname(candidate), "screenshots");
+        const heroPath = join(screenshotsDir, "case-id-sample-1440.png");
+        if (existsSync(heroPath)) {
+          // Render as relative path from the comparator HTML location
+          const reviewHtmlDir = join(REPO, "usecases", uc, "ui", "proposals");
+          // Compute relative path manually (no path.relative for safety)
+          playwrightScreenshot = heroPath.startsWith(reviewHtmlDir)
+            ? heroPath.slice(reviewHtmlDir.length + 1)
+            : heroPath;
+        }
+        break;
+      } catch { /* try next */ }
+    }
+  }
+  return { option, dir, manifest, rationale, tradeoffs, url, heroScreenshot, playwright, playwrightScreenshot };
 }
 
 const HTML_HEADER = (uc, sha) => `<!doctype html>
@@ -106,6 +133,7 @@ const HTML_HEADER = (uc, sha) => `<!doctype html>
     .panel-head .open { font-size: 11px; }
     .panel-iframe { flex: 1 1 auto; background: white; min-height: 0; }
     .panel-iframe iframe { width: 100%; height: 100%; border: 0; }
+    .panel-iframe .hero-screenshot { width: 100%; height: auto; max-height: 100%; object-fit: contain; object-position: top; display: block; background: #fff; }
     .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); }
     .panel-failed .badge { color: var(--error); font-weight: 600; }
     .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; }
@@ -135,7 +163,7 @@ const HTML_HEADER = (uc, sha) => `<!doctype html>
 function renderPanel(opt) {
   if (!opt) return `<section class="panel"><div class="panel-failed"><div class="badge">option missing</div></div></section>`;
 
-  const { option, manifest, rationale, tradeoffs, url } = opt;
+  const { option, manifest, rationale, tradeoffs, url, playwright, playwrightScreenshot } = opt;
   const axis = manifest.variation_axis ?? "—";
   const persona = manifest.persona?.primary ?? "—";
   const density = densityStars(manifest.density_score);
@@ -156,12 +184,16 @@ function renderPanel(opt) {
   let body;
   if (reuseFloorFailed) {
     body = `<div class="panel-failed"><div class="badge">⚠ reuse floor failed</div><div>${reuseFloorShared ?? "?"} shared components; floor is 5</div></div>`;
-  } else if (!buildOk) {
+  } else if (!buildOk && !playwrightScreenshot) {
     body = `<div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div>`;
-  } else if (!url) {
-    body = `<div class="panel-failed"><div class="badge">⚠ deploy failed</div><div>built but did not deploy</div></div>`;
-  } else {
+  } else if (!url && !playwrightScreenshot) {
+    body = `<div class="panel-failed"><div class="badge">⚠ not deployed</div><div>no live URL and no Playwright screenshot</div></div>`;
+  } else if (url) {
+    // Live deploy: iframe wins
     body = `<iframe src="${htmlEscape(url)}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+  } else {
+    // No live URL but we have a Playwright-captured screenshot
+    body = `<img class="hero-screenshot" src="${htmlEscape(playwrightScreenshot)}" alt="Playwright capture of option ${option.toUpperCase()} case detail at 1440px" />`;
   }
 
   const summary = (manifest.design_summary ?? "").slice(0, 600);
@@ -193,6 +225,17 @@ function renderPanel(opt) {
       <span class="judge-score">${htmlEscape(a11yMode ?? "scan")}</span>
     </div>` : "";
 
+  // Playwright row — populated when validate_with_playwright.mjs has run.
+  const pw = playwright?.summary;
+  const pwRow = pw ? `
+    <div class="judge-row">
+      ${pw.total_a11y_violations > 5 ? `<span class="pill warn">live-a11y ${pw.total_a11y_violations} ⚠</span>` : `<span class="pill ok">live-a11y ${pw.total_a11y_violations}</span>`}
+      ${pw.total_console_errors > 0 ? `<span class="pill warn">console ${pw.total_console_errors} ⚠</span>` : `<span class="pill ok">console 0</span>`}
+      ${typeof pw.cls_worst === "number" ? `<span class="pill ${pw.cls_worst > 0.1 ? "warn" : "ok"}">CLS ${pw.cls_worst.toFixed(2)}</span>` : ""}
+      ${typeof pw.lcp_worst_ms === "number" ? `<span class="pill ${pw.lcp_worst_ms > 2500 ? "warn" : "ok"}">LCP ${Math.round(pw.lcp_worst_ms)}ms</span>` : ""}
+      <span class="judge-score">playwright · ${pw.passed_budgets}/${pw.passed_budgets + pw.failed_budgets} budgets</span>
+    </div>` : "";
+
   return `
     <section class="panel" data-option="${option}">
       <div class="panel-head">
@@ -219,6 +262,7 @@ function renderPanel(opt) {
         </div>
         ${judgeRow}
         ${a11yRow}
+        ${pwRow}
       </div>
     </section>
   `;

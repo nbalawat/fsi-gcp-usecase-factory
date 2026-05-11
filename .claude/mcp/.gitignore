@@ -1,0 +1,4 @@
+node_modules/
+.playwright-browsers/
+package-lock.json
+*.log

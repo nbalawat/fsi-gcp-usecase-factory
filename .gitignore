@@ -53,3 +53,6 @@ scripts/demo_applications/BRW-*/files/*.pdf
 # Local dev process / log noise
 /tmp/dev*.log
 ui/apps/pipeline-console/_diag.mjs
+
+# Claude Code agent worktrees
+.claude/worktrees/

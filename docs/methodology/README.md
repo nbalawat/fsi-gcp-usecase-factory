@@ -21,6 +21,11 @@ Read in this order:
    `ui/decision.yaml` contract, the 7-stage pipeline (`/fsi-onboard` →
    `/fsi-design-proposals` → `/fsi-design-review` → `/init-use-case` …),
    when to re-spin, lock-level semantics, cost budget.
+7b. **`playwright-validation.md`** — how real-browser validation works
+    against each design proposal (axe-core a11y, console errors, CLS,
+    LCP, screenshots at 3 viewports). Both the MCP server (for interactive
+    Claude Code review) and the standalone Node.js validator (for CI) are
+    documented.
 8. **`onboarding-walkthrough.md`** — **the concrete follow-along.** 4-5 hour
    end-to-end transcript with exact commands, expected console output,
    sample AskUserQuestion answers (mortgage-origination as worked example),

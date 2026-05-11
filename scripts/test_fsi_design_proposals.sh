@@ -236,7 +236,7 @@ assert_path "usecases/__test_design_proposals__/ui/proposals/_review.html" "comp
 assert_grep "<!doctype html>"           "usecases/__test_design_proposals__/ui/proposals/_review.html" "valid HTML doctype"
 assert_grep "Option A"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option A"
 assert_grep "Option D"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option D"
-assert_grep "deploy failed"             "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows ⚠ banner for failed deploys"
+assert_grep "(deploy failed|not deployed)"   "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows ⚠ banner for failed/missing deploys"
 echo
 
 echo "12. Judge pass artifacts (Phase 0.1) are wired:"
@@ -526,6 +526,48 @@ fi
 rm -rf "$MC_ROOT/$MC_TS1-$MC_UC-run1" "$MC_ROOT/$MC_TS2-$MC_UC-run2"
 # Also clean up the meta-comparator output (it's keyed by current timestamp)
 [[ -d "$MC_ROOT/_meta" ]] && rm -rf "$MC_ROOT/_meta"
+echo
+
+echo "14. Playwright wiring (MCP + standalone validator):"
+assert_path ".mcp.json"                                        ".mcp.json present"
+assert_grep "playwright"     ".mcp.json"                        ".mcp.json registers playwright server"
+assert_grep "enabledMcpjsonServers" ".claude/settings.json"     "settings.json auto-enables MCP servers"
+assert_path ".claude/mcp/package.json"                          ".claude/mcp/package.json present"
+assert_path ".claude/mcp/.gitignore"                            ".claude/mcp/.gitignore present"
+assert_path ".claude/mcp/README.md"                             ".claude/mcp/README.md present"
+assert_path "scripts/validate_with_playwright.mjs"              "Playwright validator script"
+if node --check "$REPO/scripts/validate_with_playwright.mjs" 2>/dev/null; then
+  green "  ✓ validator script parses"
+else
+  red   "  ✗ validator script has syntax error"
+  failed=$((failed + 1))
+fi
+echo
+
+echo "14b. Comparator renders Playwright stats when report present:"
+# Add a fake playwright-report.json to option-a, regenerate, grep
+PW_OPT_DIR="$PROP_DIR_2/option-a"
+cat > "$PW_OPT_DIR/playwright-report.json" <<PWEOF
+{
+  "option": "A",
+  "summary": {
+    "total_a11y_violations": 3,
+    "total_console_errors": 0,
+    "total_failed_requests": 0,
+    "cls_worst": 0.05,
+    "lcp_worst_ms": 1200,
+    "passed_budgets": 4,
+    "failed_budgets": 0
+  },
+  "routes": {},
+  "budget_checks": []
+}
+PWEOF
+node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev/null 2>&1
+assert_grep "live-a11y 3"      "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders live a11y pill"
+assert_grep "CLS 0.05"         "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders CLS"
+assert_grep "LCP 1200ms"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders LCP"
+assert_grep "playwright"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator labels the row as playwright"
 echo
 
 if [[ $failed -gt 0 ]]; then

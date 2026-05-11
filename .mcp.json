@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR}/.claude/mcp/node_modules/@playwright/mcp/cli.js",
+        "--browser=chromium",
+        "--headless"
+      ]
+    }
+  }
+}

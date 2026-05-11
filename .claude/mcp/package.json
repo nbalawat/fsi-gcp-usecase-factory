@@ -1,0 +1,15 @@
+{
+  "name": "fsi-claude-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Project-scoped MCP servers for Claude Code. Adds Playwright for browser-driven UI validation.",
+  "dependencies": {
+    "@playwright/mcp": "^0.0.39",
+    "playwright": "^1.49.0",
+    "axe-core": "^4.10.2"
+  },
+  "scripts": {
+    "install-browser": "npx playwright install chromium --with-deps",
+    "verify": "node node_modules/@playwright/mcp/dist/index.js --version 2>/dev/null || echo 'MCP installed at node_modules/@playwright/mcp'"
+  }
+}
