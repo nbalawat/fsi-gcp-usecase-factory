@@ -1,0 +1,45 @@
+# Test canvas — CRE concentration surveillance (surveillance console).
+
+use_case_id: cre-concentration-monitor-test
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: surveillance
+use_case_archetype: surveillance-evaluator@1.0
+
+hitl_gates:
+  - final_approval
+
+atomic_services_reused:
+  - exposure-aggregator
+  - peer-and-industry-context
+  - peer-benchmarker
+  - industry-risk-scorer
+
+net_new_atomic_services: []
+
+multi_agent_pattern: router-only@1.0
+
+agent_archetypes_reused:
+  - eligibility-checker@1.0
+  - peer-comparator@1.0
+  - regulatory-narrator@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - cre_concentration_limit
+  - geographic_concentration_limit
+  - single_borrower_exposure
+
+net_new_rules: []
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled"
+provider_prereqs_pending: []
+compliance_scope: full
+eval_framework_wired: true

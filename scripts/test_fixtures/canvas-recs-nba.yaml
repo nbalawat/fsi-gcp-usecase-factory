@@ -1,0 +1,44 @@
+# Test canvas — next-best-action cross-sell (recommendations console).
+
+use_case_id: nba-cross-sell-test
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: recommendations
+use_case_archetype: recommendation-generator@1.0
+
+hitl_gates:
+  - final_approval
+
+atomic_services_reused:
+  - borrower-network
+  - peer-and-industry-context
+  - exposure-aggregator
+
+net_new_atomic_services: []
+
+multi_agent_pattern: classifier-extractor-decider@1.0
+
+agent_archetypes_reused:
+  - eligibility-checker@1.0
+  - peer-comparator@1.0
+  - narrative-drafter@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - reg_o_individual_limit
+
+net_new_rules:
+  - name: cross_sell_eligibility_v2
+    citation: "Bank Policy POL-2025-11 — Cross-sell pre-screening"
+    inputs_sketch: "kyc_status, product_holdings, household_aum → eligible | hold | skip"
+
+model_provider: vertex_gemini
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+  - "us-central1 region pinned"
+  - "response_schema enabled"
+provider_prereqs_pending: []
+compliance_scope: lightweight
+eval_framework_wired: true

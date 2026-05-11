@@ -1,0 +1,47 @@
+# Test canvas — quarterly CECL exercise (run console).
+
+use_case_id: cecl-quarterly-run-test
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: run
+use_case_archetype: run-exerciser@1.0
+
+hitl_gates:
+  - draft_review
+  - final_approval
+
+atomic_services_reused:
+  - financial-spreader
+  - peer-and-industry-context
+  - industry-risk-scorer
+  - exposure-aggregator
+
+net_new_atomic_services: []
+
+multi_agent_pattern: reflection-loop@1.0
+
+agent_archetypes_reused:
+  - risk-rater@1.0
+  - regulatory-narrator@1.0
+  - memo-reviewer-v2@1.0
+  - narrative-drafter@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - single_borrower_exposure
+
+net_new_rules:
+  - name: cecl_reserve_floor_by_band
+    citation: "FASB ASU 2016-13 — CECL"
+    inputs_sketch: "risk_band, ead, lgd_pct → reserve_pct | flag_for_qual"
+
+model_provider: hybrid
+provider_prereqs_confirmed:
+  - "Vertex ADC available"
+  - "us-central1 region pinned"
+  - "Anthropic API key in Secret Manager"
+provider_prereqs_pending: []
+compliance_scope: full
+eval_framework_wired: true

@@ -382,6 +382,34 @@ node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev
 assert_grep "reuse floor failed" "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders reuse-floor-failed panel"
 echo
 
+echo "13a. Test-run scheme (Phase 0.5):"
+assert_path "archives/design-tests/README.md"     "design-tests README"
+assert_path "archives/design-tests/.gitkeep"      "design-tests committed even empty"
+assert_grep "Test-run archive protection" ".claude/agents/architecture-auditor.md" "auditor rule for design-tests"
+assert_grep "archives/design-tests"        ".claude/agents/architecture-auditor.md" "auditor cites design-tests path"
+echo
+
+echo "13b. Seven canned canvases present + reuse-gate-passing:"
+canvases=(
+  "canvas-pipeline-credit-memo"
+  "canvas-pipeline-mortgage"
+  "canvas-investigations-sar"
+  "canvas-realtime-fraud"
+  "canvas-surveillance-cre"
+  "canvas-run-cecl"
+  "canvas-recs-nba"
+)
+for c in "${canvases[@]}"; do
+  assert_path "scripts/test_fixtures/$c.yaml" "$c canvas"
+  if node "$REPO/scripts/check_reuse_rate.mjs" "$REPO/scripts/test_fixtures/$c.yaml" >/dev/null 2>/dev/null; then
+    green "  ✓ $c passes reuse-rate gate"
+  else
+    red   "  ✗ $c FAILS reuse-rate gate"
+    failed=$((failed + 1))
+  fi
+done
+echo
+
 echo "13. Meta-comparator (Phase 0.4) wired:"
 assert_path "scripts/build_meta_comparator.mjs"  "meta-comparator script present"
 if node --check "$REPO/scripts/build_meta_comparator.mjs" 2>/dev/null; then
