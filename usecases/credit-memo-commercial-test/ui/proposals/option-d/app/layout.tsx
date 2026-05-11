@@ -1,4 +1,5 @@
 import * as React from "react";
+import "./globals.css";
 
 export const metadata = {
   title: "Commercial Credit · Conversation timeline",

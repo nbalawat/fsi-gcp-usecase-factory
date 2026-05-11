@@ -82,9 +82,9 @@ steps:
         set -e
         SERVICE="fsi-uc-${_USE_CASE}-design-${_OPTION}"
         IMAGE="${_REGION}-docker.pkg.dev/${PROJECT_ID}/fsi-services/uc-${_USE_CASE}-design-${_OPTION}:latest"
-        echo "→ deploying $SERVICE"
-        gcloud run deploy "$SERVICE" \
-          --image="$IMAGE" \
+        echo "→ deploying $${SERVICE}"
+        gcloud run deploy "$${SERVICE}" \
+          --image="$${IMAGE}" \
           --region="${_REGION}" \
           --platform=managed \
           --allow-unauthenticated \
@@ -96,9 +96,9 @@ steps:
           --set-env-vars="DESIGN_OPTION=${_OPTION},USE_CASE=${_USE_CASE},NODE_ENV=production" \
           --labels="kind=design-proposal,use-case=${_USE_CASE},option=${_OPTION}" \
           --quiet
-        URL=$(gcloud run services describe "$SERVICE" --region="${_REGION}" --format='value(status.url)')
-        echo "$URL" > /workspace/url.txt
-        echo "✓ deployed $SERVICE → $URL"
+        URL=$(gcloud run services describe "$${SERVICE}" --region="${_REGION}" --format='value(status.url)')
+        echo "$${URL}" > /workspace/url.txt
+        echo "✓ deployed $${SERVICE} → $${URL}"
     waitFor: ["push-image"]
 
   # ── 5. Capture URL into the option's manifest ────────────────────────
@@ -111,7 +111,7 @@ steps:
       - "-c"
       - |
         URL=$(cat /workspace/url.txt)
-        echo "url:$URL"
+        echo "url:$${URL}"
         # /fsi-design-proposals downloads /workspace/url.txt as a build artifact.
     waitFor: ["deploy-cloud-run"]
 

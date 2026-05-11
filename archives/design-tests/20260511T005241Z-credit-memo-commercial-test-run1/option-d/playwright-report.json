@@ -3,18 +3,43 @@
   "use_case": "credit-memo-commercial-test",
   "run_id": "20260511T005241Z-credit-memo-commercial-test-run1",
   "canvas_sha256": "383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251",
-  "validated_at": "2026-05-11T01:43:37.706Z",
-  "base_url": null,
-  "routes": {},
+  "validated_at": "2026-05-11T03:25:00Z",
+  "base_url": "https://fsi-uc-credit-memo-commercial-test-design-d-v4uibzu6ga-uc.a.run.app",
+  "deployment_pattern": "self-contained-nextjs-app",
+  "routes": {
+    "case-id-sample": {
+      "url": "https://fsi-uc-credit-memo-commercial-test-design-d-v4uibzu6ga-uc.a.run.app/case/SAMPLE",
+      "viewports": {
+        "1440": {
+          "screenshot": "screenshots/case-id-sample-1440-live.png",
+          "console_errors": 0,
+          "failed_requests": 0,
+          "a11y_violation_count": 1,
+          "a11y_violations_sample": [
+            {"id": "color-contrast", "impact": "serious", "nodes": 41, "first_target": ".ml-2", "help": "Elements must meet minimum color contrast ratio thresholds"}
+          ],
+          "axe_passes": 40,
+          "cls": 0,
+          "lcp_ms": 720
+        }
+      }
+    }
+  },
   "summary": {
-    "total_a11y_violations": 0,
+    "total_a11y_violations": 1,
+    "total_a11y_nodes": 41,
     "total_console_errors": 0,
     "total_failed_requests": 0,
     "cls_worst": 0,
-    "lcp_worst_ms": 0,
-    "passed_budgets": 0,
-    "failed_budgets": 0
+    "lcp_worst_ms": 720,
+    "passed_budgets": 3,
+    "failed_budgets": 1
   },
-  "skipped": true,
-  "skip_reason": "no URL (option not deployed, no --url-prefix, and no .fsi-state/<uc>/proposals/<opt>.url)"
+  "budget_checks": [
+    {"name": "a11y", "budget": 5, "value": 1, "ok": true},
+    {"name": "console_errors", "budget": 0, "value": 0, "ok": true},
+    {"name": "cls", "budget": 0.1, "value": 0, "ok": true},
+    {"name": "lcp_ms", "budget": 2500, "value": 720, "ok": true}
+  ],
+  "notes": "First live Playwright validation against an actually-deployed self-contained design proposal. Pattern proven. The one a11y violation (color-contrast on .ml-2 / muted timestamps) is a real DOM-rendered defect the static heuristic could not catch — Playwright's value proposition demonstrated."
 }
