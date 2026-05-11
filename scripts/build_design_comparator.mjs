@@ -175,6 +175,17 @@ function renderPanel(opt) {
       ${j.violations?.length ? `<span class="judge-violations">${j.violations.length} violation${j.violations.length === 1 ? "" : "s"}</span>` : ""}
     </div>` : "";
 
+  // a11y row — populated when Stage 3.5 ran.
+  const a11yCount = manifest.build?.a11y_violations;
+  const a11yMode = manifest.build?.a11y_scan_mode;
+  const a11yRow = (a11yCount != null) ? `
+    <div class="judge-row">
+      ${a11yCount > 5
+        ? `<span class="pill warn">a11y ${a11yCount} ⚠</span>`
+        : `<span class="pill ok">a11y ${a11yCount}</span>`}
+      <span class="judge-score">${htmlEscape(a11yMode ?? "scan")}</span>
+    </div>` : "";
+
   return `
     <section class="panel" data-option="${option}">
       <div class="panel-head">
@@ -200,6 +211,7 @@ function renderPanel(opt) {
           ${sacrifices.map(s => `<span class="pill warn">− ${htmlEscape(s)}</span>`).join("")}
         </div>
         ${judgeRow}
+        ${a11yRow}
       </div>
     </section>
   `;

@@ -238,6 +238,30 @@ For each failed build:
 
 If invoked with `--dry-run`, skip Stage 3 entirely. Surface a summary that lists each option's local path + manifest.yaml + rationale.md and instruct the user that `/fsi-design-review --static` can run the comparator off local files.
 
+## Stage 3.5 — a11y scan per option (~1 min)
+
+After Cloud Build + deploy completes (Stage 3), run the accessibility check against each option's deployed URL:
+
+```bash
+node scripts/check_a11y_per_option.mjs <use_case>
+```
+
+This invokes pa11y against each `.fsi-state/<uc>/proposals/<x>.url` and stamps each option's `manifest.yaml: build.a11y_violations` + `build.a11y_scan_mode` + `build.a11y_violation_codes`.
+
+If pa11y is not installed (or `--dry-run` was used), fall back to:
+
+```bash
+node scripts/check_a11y_per_option.mjs <use_case> --static
+```
+
+The static heuristic does NOT replace a real pa11y run — it's a directional offline check. It catches obvious failures (`<div onClick>`, `<img>` without `alt`, icon-only buttons without `aria-label`, anchors without `href`).
+
+Violation budget: **5 per option**. Options exceeding the budget get a ⚠ badge in the comparator but are NOT auto-failed — the user can still pick them; the judge surfaces the count as a violation. Options below budget pass clean.
+
+### Refusal handling
+
+If pa11y fails for every option (binary missing, network down): fall back to `--static` and note in the hand-off panel that the live a11y scan didn't run. The user can run the live scan later via `/fsi-design-review --a11y-rescan`.
+
 ## Stage 4 — Hand off to /fsi-design-review
 
 Print the next-steps panel:

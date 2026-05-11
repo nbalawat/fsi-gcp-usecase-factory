@@ -187,6 +187,11 @@ for opt in a b c d; do
   [[ "$opt" == "c" ]] && axis="affordance"
   [[ "$opt" == "d" ]] && axis="wildcard"
   OPT_UP=$(printf "%s" "$opt" | tr '[:lower:]' '[:upper:]')
+  # Per-option a11y violation count so the comparator can render both states.
+  a11y_count=4
+  a11y_mode="static-heuristic"
+  [[ "$opt" == "a" ]] && a11y_count=3
+  [[ "$opt" == "b" ]] && a11y_count=8 && a11y_mode="pa11y-live"
   cat > "$PROP_DIR/option-$opt/manifest.yaml" <<MFEOF
 schema_version: "1.0.0"
 option: $OPT_UP
@@ -214,6 +219,8 @@ hero_screenshot: hero.png
 build:
   build_succeeded: true
   deploy_succeeded: false
+  a11y_violations: $a11y_count
+  a11y_scan_mode: "$a11y_mode"
 MFEOF
 done
 
@@ -239,6 +246,47 @@ assert_grep "judge-report.json"      ".claude/skills/fsi-design-proposals/SKILL.
 assert_grep "judge:"                  ".claude/schemas/option-manifest.schema.yaml" "option manifest schema has judge field"
 echo
 
+echo "12c. A11y gate (Phase 0.2) wired:"
+assert_path "scripts/check_a11y_per_option.mjs"                                 "a11y check script present"
+assert_grep "Stage 3.5 — a11y scan"      ".claude/skills/fsi-design-proposals/SKILL.md" "Stage 3.5 named in skill"
+assert_grep "check_a11y_per_option.mjs"  ".claude/skills/fsi-design-proposals/SKILL.md" "skill calls the a11y script"
+# bash -n equivalent for node — syntax check
+if node --check "$REPO/scripts/check_a11y_per_option.mjs" 2>/dev/null; then
+  green "  ✓ a11y script parses"
+else
+  red   "  ✗ a11y script has syntax error"
+  failed=$((failed + 1))
+fi
+# a11y static heuristic finds violations in a known-bad fixture
+A11Y_TEST_REPO="$(mktemp -d)/a11y-test-repo"
+mkdir -p "$A11Y_TEST_REPO/scripts" "$A11Y_TEST_REPO/usecases/myuc/ui/proposals/option-a/app"
+cp "$REPO/scripts/check_a11y_per_option.mjs" "$A11Y_TEST_REPO/scripts/"
+cat > "$A11Y_TEST_REPO/usecases/myuc/ui/proposals/option-a/manifest.yaml" <<MFEOF
+schema_version: "1.0.0"
+option: A
+MFEOF
+cat > "$A11Y_TEST_REPO/usecases/myuc/ui/proposals/option-a/app/page.tsx" <<TSXEOF
+export default function P() {
+  return (
+    <div>
+      <img src="/x.png" />
+      <div onClick={() => 1}>click</div>
+      <button><svg /></button>
+      <a>link</a>
+    </div>
+  );
+}
+TSXEOF
+(cd "$A11Y_TEST_REPO" && node scripts/check_a11y_per_option.mjs myuc --static >/dev/null 2>&1)
+if grep -q "a11y_violations: 4" "$A11Y_TEST_REPO/usecases/myuc/ui/proposals/option-a/manifest.yaml"; then
+  green "  ✓ a11y heuristic detects 4 violations in fixture (img/div/button/a)"
+else
+  red   "  ✗ a11y heuristic did not find expected violations"
+  failed=$((failed + 1))
+fi
+rm -rf "$A11Y_TEST_REPO"
+echo
+
 echo "12b. Comparator renders judge row when judge fields populated:"
 # Inject judge into option-a manifest, regenerate, grep
 PROP_DIR_2="$REPO/usecases/__test_design_proposals__/ui/proposals"
@@ -258,10 +306,13 @@ judge:
   recommended: true
   ranking_position: 1
 JEOF
+# (a11y fields already in the manifests created in section 11; no append needed.)
 node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev/null 2>&1
 assert_grep "judge pick"        "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders judge-pick badge"
 assert_grep "composite 4.2"     "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders composite score"
 assert_grep "1 violation"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders violation count"
+assert_grep "a11y 3"            "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders a11y under-budget pill"
+assert_grep "a11y 8 ⚠"          "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders a11y over-budget warning"
 echo
 
 if [[ $failed -gt 0 ]]; then
