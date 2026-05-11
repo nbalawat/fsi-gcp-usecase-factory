@@ -1,0 +1,81 @@
+schema_version: "1.0.0"
+use_case_id: payment-fraud-scoring-test
+chosen_option: A
+variation_axis: density
+chosen_at: "2026-05-11T05:10:00Z"
+locked_at: "2026-05-11T05:10:00Z"
+iteration_count: 0
+lock_level: layout-only
+
+decision_rationale: |
+  Judge LLM (source-only) ranked **A (4.48) > D (4.10) > B (3.78) > C (3.74)**.
+  A wins on event-spine-first home page, zero arbitrary Tailwind classes,
+  and honest 0-HITL framing matching the canvas (advisory real-time pattern).
+
+  Playwright runtime validation against the live deployed services:
+    A: a11y 18, LCP 672ms, CLS 0.00, 0 console errors, 12 failed requests, 3/4 budgets
+    B: a11y 30, LCP 632ms, CLS 0.00, 12 console errors, 12 failed requests, 2/4 budgets
+    C: a11y  6, LCP 604ms, CLS 0.00, 0 console errors,  1 failed request,  3/4 budgets
+    D: BUILD FAILED — RSC violation (function passed to Client Component during SSG)
+
+  B disqualified by 12 console errors at runtime. D disqualified by build
+  failure (real React Server Components defect: `buildEventHref` function
+  passed from Server to Client component triggering static-generation
+  timeout). C has cleanest runtime metrics (lowest a11y violations,
+  fewest failed requests) but judge ranked it last on source quality.
+
+  A locked because the judge's source-quality analysis remains the
+  primary signal when runtime is clean of console errors. A's higher
+  a11y count and failed-request count are iterable defects, not
+  architectural ones. The 12 failed requests trace to canonical
+  `/case/sample` and `/approval/sample` routes which don't exist in
+  this real-time pattern (no per-case page; the pattern is throughput-
+  oriented) — that's a Playwright probe-set issue, not an A defect.
+
+annotations:
+  keep:
+    - "Event-spine-first home page — fraud events stream visibly as the page"
+    - "Throughput dashboard with MetricStrip for ops lead persona"
+    - "Zero Tailwind arbitrary values — clean tokens-only styling"
+    - "0-HITL advisory framing matching canvas (real-time, no human gate)"
+    - "MetricStrip + StatusBadge + StatCard reuse (10 shared primitives)"
+  drop: []
+  change:
+    - from: "18 axe-core a11y violations at runtime"
+      to: "Re-audit color contrast on event-stream rows + status pills; lift to WCAG AA 4.5:1"
+      reason: "Playwright caught 18 violations. Same pattern as Tier 1 (ink-3 muted text fails AA). Token-level fix in ui/packages/theme would help every future UC."
+    - from: "12 failed requests at /case/sample and /approval/sample"
+      to: "Update Playwright probe-set to exercise real-time pattern routes (the home dashboard + decision history) instead of canonical case-detail/approval"
+      reason: "Real-time console pattern doesn't have per-case routes. Probe-set is hard-coded for pipeline pattern. Update validator to read route list from manifest.yaml `routes:` key."
+
+rejected_options:
+  - option: B
+    judge_score: 3.78
+    playwright_score: 2/4 budgets passed; 12 console errors, 30 a11y
+    reason: "12 console errors at runtime indicate broken JS behavior — disqualifying. Source quality ranked 3rd. Splash-page home metaphor weak vs A's event-spine."
+  - option: C
+    judge_score: 3.74
+    playwright_score: 3/4 budgets passed; 0 console errors, 6 a11y, 1 failed req
+    reason: "Cleanest runtime but judge-lowest on source quality. Inline decline-reason actions are a useful pattern but don't match canvas's advisory-only framing. Save for future iteration."
+  - option: D
+    judge_score: 4.10
+    playwright_score: BUILD FAILED
+    reason: "Cloud Build failed during Next.js static page generation: passed function (`buildEventHref`) from Server to Client Component. Real RSC violation. Wildcard heatmap metaphor was promising — if rebuilt with proper Server/Client boundary, worth re-running against canonical case-detail variant."
+
+dual_signal_lesson: |
+  Tier 2 expansion confirmed dual-signal validation continues to be load-bearing:
+    - Judge ranked A first → confirmed by Playwright (0 console errors)
+    - Judge ranked D second → disqualified by build (RSC defect undetectable on source)
+    - Judge ranked B third → disqualified at runtime (console errors)
+    - Judge ranked C last → runtime cleanest
+
+  Judge alone would have picked A (correct). Playwright alone would have picked C
+  (sub-optimal — best runtime but weakest design). The composite signal: A
+  (judge winner, runtime-clean of console errors) — exactly the use case that
+  justifies the two-pass cost.
+
+  Codify as Rule 45: dual-signal divergence is normal; lock on the option that
+  passes BOTH judge ≥4.0 AND Playwright runtime clean (0 console errors).
+
+canvas_sha256: cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1
+run_id: 20260511T043500Z-payment-fraud-scoring-test-run1

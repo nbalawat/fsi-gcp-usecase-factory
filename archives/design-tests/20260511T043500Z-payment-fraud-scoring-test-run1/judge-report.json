@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "payment-fraud-scoring-test",
+  "run_id": "20260511T043500Z-payment-fraud-scoring-test-run1",
+  "canvas_sha256": "cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1",
+  "judged_at": "2026-05-11T05:03:13Z",
+
+  "scores": {
+    "A": {
+      "ui_standards": 4.7,
+      "agentic_principles": 4.0,
+      "reuse_count": 10,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "canvas_checksum mismatch: agent saw stale canvas (manifest declares cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f vs run canvas cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1)",
+        "DECISION_STREAM is module-load-time deterministic — labelled 'live' but is static at runtime (universal across all four options; would require SSE wiring to be truly live)"
+      ],
+      "strengths": [
+        "Home page IS the stream — event-spine-first delivered directly on the landing page (DecisionStream + per-row 'top factor' + per-row latency + tick-in highlight on the 4 most-recent rows)",
+        "Whole-row Link affordance — every DecisionRow is wrapped in <Link href='/case/{id}'> (no orphan-cell click targets; ui-standards Rule 4.5 satisfied byte-for-byte)",
+        "Zero arbitrary Tailwind values — grid templates set via inline `style={{ gridTemplateColumns }}` exactly to dodge the Rule 4 hazard",
+        "Honest HITL framing — /approval/[id] is explicitly labelled 'step-up queue — advisory, no HITL gate'; no fake approval surface invented",
+        "Sparse-density discipline — every row identical height/grid, tabular-nums, no card/shadow chrome (matches real-time persona of 200 tx/sec scanning)",
+        "Defensive UI — DECISION_STREAM falls back when service_invoked events are absent; getTransaction falls back to PRIMARY_BORROWER if not found",
+        "Score factor bars use signed contributions with centered divergence and inline % widths (no arbitrary Tailwind), with bar tone tied to semantic tokens"
+      ]
+    },
+    "B": {
+      "ui_standards": 3.7,
+      "agentic_principles": 3.5,
+      "reuse_count": 12,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "canvas_checksum mismatch: agent saw stale canvas",
+        "Multiple arbitrary Tailwind grid templates — LiveTicker.tsx:55 grid-cols-[7rem_5rem_1fr_auto], FeatureFiringList.tsx:69 grid-cols-[1fr_auto_auto], SampleContribution.tsx:69 grid-cols-[12rem_1fr_5.5rem], PolicyTuneClient.tsx:170 lg:grid-cols-[1fr_1fr], app/case/[id]/page.tsx:167 lg:grid-cols-[1fr_22rem], app/approval/[id]/page.tsx:164 lg:grid-cols-[1fr_22rem] — ui-standards 'no Tailwind arbitrary values' Rule 4 deduction",
+        "Home page (app/page.tsx) is a placeholder splash — two <Link> buttons and intro copy, no live model surface; the model-first metaphor and event-spine landing both live one route in at /case/[id]"
+      ],
+      "strengths": [
+        "Uses 6 shared primitives including ApprovalGate — the only option that exercises the canonical approval primitive (correctly reinterpreted for policy-tuning since per-tx HITL is none)",
+        "Honest HITL framing — every irrevocable policy change flows through the shared ApprovalGate primitive with disposition (accept/edit/reject) handlers wired",
+        "SR 11-7 audit framing explicit on /approval/[id] — 'advisory model · policy-level HITL only' callout in the right rail",
+        "Sample on the curve metaphor genuinely orthogonal — case/[id] highlights the bucket the active sample lands in (highlightIdx), tying every transaction back to the model's distribution",
+        "Per-policy day-impact panel (auto-approve / gray / auto-decline tx/day) is display-only — no thresholds applied in component, all numbers pre-computed in data adapter",
+        "PolicyTuneClient uses real <input type='number'> with label htmlFor + diff panel (subtraction only) — no business logic in component"
+      ]
+    },
+    "C": {
+      "ui_standards": 3.7,
+      "agentic_principles": 3.4,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "canvas_checksum mismatch: agent saw stale canvas",
+        "Arbitrary Tailwind grid templates on case/[id] and approval/[id] pages — lg:grid-cols-[1fr_22rem] (Rule 4 deduction)",
+        "Home page (app/page.tsx) is a placeholder splash — no live decline-stream surface on landing; the bulk-tuning surface that defines this option only appears at /approval/[id]",
+        "approval/[id]/page.tsx:43 computes meanScore via sum-reduce arithmetic — display-only but borderline; could be lifted into lib/data.ts as a pure adapter to keep page components free of math"
+      ],
+      "strengths": [
+        "Distinctive primary affordance — every decline reason carries its own inline {override · allowlist · tune-threshold · step-up} button row; affordance-pattern is genuinely 'inline-per-section' and unique across the four options",
+        "Bulk tuning surface (DeclineStream) renders an ActionLog that turns every queued tune into an audit-trail-in-the-making — the audit-as-SOP principle is the primary metaphor of the action",
+        "Same DeclineReasonActions primitive renders both case detail (compact=false with explanation paragraph) and bulk feed (compact=true) — strong reuse discipline within the use-case primitives",
+        "Every interactive control is a real <button type='button' onClick=...> or <a href=...> — no bare div-as-button anywhere; disabled state set when an action has been disposed (prevents double-action)",
+        "Five shared primitives composed cleanly into six UC primitives; reuse footprint and net-new count both meet floor"
+      ]
+    },
+    "D": {
+      "ui_standards": 3.7,
+      "agentic_principles": 4.3,
+      "reuse_count": 9,
+      "reuse_floor_met": true,
+      "net_new_count": 4,
+      "hitl_gates_wired": true,
+      "violations": [
+        "canvas_checksum mismatch: agent saw stale canvas",
+        "Self-disclosed a11y violation in manifest: 'WCAG2A.Principle2.Guideline2_1.2_1_1: anchor without href' (build.a11y_violations: 1) — the only option that ships with a known a11y debt",
+        "Arbitrary Tailwind grid template — lg:grid-cols-[1fr_22rem] on both routes (Rule 4 deduction)",
+        "Routes diverge from the canonical contract — implements heatmap-home + event-drill-in (app/page.tsx + app/event/[id]/page.tsx) instead of the case-detail + approval-flow routes the judge prompt names. Defensible given the wildcard axis and 0-HITL canvas, but a delta the human should know about"
+      ],
+      "strengths": [
+        "Population-first metaphor genuinely orthogonal to A/B/C — the feature × MCC heatmap reveals attack-wave shape that no row-table can show, and is the only option where the firing collection (not the score, not the model, not a transaction) is the unit of attention",
+        "Two-way navigation cell ↔ event — every contributing feature pill on the event page deep-links back to its heatmap cell (?cell=feature::mcc); explicit signature affordance of the design",
+        "Every cell is a real <button type='button'> with aria-label, aria-pressed, title, and disabled={count===0} so keyboards skip empty cells — strongest accessibility discipline on interactive grid in the four options",
+        "Tokenised heat ramp (bg-heat-0…bg-heat-5) in tailwind.config — no arbitrary colours; intensity legend present",
+        "Audit trail by construction — every cell value is a pure tally of underlying events; the rationale documents the auditor-replay invariant (no thresholds computed in UI)",
+        "Strongest event-spine-first delivery on the landing page — the heatmap renders the firing population live without leaving the home route"
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["A", "D", "B", "C"],
+
+  "recommended_winner": "A",
+  "recommendation_rationale": "Option A scores highest on the composite (~4.48): it is the only option that delivers a true event-spine landing surface (the DecisionStream IS the home page, not buried behind /case/[id] or /approval/[id]), it is the only option with zero arbitrary Tailwind values (grid templates set via inline `style` precisely to honour Rule 4), it correctly frames the 0-HITL constraint via the step-up disposition queue without inventing a fake approval gate, and its whole-row Link affordance pattern matches ui-standards Rule 4.5 byte-for-byte. Option D (~4.10) is a strong runner-up and is the only option that delivers a genuinely population-level metaphor (feature × MCC heatmap with two-way cell↔event navigation) — the human should consider D if the primary persona is investigative pattern-detection rather than line-rate throughput watching. Options B (~3.78) and C (~3.74) both ship placeholder splash home pages and a cluster of arbitrary Tailwind grid values; they're within 0.2 of each other and surface different bets (B: model-as-page + policy-tuning HITL via ApprovalGate; C: inline-per-section affordance + decline-reason tuning).",
+
+  "notes_for_human": [
+    "ALL FOUR options' manifests declare canvas_checksum cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f, which does NOT match the run canvas SHA cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1 — every designer agent saw the same stale canvas. This is a uniform error and should not influence option selection; the orchestrator should investigate why the canvas_checksum drift was identical across all four agents (likely a single upstream miscompute, not four independent stalenesses).",
+    "Convergence is healthy — Jaccard ranges 0.28–0.36 across all 6 pairs; the four options share only the foundation primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge) and diverge sharply in their UC composition. The variation axes (density / metaphor / affordance / wildcard) produced meaningfully different surfaces.",
+    "B and C tie within 0.04 composite — let the human break this tie on subjective preference (B's ApprovalGate-anchored policy-tuning vs C's inline-per-reason action discipline).",
+    "B, C, and D all ship a `lg:grid-cols-[1fr_22rem]` arbitrary Tailwind value — only Option A dodged Rule 4 entirely (via inline `style` grid templates). If grid-template-cols arbitrary values were considered acceptable infrastructure (which the standards doc does not currently permit), B/C/D's ui_standards scores would each rise ~0.4.",
+    "Option B's home page (app/page.tsx) is a 35-line placeholder splash with two <Link> buttons — the design's model-first hero (ModelHero histogram + LiveTicker + FeatureFilterBar) only appears on /case/[id]. If a real /case/[id] is the intended landing in production this is fine; if /(model)/page.tsx is supposed to be the model-health monitor the design promises, the home page needs to be rebuilt.",
+    "Option C's home page is similarly a splash (2 link cards) — the bulk-tuning DeclineStream that defines the design only renders at /approval/[id]. Same caveat as B.",
+    "Option D self-discloses 1 a11y violation (anchor without href) in its manifest build.a11y_violations field — the only option with a known a11y debt before merge. If selected, this must be fixed before promotion.",
+    "Option D's routes (heatmap-home + event-drill-in) do not match the canvas-implied case-detail + approval-flow contract. Defensible given the 0-HITL canvas and wildcard axis, but the comparator should surface this delta as a banner so the human chooses with eyes open.",
+    "All four options ship deterministic 'live' data (module-load-time fixed arrays) — none have SSE/streaming wired. Real-time UC promotion will require step-1 handler + SSE endpoint regardless of which option is picked; this is uniform tech debt, not a winner signal.",
+    "Option A's case-detail page hard-codes the agent reasoning paragraph in app/case/[id]/page.tsx:114-120 — readable but should be sourced from data layer when promoted to a live use case (the values match the FACTOR_TABLE.default contributions, so the parity check is satisfied for the proposal)."
+  ]
+}

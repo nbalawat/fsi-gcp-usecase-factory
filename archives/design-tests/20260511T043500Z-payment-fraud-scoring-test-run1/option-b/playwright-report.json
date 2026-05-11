@@ -1,0 +1,391 @@
+{
+  "option": "B",
+  "use_case": "payment-fraud-scoring-test",
+  "run_id": "20260511T043500Z-payment-fraud-scoring-test-run1",
+  "canvas_sha256": "cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1",
+  "validated_at": "2026-05-11T05:07:46.925Z",
+  "base_url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app",
+  "routes": {
+    "case-sample": {
+      "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/case/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-768.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 312
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1024.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 332
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1440.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 632
+        }
+      }
+    },
+    "approval-sample": {
+      "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/approval/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-768.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 268
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1024.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 256
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1440.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+          ],
+          "console_warnings": 0,
+          "failed_requests": 2,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-b-v4uibzu6ga-uc.a.run.app/_next/static/css/20208de498c0b913.css",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 296
+        }
+      }
+    }
+  },
+  "summary": {
+    "total_a11y_violations": 30,
+    "total_console_errors": 12,
+    "total_failed_requests": 12,
+    "cls_worst": 0,
+    "lcp_worst_ms": 632,
+    "passed_budgets": 2,
+    "failed_budgets": 2
+  },
+  "budget_checks": [
+    {
+      "name": "a11y",
+      "budget": 5,
+      "value": 30,
+      "ok": false
+    },
+    {
+      "name": "console_errors",
+      "budget": 0,
+      "value": 12,
+      "ok": false
+    },
+    {
+      "name": "cls",
+      "budget": 0.1,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "lcp_ms",
+      "budget": 2500,
+      "value": 632,
+      "ok": true
+    }
+  ]
+}

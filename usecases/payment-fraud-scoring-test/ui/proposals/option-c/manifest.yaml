@@ -1,0 +1,106 @@
+schema_version: "1.0.0"
+option: C
+variation_axis: affordance
+canvas_checksum: cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f
+use_case_id: payment-fraud-scoring-test
+
+persona:
+  primary: "Fraud Ops analyst tuning the model from the decline feed"
+  context: |
+    The fraud analyst's job is NOT to approve individual transactions. The
+    job is to read the decline stream and tune the model — override for a
+    known-good customer, allowlist a misclassified merchant, adjust a rule
+    threshold, or route into step-up. Every decline reason must therefore
+    carry its own one-click affordance, inline, where the analyst is
+    already looking. Hopping to a side panel breaks the flow.
+
+density_score: 4
+motion_budget: minimal
+affordance_pattern: inline-per-section
+primary_metaphor: decline-reason-actionable
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: DeclineReasonActions
+    source: use-case
+  - name: DeclineStream
+    source: use-case
+  - name: DeclineStreamRow
+    source: use-case
+  - name: DeclineFilterBar
+    source: use-case
+  - name: CaseDisposition
+    source: use-case
+  - name: TranscriptRow
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option C treats every declined transaction as a tuning surface. The
+  decline reasons are surfaced as individual cards — and each card
+  carries its own inline action buttons (override · this customer,
+  allowlist · this merchant, tune · this threshold, step-up · 3DS).
+  The analyst disposes the model from the reason, not from a separate
+  workflow.
+
+  `case/[id]` renders ONE transaction with the full reason set,
+  `compact=false` (full explanation paragraph).
+
+  `approval/[id]` renders the bulk decline-stream tuning surface — every
+  row is itself a stack of reason cards in `compact=true` form, each
+  with its own inline buttons. A local action log captures every
+  queued tune so the analyst sees the trail being built.
+
+variation_axis_notes: |
+  affordance_pattern = inline-per-section. The five other options on the
+  affordance axis (toolbar, drawer, modal, bulk-only, gesture) are
+  explicitly NOT used here — every action is where the reason is.
+
+tradeoffs:
+  optimised_for:
+    - Tuning velocity — analyst clicks override / allowlist / tune from the row
+    - Decline reasoning legibility — every reason has its label, source, and explanation
+    - No-hop disposition — affordance lives next to the explanation
+    - Reuse — five shared primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge); UC primitives compose them
+  sacrifices:
+    - Vertical density (each row is taller than a tombstone-only list view)
+    - Real-time motion (this is a tuning surface, not a streaming meter — motion_budget = minimal)
+    - One-step disposition only (multi-row bulk select is intentionally NOT in scope)
+
+mock_data:
+  source: usecases/payment-fraud-scoring-test/ui/proposals/_shared/mock-data.ts
+  read_only: true
+
+build_seed:
+  seed: |
+    Every declined transaction shows its decline reason as a one-click
+    'override' or 'add to allowlist' or 'tune threshold' button. The
+    fraud analyst's job is not to approve transactions; it's to tune
+    the model from the decline stream. Each row in the decline feed
+    has its own inline action.
+build:
+  playwright_validated_at: "2026-05-11T05:08:03.429Z"
+  playwright_a11y_violations: 6
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 604
+  playwright_budgets_passed: 3
+  playwright_budgets_failed: 1
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true

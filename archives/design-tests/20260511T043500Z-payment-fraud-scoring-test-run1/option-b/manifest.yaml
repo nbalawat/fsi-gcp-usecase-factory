@@ -1,0 +1,102 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+primary_metaphor: model-first
+canvas_checksum: cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f
+use_case_id: payment-fraud-scoring-test
+
+persona:
+  primary: "ML Ops / Model owner of the gray-zone-fraud-scorer"
+  context: |
+    Owns the model. Reads the page to answer: "Is the model behaving?
+    Which features are still doing the work? Is the score distribution
+    drifting? When a borderline sample lands in the gray band, why?"
+    Disposition is at the POLICY level (velocity thresholds, band cuts)
+    — never at the individual transaction level, because real-time
+    fraud has no per-tx HITL.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: model-hero-with-side-rails
+primary_metaphor: model-first
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: ModelHero
+    source: use-case
+  - name: FeatureFiringList
+    source: use-case
+  - name: FeatureFilterBar
+    source: use-case
+  - name: SampleContribution
+    source: use-case
+  - name: LiveTicker
+    source: use-case
+  - name: PolicyTuneClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option B treats the MODEL as the primary metaphor. The page IS the
+  model's behavior. Score distribution histogram (20 buckets, banded
+  approve/gray/decline) is the hero — every transaction is a sample
+  contributing to one of those bars. The feature-firing list shows
+  which inputs are actually doing the work, with 24h drift indicators
+  per feature. A single optional highlight pin lands the active sample
+  on the curve.
+
+  The case route ("one sample on the curve") drills into a single
+  transaction: where on the histogram it lives, which features
+  contributed (signed weights, normalised bars), and — only when the
+  gray-zone agent was invoked — the agent's natural-language rationale
+  and confidence.
+
+  The approval route is reinterpreted as POLICY tuning, because the
+  canvas declares zero per-transaction HITL gates. The ML-ops operator
+  picks a threshold (velocity_threshold_by_mcc per MCC, decline-band
+  floor, approve-band ceiling), proposes a value, sees the pre-shaped
+  diff, and submits via the shared ApprovalGate primitive — the only
+  path that records the change for audit.
+
+tradeoffs:
+  optimised_for:
+    - Model-owner persona — every primary surface answers "how is the model behaving?"
+    - Distribution-first thinking — the histogram makes drift visible at a glance
+    - Sub-second emphasis — p99 latency is in the metric strip, the live ticker shows the millisecond clock
+    - Reuse — six shared primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, ApprovalGate) carry the foundation
+    - Honest HITL framing — no fake per-case approval; the human-in-the-loop surface is policy, which matches the canvas
+  sacrifices:
+    - The individual transaction is not the unit of attention — investigators looking for one card's history will have to navigate elsewhere
+    - No spatial pipeline rail (there are no stages worth pinning for sub-second flow)
+    - The histogram is intentionally static-snapshot — no time-windowing slider
+    - Per-feature drill (PDP / SHAP) is summarised, not foregrounded; this is a health monitor, not an evaluation harness
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 12
+  reuse_floor_met: true
+  playwright_validated_at: ""
+  playwright_a11y_violations: 0
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 0
+  playwright_budgets_passed: 0
+  playwright_budgets_failed: 0

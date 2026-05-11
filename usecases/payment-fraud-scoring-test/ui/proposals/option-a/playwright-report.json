@@ -1,0 +1,298 @@
+{
+  "option": "A",
+  "use_case": "payment-fraud-scoring-test",
+  "run_id": "20260511T043500Z-payment-fraud-scoring-test-run1",
+  "canvas_sha256": "cc47591b9d1241218f08426db4fc4f8d5ab013c34dcbae526d7d104d502c15b1",
+  "validated_at": "2026-05-11T05:07:28.317Z",
+  "base_url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app",
+  "routes": {
+    "case-sample": {
+      "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-768.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 2,
+          "a11y_violations_sample": [
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 5
+            },
+            {
+              "id": "heading-order",
+              "impact": "moderate",
+              "help": "Heading levels should only increase by one",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 292
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1024.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 2,
+          "a11y_violations_sample": [
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 5
+            },
+            {
+              "id": "heading-order",
+              "impact": "moderate",
+              "help": "Heading levels should only increase by one",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 292
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1440.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 2,
+          "a11y_violations_sample": [
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 5
+            },
+            {
+              "id": "heading-order",
+              "impact": "moderate",
+              "help": "Heading levels should only increase by one",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 672
+        }
+      }
+    },
+    "approval-sample": {
+      "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/approval/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-768.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 4,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-001d?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-000d?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0025?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0035?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 4,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-allowed-role",
+              "impact": "minor",
+              "help": "ARIA role should be appropriate for the element",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-children",
+              "impact": "critical",
+              "help": "Certain ARIA roles must contain particular children",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-parent",
+              "impact": "critical",
+              "help": "Certain ARIA roles must be contained by particular parents",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 252
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1024.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 5,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0005?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-000d?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0025?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0015?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0035?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 4,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-allowed-role",
+              "impact": "minor",
+              "help": "ARIA role should be appropriate for the element",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-children",
+              "impact": "critical",
+              "help": "Certain ARIA roles must contain particular children",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-parent",
+              "impact": "critical",
+              "help": "Certain ARIA roles must be contained by particular parents",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 232
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1440.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 3,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-0015?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-001d?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://fsi-uc-payment-fraud-scoring-test-design-a-v4uibzu6ga-uc.a.run.app/case/1715350200-000d?_rsc=pp6a0",
+              "reason": "net::ERR_ABORTED"
+            }
+          ],
+          "a11y_violation_count": 4,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-allowed-role",
+              "impact": "minor",
+              "help": "ARIA role should be appropriate for the element",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-children",
+              "impact": "critical",
+              "help": "Certain ARIA roles must contain particular children",
+              "nodes": 1
+            },
+            {
+              "id": "aria-required-parent",
+              "impact": "critical",
+              "help": "Certain ARIA roles must be contained by particular parents",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 264
+        }
+      }
+    }
+  },
+  "summary": {
+    "total_a11y_violations": 18,
+    "total_console_errors": 0,
+    "total_failed_requests": 12,
+    "cls_worst": 0,
+    "lcp_worst_ms": 672,
+    "passed_budgets": 3,
+    "failed_budgets": 1
+  },
+  "budget_checks": [
+    {
+      "name": "a11y",
+      "budget": 5,
+      "value": 18,
+      "ok": false
+    },
+    {
+      "name": "console_errors",
+      "budget": 0,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "cls",
+      "budget": 0.1,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "lcp_ms",
+      "budget": 2500,
+      "value": 672,
+      "ok": true
+    }
+  ]
+}

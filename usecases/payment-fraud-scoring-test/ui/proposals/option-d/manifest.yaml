@@ -1,0 +1,74 @@
+schema_version: "1.0.0"
+option: D
+variation_axis: wildcard
+canvas_checksum: cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f
+use_case_id: payment-fraud-scoring-test
+
+persona:
+  primary: "Fraud Ops analyst monitoring the live fraud floor"
+  context: |
+    The analyst's first question every shift is "what is the model firing
+    on right now?" They want to see — across the entire firing
+    population, not one transaction at a time — which (feature × MCC)
+    combinations are lighting up. A hot cell is a population, not a
+    case; clicking it surfaces the individual firings that produced it.
+    From a single firing, the analyst can navigate back to the cell to
+    see siblings and confirm the pattern is real.
+
+density_score: 4
+motion_budget: minimal
+affordance_pattern: cell-as-button
+primary_metaphor: feature-mcc-heatmap
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: HeatmapGrid
+    source: use-case
+  - name: HeatmapCellDetail
+    source: use-case
+  - name: DecisionStreamRail
+    source: use-case
+  - name: EventForensicCard
+    source: use-case
+
+routes_implemented:
+  - heatmap-home
+  - event-drill-in
+
+design_summary: |
+  Option D treats the firing population as a 2-dimensional heat surface:
+  rows are the model's top fraud features, columns are merchant
+  category codes, cells count the non-approve firings that lit up both
+  axes. A click drills into the individual transactions in that cell;
+  each transaction's detail page links its contributing features BACK
+  to their cells, so the analyst can move fluidly between population
+  view and case view.
+
+tradeoffs:
+  optimised_for:
+    - Population-level pattern detection — "the velocity-5m × wire/crypto cell just lit red" beats any single-row table for spotting attack waves
+    - Two-way navigation between population (heatmap cell) and case (event) — every feature pill on the event page deep-links to the cell that pattern belongs to
+    - Audit explainability — every count comes from a pure tally of events; no thresholds are computed in the UI
+    - Reuse — five shared primitives carry chrome and metrics; novelty is in the heatmap aggregator + grid
+  sacrifices:
+    - Per-event detail is secondary — readers who think first in "which transaction" need to use the right-rail stream
+    - The 8×8 grid forces fixed feature and MCC axes; the model can fire on far more features than 8, so this view summarises (the firing-population view, not the raw-feature-vector view)
+    - Approve-only firings are intentionally not counted in cell intensity; a quiet cell does NOT mean "no traffic," it means "no fraud signal"
+    - There is no SLA-clock anchor; the real-time console pattern would normally surface a P50/P99 latency rail — that lives in a sibling option
+build:
+  a11y_violations: 1
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+    - "WCAG2A.Principle2.Guideline2_1.2_1_1: anchor without href"
+  reuse_count_net_new: 0
+  reuse_count_shared: 9
+  reuse_floor_met: true

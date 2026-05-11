@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --accent: #86BC24;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0F0B0B;
+  font-family: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tiny utility classes used by option-A's dense rows. */
+.eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #665D55;
+}
+
+/* Live-tick animation for newly arrived decision rows. Used by
+   DecisionStream; kept here so the component file stays declarative. */
+@keyframes tickIn {
+  0%   { background-color: #FBF1D6; }
+  100% { background-color: transparent; }
+}
+.tick-in {
+  animation: tickIn 0.9s ease-out 1;
+}

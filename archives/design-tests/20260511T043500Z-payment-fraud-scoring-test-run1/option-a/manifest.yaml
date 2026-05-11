@@ -1,0 +1,124 @@
+schema_version: "1.0.0"
+option: A
+variation_axis: density
+canvas_checksum: cc47591b9d1241218f08426d1f4ca8be84cd1b6cb4cb31bc23066ab2f9e80c5f
+use_case_id: payment-fraud-scoring-test
+console_pattern: real-time
+
+persona:
+  primary: "Fraud Ops Lead watching transactions at line rate"
+  context: |
+    The decision is already made by the gray-zone-fraud-scorer agent.
+    The screen is a flood of approve / decline / step-up rows plus the
+    three KPIs the Lead actually watches: rolling decline rate, p99
+    agent latency, and a model drift gauge. The Lead drills into a row
+    only when something looks off — most of the time the page is a
+    pure throughput dashboard.
+
+density_score: 1
+motion_budget: minimal-tick-in
+affordance_pattern: whole-row-link
+primary_metaphor: throughput-stream
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: KpiHeader
+    source: use-case
+  - name: DecisionStream
+    source: use-case
+  - name: DecisionRow
+    source: use-case
+  - name: ScoreFactorBars
+    source: use-case
+  - name: StepUpQueueRow
+    source: use-case
+
+routes_implemented:
+  - live-floor
+  - transaction-detail
+  - step-up-queue
+
+design_summary: |
+  Option A treats the console as a TICKER. The home route is a flood of
+  one-line decision rows scrolling past the Fraud Ops Lead at line rate;
+  three sparse KPI tiles sit above (decline %, p99 latency, drift). The
+  /case/[id] route is a single transaction's score-factor breakdown
+  rendered as diverging bars + a one-line agent reasoning summary —
+  enough to audit a decision in under five seconds. The /approval/[id]
+  route is repurposed as a step-up challenge audit queue (the UC has
+  zero HITL gates by design; the only place a human touches a case is
+  reviewing how customers responded to step-up challenges).
+
+  Variation axis: density. Every surface is single-line, tabular-nums,
+  fixed-grid. Chrome is invisible: no cards, no shadows, no per-row
+  padding-y beyond what one line of mono text needs. The whole row is
+  the click target — never a single cell.
+
+real_time_specifics:
+  hitl_gates_required: 0
+  hitl_gates_treatment: |
+    Per agentic-ui-principles "human in the loop" principle: real-time
+    UCs handle HITL via a step-up disposition review queue. The
+    /approval/[id] route exposes this surface explicitly — it shows the
+    customer's response to each challenge (passed / failed / expired)
+    so Fraud Ops can audit a sample. No business decision is taken in
+    this view; drill-in opens the underlying transaction.
+  business_kpi: rolling-decline-rate
+  latency_budget_ms: 800
+  motion: |
+    Only the most-recent 4 rows in the decision stream tick in with a
+    400ms warning-tint fade. No marquee, no auto-scroll, no animation
+    on KPI tiles. The Lead's eye scans, the rows do not jump.
+
+tradeoffs:
+  optimised_for:
+    - Throughput comprehension — 64 rows visible on a single screen
+    - Sub-second mental scan — same grid, same widths, every row
+    - Decline-rate as headline KPI (the bank's primary fraud metric)
+    - Drill-down audit (whole-row link → /case/[id] → score factors)
+    - Step-up audit (the one human-touch surface in a 0-HITL UC)
+  sacrifices:
+    - No "agent thinking" tile on the home page — that lives behind
+      the transaction detail (one extra click). Density 1 means the
+      stream wins over per-row reasoning previews.
+    - No 2D state grid (surveillance-console style); throughput beats
+      cross-section for this persona.
+    - No workflow-stage rail — the real-time process has only four
+      stages (received → scored → decided → settled) and they fly past
+      in <800ms, so a spatial rail wastes pixels.
+    - Sparkline visualisation is dropped from KPIs to keep the band
+      under 90px tall.
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 10
+  reuse_floor_met: true
+
+a11y:
+  - "AppShell rooted on every route"
+  - "Whole-row Link wraps each decision row (no orphan onClick cells)"
+  - "Column header sibling shares the same grid template as the data row"
+  - "Filter chips are real <button type=button> with aria-selected"
+  - "Status badges carry semantic colour AND text — never colour alone"
+
+rules_satisfied:
+  - "Every page AppShell-rooted"
+  - "No Tailwind arbitrary values (grid templates set via inline style)"
+  - "No bare <button> without type or onClick"
+  - "No <div onClick>"
+  - "No <a> without href"
+  - "No inline () => passed from Server to JSX child"
+  - "Client components carry 'use client'"
