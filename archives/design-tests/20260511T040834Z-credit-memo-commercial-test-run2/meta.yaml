@@ -1,0 +1,11 @@
+use_case_id: credit-memo-commercial-test
+tier: 3
+canvas_sha256: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+generated_at: "2026-05-11T04:08:34Z"
+test_run: 2
+console_pattern: pipeline
+purpose: variance
+notes: |
+  Tier 3 variance run #2. Same canvas as run #1 (Tier 1, locked).
+  Goal: measure same-axis consistency across runs (≥0.5 Jaccard target)
+  and cross-axis divergence within a run (≤0.4 Jaccard target).

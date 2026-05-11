@@ -1152,6 +1152,63 @@ state, not the failed state, when the gate hasn't run. Plus
 
 ---
 
+## 44. Same-axis designer variance is high; rely on the OBJECTIVE Jaccard, not the LLM judge
+
+**Incident.** Tier 3 variance test (same canvas, 2 runs, same axis seeds):
+
+| Axis | Judge LLM verdict | Meta-comparator Jaccard | Ground truth |
+|---|---|---|---|
+| density (A) | "consistent" (jaccard 0.55) | 0.18 | chaotic |
+| metaphor (B) | "consistent" (jaccard 0.65) | 0.30 | drifting |
+| affordance (C) | "consistent" (jaccard 0.55) | 0.20 | chaotic |
+| wildcard (D) | "drifting (acceptable)" | 0.38 | drifting |
+
+The LLM judge reads component names semantically — `<DecisionHero>` and
+`<ExecutiveDecisionCard>` feel similar so it scores high. The
+meta-comparator computes exact-string Jaccard — they're different
+strings, so it scores low. The script is the ground truth.
+
+**What this means.** A given seed produces a CONSISTENT DESIGN PHILOSOPHY
+across runs (judge confirms) but the AGENT INVENTS DIFFERENT COMPONENT
+NAMES each time. For 100 builders running the same UC, this means:
+- Two builders running /fsi-design-proposals on the same canvas get
+  options A that share design philosophy but share <30% of components
+- The locked decision.yaml at builder #1's pick won't reuse cleanly
+  if builder #2 promotes the same option from a fresh run
+- The factory's reuse-floor gate (≥5 shared from ui/packages/) is
+  the actual stabilizer — different agents land on different mixes
+  of the SAME 14 shared primitives, so the underlying chrome is
+  consistent even when option-specific component NAMES drift
+
+**Rule.** Decisions that depend on COMPONENT IDENTITY across runs (e.g.
+"all UCs that picked option-A should share the same DecisionHero
+component") cannot be made on agent output alone. Either:
+
+1. **Accept the variance** — the design PHILOSOPHY is consistent
+   (which is what the picker actually cares about); the component
+   *names* are local to each run. This is the default position.
+2. **Promote winning components to libraries/components/** — once an
+   option is picked and lives in a real UC, the platform team can
+   identify components that should be platform-level and migrate them.
+   `/fsi-promote-to-library` handles this for agents; needs an
+   equivalent for UI components.
+3. **Pre-define component names in the canvas** — the designer prompt
+   already enumerates 14 shared primitives by name. Extending to
+   "every option must use named components from THIS list of N for
+   the hero, M for the right-rail" reduces variance at the cost of
+   designer creativity.
+
+For the V1 factory, option 1 (accept) is the right call. Option 2 is
+the natural follow-up after UC #3 ships.
+
+**CI gate.** `scripts/build_meta_comparator.mjs` already computes the
+ground-truth Jaccard and writes it to `archives/design-tests/_meta/<ts>/analysis.json`.
+`/review-uc` reads this and flags ANY UC whose chosen-option's same-axis
+Jaccard against the previous run on the same canvas is below 0.5 — not
+to block, but to surface the variance in the reviewer's feed.
+
+---
+
 ## How to use this doc
 
 **At scaffold time** — `/new-use-case` includes a step that reads the

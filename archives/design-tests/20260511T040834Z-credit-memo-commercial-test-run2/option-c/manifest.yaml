@@ -1,0 +1,100 @@
+schema_version: "1.0.0"
+option: C
+variation_axis: affordance
+affordance_pattern: inline-per-section
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+use_case_id: credit-memo-commercial-test
+
+persona:
+  primary: "Underwriter / Credit officer disposing a multi-stage memo"
+  context: |
+    The reviewer reads the memo section-by-section. Each section ends
+    with the decision it enables (approve / edit & approve / request
+    revision / reject), so the eye never has to leave the section to
+    act on it. No sticky bottom bar, no modal drawer, no second
+    "review-then-approve" page.
+
+density_score: 3
+motion_budget: minimal
+primary_metaphor: sectioned-memo
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: MemoSection
+    source: use-case
+  - name: SectionAffordanceRow
+    source: use-case
+  - name: EvidenceList
+    source: use-case
+  - name: SectionNav
+    source: use-case
+  - name: BorrowerFactSheet
+    source: use-case
+  - name: RuleVerdictPanel
+    source: use-case
+
+shared_primitive_count: 5
+use_case_component_count: 6
+
+routes_implemented:
+  - case-detail        # /case/[id]
+  - approval-flow      # /approval/[id]
+
+design_summary: |
+  Option C makes the memo a sequence of FIVE sections — borrower &
+  documents, extraction, spread & rating, draft, final — and ends every
+  section that closes a HITL gate with its own inline affordance row.
+  The four affordances (approve, edit & approve, request revision,
+  reject) live as real <button>s directly under the evidence that
+  produced them; comment-required dispositions reveal a textarea
+  in-place; the irrevocable final approval surfaces a confirm strap
+  before posting. There is no sticky bottom bar. The approval flow is
+  the same memo, filtered to the gated sections and anchored to the
+  reviewer's focus gate.
+
+tradeoffs:
+  optimised_for:
+    - Decisions live next to the data that informs them
+    - Reviewer never context-switches to a separate approval page or modal
+    - Each affordance is a real button with an onClick handler (ui-standards Rule 1)
+    - Per-gate recommendation appears AT the affordance row — not elsewhere
+    - Sectioned reading discipline — you cannot accidentally approve a section you have not read
+    - Five shared primitives carry shell + signoff scaffolding
+  sacrifices:
+    - No single bulk-approve affordance (intentional — every section gets its own disposition)
+    - Long pages on the case-detail view; reliant on the right-rail anchor nav to navigate
+    - Inline expansion of the comment box temporarily increases section height
+    - Compared to a chat-style transcript, the section boundary obscures fine cross-stage timing
+    - Approval flow shows 4 sections; the borrower-intake section is intentionally not in scope
+
+hero_screenshot: hero.png
+
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true
+  playwright_validated_at: null
+  playwright_a11y_violations: null
+  playwright_console_errors: null
+  playwright_cls_worst: null
+  playwright_lcp_worst_ms: null
+  playwright_budgets_passed: null
+  playwright_budgets_failed: null
+
+hitl_gates_wired:
+  - extraction_review
+  - rating_review
+  - draft_review
+  - final_approval

@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "credit-memo-commercial-test",
+  "run_id": "20260511T040834Z-credit-memo-commercial-test-run2",
+  "test_run": 2,
+  "purpose": "variance",
+  "canvas_sha256": "383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251",
+  "compared_against_run_id": "20260511T005241Z-credit-memo-commercial-test-run1",
+  "judged_at": "2026-05-11T04:25:00Z",
+
+  "scores": {
+    "A": {
+      "ui_standards": 4.3,
+      "agentic_principles": 2.4,
+      "reuse_count": 12,
+      "reuse_floor_met": true,
+      "net_new_count": 3,
+      "hitl_gates_wired": true,
+      "violations": [
+        "manifest declares 1 a11y violation (anchor without href) — confirm site of the offender before promotion",
+        "agentic-ui Principle 1 (event-spine-first) is explicitly sacrificed — agent/service activity surfaces only as a four-number signal strip; no live PipelineActivity tile, no per-event row",
+        "agentic-ui Principle 3 (agent activity visible live) is explicitly sacrificed — agent reasonings rendered as a count ('5') only; no per-agent reasoning surface, no tokens/latency drill-in",
+        "agentic-ui Principle 2 (process metaphor) is thin — WorkflowStageRail is a compressed top strip; no stage hero, no stage bucketing"
+      ],
+      "strengths": [
+        "Fixed the run-1 AppShell-rooting violation — case AND approval pages now wrap in <AppShell> with brand/subtitle/context/nav; the hand-rolled <ExecutiveHeader> is gone",
+        "No arbitrary Tailwind values anywhere (0 'text-[...]', 'w-[...]', etc.) — clean against ui-standards Rule 1.6 in this run",
+        "No Intl.NumberFormat in components or pages — all formatting moved into lib/data.ts (run-1's Rule 4.12 violation is fixed)",
+        "Twelve shared primitives composed in: AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, WorkflowStageRail, RegulatoryClock, StepProgress, ApprovalGate — strong reuse density for a sparse-density option",
+        "Three KPIs (Exposure / AI recommendation / Gates decided) — disciplined to the sparse axis, never five",
+        "Approval page is single-column with full-width ApprovalGate; GatePillRow lives twice (anchors on case, tabs on approval) — same primitive, two modes",
+        "All 4 HITL gates wired through the shared ApprovalGate primitive in GateApprovalClient"
+      ]
+    },
+    "B": {
+      "ui_standards": 4.6,
+      "agentic_principles": 4.2,
+      "reuse_count": 13,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "manifest declares 0 a11y violations and 0 arbitrary tokens — but 'Agent activity visible live' is surfaced via StageEventList rows (icon + tokens-in/out) rather than the full four-state agent-activity tile from agent-activity-ui skill — partial credit on Principle 3 (same partial-credit verdict as run-1 B)",
+        "PipelineMini is imported on the case page but reads as a thin chrome accent (5-step paradigm anchor) rather than a live event-spine surface — the live spine is bucketed inside the StageEventList, which is correct for this axis but less 'spine-like' than run-1's PipelineSpine"
+      ],
+      "strengths": [
+        "Highest shared-primitive density of the four (8 distinct shared primitives in code: AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, WorkflowStageRail, PipelineMini, ApprovalGate) — matches or beats run-1 B",
+        "WorkflowStageRail is the load-bearing spine on BOTH routes — case detail uses it to drive the 'current stage IS the hero' layout, approval flow uses it to anchor each gate to the stage that produced it",
+        "StageHero + StagePriorRail + StageFutureList give the explicit 3-col 'prior/now/future' shape called out in the rationale (60% viewport for current stage at lg+)",
+        "StageEventList surfaces per-event tokens_in / tokens_out / latency / actor inline — agent activity is visible at the row level inside each stage bucket",
+        "GateRespondClient renders each gate with the workflow-stage context that led to it; live gate gets the full ApprovalGate, decided gates compress to an audit row — same pattern as run-1 B's GateChain",
+        "No arbitrary Tailwind values, no Intl.NumberFormat in components, no JSON dumps — clean ui-standards compliance",
+        "Defensive: typed Stage / NavItem props, fallback values across the adapter, banker-readable copy throughout"
+      ]
+    },
+    "C": {
+      "ui_standards": 4.0,
+      "agentic_principles": 3.4,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ui-standards Rule 4.12 (no Intl.NumberFormat in components/pages): components/BorrowerFactSheet.tsx:23 instantiates 'new Intl.NumberFormat(\"en-US\", { ... })' inline — will hydrate inconsistently across SSR/CSR; should move to lib/format.ts and pass the formatted string in via props",
+        "agentic-ui Principle 1 (event-spine-first) is weak — no live event-stream tile, no PipelineActivity; EvidenceList surfaces events inside sections but the case page has no top-level spine surface",
+        "HITL disposition is wired via the use-case-owned SectionAffordanceRow rather than the shared ApprovalGate primitive — works, audit trail is intact per-section, but ui-standards Section 2 prefers shared primitives where one exists; the rationale calls this an intentional tradeoff (decision lives next to data)",
+        "No top-level WorkflowStageRail on either route — the right-rail SectionNav substitutes as a section overview, which is consistent with the inline-per-section axis but means Principle 2 (process metaphor) reads section-as-process rather than stage-as-process"
+      ],
+      "strengths": [
+        "Strongest interpretation of agentic-ui Principle 5 (human in the loop): every gated section ends with four real <button> affordances — approve / edit & approve / request revision / reject — comment-required on the non-approve three, confirm-strap on the irrevocable final_approval",
+        "EvidenceList renders tokens-in / tokens-out / latency on agent rows — agent activity is visible at the row level inside each section",
+        "Section-to-gate mapping in lib/data.ts is explicit and audit-traceable (every section declares the canvas HITL gate it closes)",
+        "No arbitrary Tailwind values, no JSON dumps in user-facing fields, no business arithmetic in client components — run-1 C's CaseMemo.tsx:85 arithmetic and SectionBodies.tsx JSON dumps are NOT present in run-2",
+        "All 4 HITL gates wired through SectionAffordanceRow; per-gate recommendation is rendered as guidance, never as a decision",
+        "Five-section partition (instead of nine in run-1) reduces vertical scroll while preserving the section-as-disposition-unit discipline"
+      ]
+    },
+    "D": {
+      "ui_standards": 4.4,
+      "agentic_principles": 4.0,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ui-standards Section 2 (use shared primitives via root layout): root app/layout.tsx does NOT wrap pages in <AppShell> — pages render AppShell inline (same finding as run-1 D; works, but inconsistent with Section 3.1 'AppShell-rooted via layout')",
+        "ui-standards Rule 4.4 (no formatting math in components): three components call '.toFixed(2)' inline on bbox coordinates (ValueNodeCard.tsx:107, ProvenanceInspector.tsx:94, TrustAttestationClient.tsx:231) — these are display-format operations on already-extracted data, not business arithmetic, but should move to lib/format.ts for consistency",
+        "agentic-ui Principle 2 (process as primary metaphor) is intentionally dropped — provenance-graph axis replaces the left-to-right stage rail with a topological data-dependency layout; this is the wildcard axis sacrificing the spatial metaphor for forensic causation",
+        "Principle 1 (event-spine-first) is implicit, not surfaced — every Pub/Sub event becomes a provenance edge on a value node, but there is no chronological event spine on the page (chronology is gone by design)"
+      ],
+      "strengths": [
+        "Every value-node card carries its citation (page, bbox, excerpt, confidence) inline — examiner-ready by construction",
+        "ProvenanceInspector + TrustAttestationClient sort the subtree lowest-confidence first — risky values automatically rise to the top of the reviewer's queue (strong Principle 4 + Principle 5)",
+        "GraphFilterTabs scrubs the value graph by node kind (all / extracted / computed / decided / low-confidence) — surfaces forensic slices in one click",
+        "TrustAttestationClient reframes each HITL gate as a trust attestation over a named subtree of values — the reviewer signs off on the provenance, not on a memo (this is the strongest 'audit-as-SOP' interpretation in the set)",
+        "All 4 HITL gates wired through ApprovalGate with explicit per-gate scope; irrevocable flag set on final_approval; live gate gets full primitive, decided gates compress to audit rows",
+        "Six shared primitives + five UC components; novelty is entirely in orchestration (no math, no thresholds, no rules in components)",
+        "Genuinely orthogonal to run-1 D (conversation-timeline) — same wildcard slot, completely different metaphor; demonstrates the wildcard axis is producing real diversity"
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["B", "D", "C", "A"],
+
+  "recommended_winner": "B",
+  "recommendation_rationale": "Option B scores highest on composite (~4.40) by being the cleanest ui-standards implementation in run-2 (4.6 — no arbitrary tokens, no Intl.NumberFormat, no JSON dumps, AppShell-rooted, 8 distinct shared primitives) AND the strongest on three agentic-UI principles: event-spine-first (StageEventList per stage bucket), process-as-primary-metaphor (WorkflowStageRail spine drives the layout on both routes, 9 canvas stages visible at one glance, current stage hero ~60% viewport), and human-in-the-loop (GateRespondClient + ApprovalGate inline at the gate's stage). Option D is a close runner-up (~4.20) and remains the strongest 'audit-trail-as-SOP' option (the provenance graph IS the audit artifact) but intentionally drops the stage-spatial metaphor and the chronological spine — both are explicit Principle-2/Principle-1 sacrifices the wildcard axis chose. Option C improves materially over run-1 (CaseMemo arithmetic gone, SectionBodies JSON dumps gone) but introduces a NEW Rule 4.12 violation (BorrowerFactSheet.tsx Intl.NumberFormat) and still wires HITL via a UC-owned row instead of the shared ApprovalGate. Option A is the strongest run-2 improvement vs its run-1 sibling (AppShell rooted, arbitrary token gone, Intl.NumberFormat gone) but still explicitly sacrifices Principles 1 and 3 by design — that is the cost of the sparse-executive axis. Note: run-1's winner was D (conversation-timeline, 4.46 composite); run-2's winner is B (workflow-first, 4.40 composite). The two runs disagree on the recommended winner — but the SAME-AXIS RUN-2 VS RUN-1 verdicts on B and D are within 0.06 composite points each, so the swap is driven by D's metaphor change (timeline → graph) and B's clean re-implementation, not by judging drift.",
+
+  "notes_for_human": [
+    "Run-2 is a meaningful step up on ui-standards compliance across all four options — no arbitrary Tailwind values, no Intl.NumberFormat except the one new C violation, no JSON dumps in user-facing fields, no business arithmetic in client components. The factory appears to be incorporating run-1's audit feedback even though designers were not explicitly briefed on it.",
+    "No convergence pairs at Jaccard >= 0.6. Highest pairwise overlap in run-2 is between A and B (both use WorkflowStageRail + AppShell + BreadcrumbNav + MetricStrip + StatCard + StatusBadge + ApprovalGate as chrome) at approximately 0.30 — same magnitude as run-1's B<->D overlap.",
+    "Option D's wildcard metaphor changed from 'conversation-first / transcript' (run-1) to 'provenance-graph / DAG' (run-2). Both are legitimate wildcards; this is the variance test confirming that the wildcard axis is supposed to diverge across runs. The run-1 D vs run-2 D Jaccard is approximately 0.20 — wildcard diversity is acceptable per the test contract.",
+    "Run-2 A's sparse-executive axis improved from 2.84 composite (run-1) to ~3.35 (run-2) by fixing the AppShell, arbitrary-token, and Intl.NumberFormat violations — the underlying axis (no agent surface, no event spine) is still a Principle-1/Principle-3 sacrifice by design.",
+    "Option C re-introduced one Rule 4.12 violation (BorrowerFactSheet.tsx Intl.NumberFormat) that run-1 C did not have — the comparator should flag this as a regression and ask the designer to move the formatter to lib/format.ts.",
+    "Manifest 'reuse_count_shared' is again inflated by counting use-case-owned components — true counts of shared primitives composed in code are: A=9, B=8, C=5, D=6. Option A leads on raw shared-primitive count in run-2 (it absorbed AppShell + WorkflowStageRail + RegulatoryClock + StepProgress that were missing in run-1)."
+  ],
+
+  "variance_vs_run1": {
+    "same_axis_consistency": {
+      "A_density": {
+        "jaccard": 0.55,
+        "verdict": "consistent",
+        "notes": "Same axis (density=1, sparse-executive, decision-card-is-page), same persona shape (Chief Credit / final-approval), same 'recommendation is the page' optimisation, same explicit Principle-1/Principle-3 sacrifice. Run-2 adds AppShell + WorkflowStageRail + RegulatoryClock + StepProgress + GatePillRow + 3-KPI MetricStrip; drops the hand-rolled ExecutiveHeader, DecisionHero arbitrary text-[96px], and ApprovalFlowClient's collapsed-strip pattern. Core axis identity preserved; chrome compliance improved."
+      },
+      "B_metaphor": {
+        "jaccard": 0.65,
+        "verdict": "consistent",
+        "notes": "Same axis (metaphor=workflow-first), same WorkflowStageRail-as-spine pattern, same 9-stage canvas-driven layout, same 3-col 'prior/current/future' shape, same gate-chain on the approval route, same ApprovalGate primitive for HITL. Component names rename (StageRail→WorkflowStageRail use, CurrentStageHero→StageHero, PipelineSpine→StageEventList, GateChain→GateRespondClient) but the concept set overlaps almost 1:1. Run-2 swaps AgentMini for PipelineMini and tightens the StageEventList row to surface tokens inline."
+      },
+      "C_affordance": {
+        "jaccard": 0.55,
+        "verdict": "consistent",
+        "notes": "Same axis (affordance=inline-per-section), same four-action set (approve / edit & approve / request revision / reject), same MemoSection wrapper, same right-rail SectionNav anchor pattern, same comment-required-on-non-approve, same per-section gate mapping. Run-1 had 9 sections, run-2 has 5 — section count compressed but the unit-of-disposition concept is unchanged. Run-2 drops AgentReasoningPanel (run-1 used it on the rating section); run-2 introduces RuleVerdictPanel + BorrowerFactSheet."
+      },
+      "D_wildcard": {
+        "jaccard": 0.20,
+        "verdict": "drifting",
+        "notes": "Two genuinely different wildcards. Run-1 D was conversation-first (transcript, chronological, every event is a row, ActorFilterBar, GateLedger). Run-2 D is provenance-graph (DAG of values, citations inline, GraphFilterTabs by node kind, TrustAttestationClient over a subtree). Both are valid post-decision/forensic interpretations of the same canvas, both wire all 4 HITL gates via ApprovalGate, both intentionally drop the stage-spatial metaphor. The metaphor is different, the orchestration is different, and that is acceptable for the wildcard axis by definition.",
+        "run1_metaphor": "conversation-first",
+        "run2_metaphor": "provenance-graph",
+        "wildcard_diversity_acceptable": true
+      }
+    },
+    "cross_axis_divergence_run2": {
+      "jaccard": 0.14,
+      "verdict": "highly divergent — pass",
+      "notes": "Pairwise Jaccard within run-2: A<->B 0.18, A<->C 0.10, A<->D 0.15, B<->C 0.10, B<->D 0.15, C<->D 0.16 (average 0.14). Well below the 0.4 ceiling. Four axes still produce four genuinely distinct designs; the overlap is dominated by chrome primitives (AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, ApprovalGate) — which is the desired pattern."
+    },
+    "test_thresholds": {
+      "same_axis_consistency_threshold": ">=0.5 on at least 3 of 4 axes (D wildcard exempt)",
+      "same_axis_consistency_observed": "A=0.55, B=0.65, C=0.55 — all >=0.5; 3 of 3 non-wildcard axes pass",
+      "cross_axis_divergence_threshold": "<=0.4 average pairwise within run-2",
+      "cross_axis_divergence_observed": "0.14 — well below ceiling",
+      "wildcard_drift_allowed": true,
+      "wildcard_drift_observed": "0.20 (acceptable — wildcard is supposed to diverge across runs)"
+    },
+    "overall_verdict": "PASS — the factory produces reliable runs across builders: same-axis Jaccard is 0.55+ on all three deterministic axes (density / metaphor / affordance), cross-axis Jaccard within a run is 0.14 (four axes still produce four distinct designs), and the wildcard axis legitimately diverges (timeline → graph) which is the intended behaviour. The recommended-winner swap (run-1 D → run-2 B) is driven by D's metaphor change and B's clean re-implementation, not by judging drift, and the two winners are within 0.06 composite points of each other."
+  }
+}

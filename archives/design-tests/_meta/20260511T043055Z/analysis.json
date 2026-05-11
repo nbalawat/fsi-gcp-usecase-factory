@@ -1,0 +1,30 @@
+{
+  "runs": [
+    "20260511T005241Z-credit-memo-commercial-test-run1",
+    "20260511T040834Z-credit-memo-commercial-test-run2"
+  ],
+  "use_case_id": "credit-memo-commercial-test",
+  "axis_consistency": {
+    "density": {
+      "mean": 0.17647058823529413,
+      "std": 0
+    },
+    "metaphor": {
+      "mean": 0.3,
+      "std": 0
+    },
+    "affordance": {
+      "mean": 0.2,
+      "std": 0
+    },
+    "wildcard": {
+      "mean": 0.375,
+      "std": 0
+    }
+  },
+  "cross_axis_divergence": {
+    "mean": 0.2670194174160892,
+    "std": 0.07921772460534446
+  },
+  "judge_by_axis": {}
+}

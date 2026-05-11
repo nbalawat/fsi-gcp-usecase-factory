@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meta-comparator · 2 runs · credit-memo-commercial-test</title>
+  <style>
+    :root {
+      --bg: #0b0d10; --panel: #15181c; --panel-2: #1c2026; --border: #2a2f37;
+      --text: #e6e9ee; --text-dim: #98a0aa; --accent: #4f8cff;
+      --warn: #ffaa44; --err: #ff5577; --ok: #44dd99;
+      --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin: 0; }
+    .header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .header h1 { font-size: 17px; margin: 0; font-weight: 600; }
+    .header .sub { font-size: 12px; color: var(--text-dim); font-family: var(--mono); }
+    .stats { padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--border); }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .axis-stat { background: var(--panel-2); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); }
+    .axis-name { font-size: 11px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; margin-bottom: 6px; font-family: var(--mono); }
+    .axis-row { display: flex; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
+    .cross-axis { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .cross-label { font-size: 12px; color: var(--text-dim); }
+    .legend { font-size: 11px; color: var(--text-dim); font-style: italic; }
+    table { width: 100%; border-collapse: collapse; background: var(--bg); }
+    th, td { border: 1px solid var(--border); padding: 10px 12px; vertical-align: top; text-align: left; }
+    th { background: var(--panel); font-size: 12px; font-weight: 600; }
+    .row-head { width: 180px; background: var(--panel); }
+    .run-id { font-family: var(--mono); font-size: 11px; color: var(--text); }
+    .run-meta { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+    .cell { background: var(--panel); min-width: 240px; max-width: 320px; position: relative; }
+    .cell.failed { background: rgba(255, 85, 119, 0.08); }
+    .cell.missing { background: var(--panel-2); color: var(--text-dim); text-align: center; font-style: italic; font-size: 12px; }
+    .missing-badge { padding: 8px; }
+    .cell-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .opt-letter { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--accent); }
+    .cell-axis { font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.05em; }
+    .judge-pick { background: var(--ok); color: #001; padding: 1px 6px; border-radius: 99px; font-size: 9px; font-weight: 700; }
+    .cell-summary { font-size: 11px; line-height: 1.4; color: var(--text); margin-bottom: 8px; max-height: 4.2em; overflow: hidden; }
+    .cell-stats { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+    .stat { padding: 1px 6px; border-radius: 99px; font-size: 10px; font-family: var(--mono); border: 1px solid var(--border); color: var(--text); }
+    .stat.high, .stat.ok { color: var(--ok); border-color: var(--ok); }
+    .stat.mid, .stat.warn { color: var(--warn); border-color: var(--warn); }
+    .stat.low, .stat.err { color: var(--err); border-color: var(--err); }
+    .stat.dim { color: var(--text-dim); }
+    .cell-link { font-size: 10px; color: var(--accent); text-decoration: none; font-family: var(--mono); }
+    .cell-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Meta-comparator</h1>
+    <div class="sub">2 runs · credit-memo-commercial-test</div>
+  </div>
+  
+    <section class="stats">
+      <div class="stats-row">
+        
+      <div class="axis-stat">
+        <div class="axis-name">density</div>
+        <div class="axis-row">
+          <span class="stat err">same-axis 0.18</span>
+          <span class="stat dim">σ 0.00</span>
+          <span class="stat dim">chaotic</span>
+        </div>
+        
+      </div>
+    
+      <div class="axis-stat">
+        <div class="axis-name">metaphor</div>
+        <div class="axis-row">
+          <span class="stat warn">same-axis 0.30</span>
+          <span class="stat dim">σ 0.00</span>
+          <span class="stat dim">drifting</span>
+        </div>
+        
+      </div>
+    
+      <div class="axis-stat">
+        <div class="axis-name">affordance</div>
+        <div class="axis-row">
+          <span class="stat err">same-axis 0.20</span>
+          <span class="stat dim">σ 0.00</span>
+          <span class="stat dim">chaotic</span>
+        </div>
+        
+      </div>
+    
+      <div class="axis-stat">
+        <div class="axis-name">wildcard</div>
+        <div class="axis-row">
+          <span class="stat warn">same-axis 0.38</span>
+          <span class="stat dim">σ 0.00</span>
+          <span class="stat dim">drifting</span>
+        </div>
+        
+      </div>
+    
+      </div>
+      <div class="cross-axis">
+        <span class="cross-label">cross-axis within-run divergence:</span>
+        <span class="stat ok">0.27</span>
+        <span class="stat dim">σ 0.08</span>
+        <span class="stat dim">distinct</span>
+        <span class="legend">(lower = more distinct = good)</span>
+      </div>
+    </section>
+  
+  <table>
+    <thead>
+    <tr>
+      <th class="row-head">run</th>
+      <th>density</th><th>metaphor</th><th>affordance</th><th>wildcard</th>
+    </tr>
+  </thead>
+    <tbody>
+    
+      <tr>
+        <th class="row-head">
+          <div class="run-id">20260511T005241Z-credit-…</div>
+          <div class="run-meta">1 credit-memo-commercial-test</div>
+        </th>
+        
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">A</span>
+        <span class="cell-axis">density</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        <span class="stat low">judge 2.8</span>
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 8</span>
+        <span class="stat dim">density ★☆☆☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">B</span>
+        <span class="cell-axis">metaphor</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        <span class="stat high">judge 4.3</span>
+        <span class="stat ok">a11y 1</span>
+        <span class="stat ok">reuse 13</span>
+        <span class="stat dim">density ★★★☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">C</span>
+        <span class="cell-axis">affordance</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        <span class="stat mid">judge 3.9</span>
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 13</span>
+        <span class="stat dim">density ★★★☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">D</span>
+        <span class="cell-axis">wildcard</span>
+        <span class="judge-pick">★ pick</span>
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        <span class="stat high">judge 4.5</span>
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 11</span>
+        <span class="stat dim">density ★★★☆☆</span>
+      </div>
+      
+    </td>
+  
+      </tr>
+    
+      <tr>
+        <th class="row-head">
+          <div class="run-id">20260511T040834Z-credit-…</div>
+          <div class="run-meta">3 credit-memo-commercial-test</div>
+        </th>
+        
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">A</span>
+        <span class="cell-axis">density</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        
+        <span class="stat ok">a11y 1</span>
+        <span class="stat ok">reuse 12</span>
+        <span class="stat dim">density ★☆☆☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">B</span>
+        <span class="cell-axis">metaphor</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 13</span>
+        <span class="stat dim">density ★★★☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">C</span>
+        <span class="cell-axis">affordance</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 11</span>
+        <span class="stat dim">density ★★★☆☆</span>
+      </div>
+      
+    </td>
+  
+    <td class="cell ">
+      <div class="cell-head">
+        <span class="opt-letter">D</span>
+        <span class="cell-axis">wildcard</span>
+        
+      </div>
+      <div class="cell-summary">|</div>
+      <div class="cell-stats">
+        
+        <span class="stat ok">a11y 0</span>
+        <span class="stat ok">reuse 11</span>
+        <span class="stat dim">density ★★★★☆</span>
+      </div>
+      
+    </td>
+  
+      </tr>
+    
+  </tbody>
+  </table>
+</body>
+</html>

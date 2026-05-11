@@ -1,0 +1,84 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+primary_metaphor: workflow-first
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+use_case_id: credit-memo-commercial-test
+
+persona:
+  primary: "Credit officer / underwriter following a case through the pipeline"
+  context: |
+    Thinks in stages, not in transcripts and not in documents. Wants to
+    know "where is this case in the workflow right now, what fired in
+    this stage, and what's the gate I need to clear next?" The pipeline
+    is the spatial metaphor.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: per-stage-hero
+primary_metaphor: workflow-first
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: WorkflowStageRail
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: PipelineMini
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: StageHero
+    source: use-case
+  - name: StagePriorRail
+    source: use-case
+  - name: StageFutureList
+    source: use-case
+  - name: StageEventList
+    source: use-case
+  - name: GateRespondClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option B treats the WORKFLOW as the metaphor. Stages drive layout: the
+  current stage is the hero (~60% of viewport at lg+), prior stages
+  compress to a left rail as status pills (click to expand the bucket
+  of events that fired there), future stages dim on a right rail. The
+  shared WorkflowStageRail sits above as the spine — the page's
+  navigation IS the pipeline. The approval flow keeps the same rail and
+  renders each gate as the slice of workflow that led to it.
+
+tradeoffs:
+  optimised_for:
+    - Spatial comprehension — the reader sees the pipeline at one glance
+    - Stage-scoped focus — the hero shows ONLY what fired in the current stage
+    - "Where am I?" answered by the rail on every page
+    - Reuse — eight shared primitives carry the foundation; the
+      WorkflowStageRail is the load-bearing spine and the AppShell is
+      the chrome.
+  sacrifices:
+    - The story-as-time-axis is less direct (events are bucketed by stage,
+      not laid out as one chronological column)
+    - Per-metric data (DSCR, leverage) appears only as rule verdicts —
+      no numeric hero
+    - Heavy on layout (3-column at lg+); collapses to one column at sm
+      so the rail and side-rails stack
+    - Memo PDF is not the centerpiece — the stage activity is
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 13
+  reuse_floor_met: true

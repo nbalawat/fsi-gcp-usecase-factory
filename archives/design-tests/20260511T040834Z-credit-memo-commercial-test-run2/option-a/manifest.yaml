@@ -1,0 +1,85 @@
+schema_version: "1.0.0"
+option: A
+variation_axis: density
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+use_case_id: credit-memo-commercial-test
+
+persona:
+  primary: "Chief Credit Officer (executive who delegates the analysis but owns the irrevocable approval)"
+  context: |
+    Scans 8-12 cases / day for ~30 seconds each before deep-reading the
+    one or two with adverse signals. Needs the recommendation, the risk
+    band, and ONE sentence of "why" — anything more delays the read.
+    Will sign off on the final gate; the upstream three are delegated.
+    Comes back later if the page tells them to.
+
+density_score: 1
+motion_budget: minimal
+affordance_pattern: hero-card-plus-pill-row
+primary_metaphor: decision-card-is-the-page
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: WorkflowStageRail
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: StepProgress
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: ExecutiveDecisionCard
+    source: use-case
+  - name: GatePillRow
+    source: use-case
+  - name: GateApprovalClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option A treats the case as an EXECUTIVE DECISION CARD. The page hero
+  is one oversize artifact: borrower identity, recommendation verb,
+  risk-band badge, a single-sentence rationale, and four signal counts
+  on one horizontal line. Below the card live a compressed gate-pill
+  row and an inline rule-verdict row. Chrome compresses to a thin top
+  WorkflowStageRail + 3-metric strip and a 14-rem right rail
+  (RegulatoryClock + canvas pin). The approval flow page asks ONE
+  question — "approve this gate?" — with a StepProgress at the header,
+  a GatePillRow as a stepper, and the shared <ApprovalGate> primitive
+  rendered full-width as the only content surface.
+
+tradeoffs:
+  optimised_for:
+    - 30-second executive scan — recommendation visible without scrolling
+    - Decision-card-is-the-artifact — the page IS the deliverable
+    - Reuse — nine shared primitives carry the chrome, the stage rail, the clock, and the signoff
+    - Sparse cognitive load — three KPIs not five, four signals not twenty
+    - Process metaphor preserved via thin top WorkflowStageRail
+  sacrifices:
+    - No agent reasoning surface on the case page (counts only — drill is implicit)
+    - No transcript / event timeline (the spine is not visible on this view)
+    - No citation drill-in (executives delegate to the analyst gate)
+    - No data-density power-user view (DSCR / leverage values are summary counts)
+    - Approval page sacrifices "review the work first" — exec sees recommendation + signoff in one card
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 1
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+    - "WCAG2A.Principle2.Guideline2_1.2_1_1: anchor without href"
+  reuse_count_net_new: 0
+  reuse_count_shared: 12
+  reuse_floor_met: true
