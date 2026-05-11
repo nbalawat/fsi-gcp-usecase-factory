@@ -382,6 +382,124 @@ node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev
 assert_grep "reuse floor failed" "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders reuse-floor-failed panel"
 echo
 
+echo "13. Meta-comparator (Phase 0.4) wired:"
+assert_path "scripts/build_meta_comparator.mjs"  "meta-comparator script present"
+if node --check "$REPO/scripts/build_meta_comparator.mjs" 2>/dev/null; then
+  green "  ✓ meta-comparator script parses"
+else
+  red   "  ✗ meta-comparator script has syntax error"
+  failed=$((failed + 1))
+fi
+
+# End-to-end smoke: build two fixture test runs, then render the meta-comparator
+MC_TS1="20260510T100000Z"
+MC_TS2="20260510T110000Z"
+MC_UC="__test_meta_comparator__"
+MC_ROOT="$REPO/archives/design-tests"
+mkdir -p "$MC_ROOT/$MC_TS1-$MC_UC-run1" "$MC_ROOT/$MC_TS2-$MC_UC-run2"
+
+# Each run has 4 options (a/b/c/d). Same-axis components are deliberately
+# similar across runs (consistency); cross-axis components are deliberately
+# distinct (divergence). This is the floor signal the meta-comparator must
+# render correctly.
+for run_dir in "$MC_TS1-$MC_UC-run1" "$MC_TS2-$MC_UC-run2"; do
+  run_id="$run_dir"
+  cat > "$MC_ROOT/$run_dir/meta.yaml" <<MMEOF
+use_case_id: $MC_UC
+tier: smoke
+generated_at: "2026-05-10T10:00:00Z"
+canvas_sha256: abc1234567890def
+MMEOF
+  for opt in a b c d; do
+    axis="density"
+    [[ "$opt" == "b" ]] && axis="metaphor"
+    [[ "$opt" == "c" ]] && axis="affordance"
+    [[ "$opt" == "d" ]] && axis="wildcard"
+    # Same-axis-across-runs: shared common components (high Jaccard)
+    # Cross-axis-within-run: distinct components (low Jaccard)
+    case "$axis" in
+      density)    comps='AppShell SparseHero ExecMetric ExecBadge Card AppFooter';;
+      metaphor)   comps='AppShell StageRail PipelineSpine CurrentStageHero Card AppFooter';;
+      affordance) comps='AppShell InlineApprover InlineReject SectionCard Card AppFooter';;
+      wildcard)   comps='AppShell TimelineRow ConvoBubble RegBadge Card AppFooter';;
+    esac
+    mkdir -p "$MC_ROOT/$run_dir/option-$opt"
+    # Render components_used list in YAML
+    comps_yaml=""
+    for c in $comps; do
+      comps_yaml="${comps_yaml}  - name: $c\n    source: shared\n"
+    done
+    OPT_UP=$(printf "%s" "$opt" | tr '[:lower:]' '[:upper:]')
+    cat > "$MC_ROOT/$run_dir/option-$opt/manifest.yaml" <<MEOF
+schema_version: "1.0.0"
+option: $OPT_UP
+variation_axis: $axis
+use_case_id: $MC_UC
+canvas_checksum: abc1234567890def
+density_score: 3
+design_summary: "$axis variation, smoke fixture"
+components_used:
+$(printf "$comps_yaml")
+build:
+  build_succeeded: true
+  deploy_succeeded: true
+  reuse_floor_met: true
+  reuse_count_shared: 6
+  a11y_violations: 2
+  a11y_scan_mode: "static-heuristic"
+judge:
+  composite_score: 4.1
+  ui_standards: 4.2
+  agentic_principles: 4.0
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 0
+  recommended: false
+MEOF
+  done
+done
+
+# Now build the meta-comparator from these two fixture runs
+node "$REPO/scripts/build_meta_comparator.mjs" "$MC_TS1-$MC_UC-run1" "$MC_TS2-$MC_UC-run2" >/dev/null 2>&1 || true
+# Find the freshly generated _meta_review.html
+META_HTML=$(ls -t "$MC_ROOT/_meta/"*/_meta_review.html 2>/dev/null | head -1)
+if [[ -n "$META_HTML" && -f "$META_HTML" ]]; then
+  green "  ✓ meta-comparator wrote $META_HTML"
+else
+  red   "  ✗ meta-comparator did not produce HTML"
+  failed=$((failed + 1))
+fi
+if [[ -f "$META_HTML" ]]; then
+  if grep -q "Meta-comparator" "$META_HTML" && \
+     grep -q "density" "$META_HTML" && grep -q "metaphor" "$META_HTML" && \
+     grep -q "affordance" "$META_HTML" && grep -q "wildcard" "$META_HTML"; then
+    green "  ✓ meta-comparator renders all 4 variation axes"
+  else
+    red   "  ✗ meta-comparator did not render all axes"
+    failed=$((failed + 1))
+  fi
+  if grep -q "same-axis" "$META_HTML"; then
+    green "  ✓ meta-comparator renders same-axis consistency stat"
+  else
+    red   "  ✗ meta-comparator missing same-axis stat"
+    failed=$((failed + 1))
+  fi
+  if grep -q "cross-axis" "$META_HTML"; then
+    green "  ✓ meta-comparator renders cross-axis divergence stat"
+  else
+    red   "  ✗ meta-comparator missing cross-axis stat"
+    failed=$((failed + 1))
+  fi
+fi
+
+# Cleanup the fixture runs (they're under archives/, which the auditor
+# protects in production — but smoke test fixtures don't count as audit
+# trail; we always clean up after ourselves).
+rm -rf "$MC_ROOT/$MC_TS1-$MC_UC-run1" "$MC_ROOT/$MC_TS2-$MC_UC-run2"
+# Also clean up the meta-comparator output (it's keyed by current timestamp)
+[[ -d "$MC_ROOT/_meta" ]] && rm -rf "$MC_ROOT/_meta"
+echo
+
 if [[ $failed -gt 0 ]]; then
   red "$failed assertion(s) failed."
   exit 1
