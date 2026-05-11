@@ -287,6 +287,65 @@ fi
 rm -rf "$A11Y_TEST_REPO"
 echo
 
+echo "12d. Reuse-floor gate (Phase 0.3) wired:"
+assert_path "scripts/check_reuse_floor.mjs"                                       "reuse-floor script present"
+assert_grep "reuse-floor"          ".claude/skills/fsi-design-proposals/SKILL.md" "skill cites reuse-floor"
+assert_grep "Component-reuse floor" ".claude/skills/fsi-design-proposals/SKILL.md" "skill names the floor gate"
+if node --check "$REPO/scripts/check_reuse_floor.mjs" 2>/dev/null; then
+  green "  ✓ reuse-floor script parses"
+else
+  red   "  ✗ reuse-floor script has syntax error"
+  failed=$((failed + 1))
+fi
+
+# Reuse-floor gate: option-A (5 shared) passes; option-B (2 shared) fails; exit=1
+RF_TEST_REPO="$(mktemp -d)"
+mkdir -p "$RF_TEST_REPO/scripts" "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-a" "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-b"
+cp "$REPO/scripts/check_reuse_floor.mjs" "$RF_TEST_REPO/scripts/"
+cat > "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-a/manifest.yaml" <<RFEOF
+schema_version: "1.0.0"
+option: A
+components_used:
+  - name: AppShell
+    source: shared
+  - name: Button
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: Badge
+    source: shared
+  - name: Card
+    source: shared
+RFEOF
+cat > "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-b/manifest.yaml" <<RFEOF2
+schema_version: "1.0.0"
+option: B
+components_used:
+  - name: AppShell
+    source: shared
+  - name: Custom1
+    source: net-new
+  - name: Custom2
+    source: net-new
+RFEOF2
+rf_exit=0
+(cd "$RF_TEST_REPO" && node scripts/check_reuse_floor.mjs myuc >/dev/null 2>/dev/null) || rf_exit=$?
+if [[ "$rf_exit" == "1" ]]; then
+  green "  ✓ reuse-floor gate exits 1 when any option fails"
+else
+  red   "  ✗ reuse-floor gate did not exit 1 (got $rf_exit)"
+  failed=$((failed + 1))
+fi
+if grep -q "reuse_floor_met: true"  "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-a/manifest.yaml" && \
+   grep -q "reuse_floor_met: false" "$RF_TEST_REPO/usecases/myuc/ui/proposals/option-b/manifest.yaml"; then
+  green "  ✓ reuse-floor gate stamps reuse_floor_met into both manifests correctly"
+else
+  red   "  ✗ reuse-floor gate did not stamp manifests correctly"
+  failed=$((failed + 1))
+fi
+rm -rf "$RF_TEST_REPO"
+echo
+
 echo "12b. Comparator renders judge row when judge fields populated:"
 # Inject judge into option-a manifest, regenerate, grep
 PROP_DIR_2="$REPO/usecases/__test_design_proposals__/ui/proposals"
@@ -313,6 +372,14 @@ assert_grep "composite 4.2"     "usecases/__test_design_proposals__/ui/proposals
 assert_grep "1 violation"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders violation count"
 assert_grep "a11y 3"            "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders a11y under-budget pill"
 assert_grep "a11y 8 ⚠"          "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders a11y over-budget warning"
+
+# Inject a reuse-floor failure into option-d and re-render; comparator must show the "reuse floor failed" panel.
+cat >> "$PROP_DIR_2/option-d/manifest.yaml" <<RFEOF3
+  reuse_floor_met: false
+  reuse_count_shared: 2
+RFEOF3
+node "$REPO/scripts/build_design_comparator.mjs" __test_design_proposals__ >/dev/null 2>&1
+assert_grep "reuse floor failed" "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator renders reuse-floor-failed panel"
 echo
 
 if [[ $failed -gt 0 ]]; then

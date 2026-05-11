@@ -148,8 +148,15 @@ function renderPanel(opt) {
   const reuseCount = components.filter(c => c?.source === "shared" || c?.source === "use-case").length;
   const netNewCount = components.filter(c => c?.source === "net-new").length;
 
+  // Reuse-floor hard gate (Phase 0.3): if explicitly failed, render as failed,
+  // even if build_succeeded was true upstream.
+  const reuseFloorFailed = manifest.build?.reuse_floor_met === false;
+  const reuseFloorShared = manifest.build?.reuse_count_shared;
+
   let body;
-  if (!buildOk) {
+  if (reuseFloorFailed) {
+    body = `<div class="panel-failed"><div class="badge">⚠ reuse floor failed</div><div>${reuseFloorShared ?? "?"} shared components; floor is 5</div></div>`;
+  } else if (!buildOk) {
     body = `<div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div>`;
   } else if (!url) {
     body = `<div class="panel-failed"><div class="badge">⚠ deploy failed</div><div>built but did not deploy</div></div>`;

@@ -173,8 +173,21 @@ For each option directory:
 
 1. **Sanity check the manifest.** Parse `manifest.yaml`; verify `canvas_checksum` equals the canvas SHA. Mismatch → mark option as failed; do NOT deploy. Note in `.fsi-state/<uc>/proposals/<option>.failed`.
 2. **TypeScript gate.** Run `cd usecases/<uc>/ui/proposals/option-<x>/ && npx tsc --noEmit -p tsconfig.json` (the option's Dockerfile runs this in CI; we run it here for fast-fail). On failure, capture stderr to `<option>.tsc-error.log` and mark failed.
-3. **Component-reuse gate.** Parse `manifest.yaml: components_used`; if `net-new` count > 5, attach a ⚠ in the option's manifest. (Don't fail; user might still pick it. The comparator surfaces the warning.)
-4. **Diversity scorer (optional in V1; required in V2).** For pairs of options, compute Jaccard similarity over `components_used.name`. If pairwise Jaccard > 0.6, log a warning — agents are converging.
+3. **Component-reuse floor (HARD GATE, Phase 0.3).** Parse `manifest.yaml: components_used`. Count entries where `source: shared` OR `source: use-case`. The floor is **5 per option**:
+   - **< 5**: option is FAILED. Stamp `manifest.yaml: build.reuse_floor_met: false` + `build.reuse_count_shared: <n>`. Do NOT deploy. Add ⚠ in `.fsi-state/<uc>/proposals/<option>.failed` with reason `"reuse-floor: <n> shared components, need ≥5"`. The comparator will render the option as failed-to-build.
+   - **≥ 5**: stamp `build.reuse_floor_met: true`. Proceed.
+
+   Run the validator to do this in one shot:
+
+   ```bash
+   node scripts/check_reuse_floor.mjs <use_case>
+   ```
+
+   The validator exits 1 if any option fails the floor; the skill captures this but continues with the options that passed (don't block the whole pipeline on one stuck agent).
+
+4. **Diversity scorer.** For pairs of options (6 pairs across A/B/C/D), compute Jaccard similarity over `components_used[].name`. If pairwise Jaccard > 0.6, log a warning — agents are converging. Surface in hand-off panel.
+
+5. **Net-new ceiling.** If `net-new` count > 5 on any option, attach a ⚠ in the option's manifest. Don't fail; user might still pick it; the judge surfaces the count.
 
 If all 4 options fail, halt: tell the user "0/4 designer agents produced compilable output. Run with `--respin` to retry, or use `--skip-deploy` for ASCII-only review." Print agent error logs.
 
