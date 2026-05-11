@@ -96,6 +96,40 @@ Missing `archives/design-tests/README.md`: WARN.
 
 Test-run subdirectories without `meta.yaml`: FAIL — provenance is broken.
 
+### Playwright validation required for UI commits (Stage 3.6 gate)
+
+Static source analysis (tsc, lint, the static a11y heuristic) does NOT catch hydration errors, runtime console errors, real-DOM WCAG violations, layout shifts, or perf regressions. The factory's `/fsi-design-proposals` Stage 3.6 captures those signals via `scripts/validate_with_playwright.mjs`. The auditor enforces that this evidence exists at commit time.
+
+For every commit that creates or modifies files under `usecases/<uc>/ui/components/` or `usecases/<uc>/ui/app/`:
+
+1. **`usecases/<uc>/ui/decision.yaml`** must exist (already enforced above).
+2. The archive at `decision.yaml: archive_path` must contain ONE of:
+   - **`<archive>/../design-tests/<run-id>/option-<chosen>/playwright-report.json`** — preferred; the validation evidence for the winning option. Located by resolving `decision.yaml: chosen_option` (lowercased) against the test-run archive that produced the design.
+   - **`<archive>/_meta/playwright-skipped.yaml`** with non-empty `reason` AND (for non-`dry-run` reasons) a non-empty `approver` + `ticket`. This is the explicit escape hatch for environments where Chromium can't run.
+
+3. If a `playwright-report.json` exists, its `canvas_sha256` field (if present) must match `decision.yaml: canvas_checksum`. Mismatch indicates the validation ran against a different canvas than the one locked.
+
+4. If a `playwright-report.json` exists and `report.summary.failed_budgets > 0`, the auditor WARNs (does not block) and prints the failed budgets by name. Failed budgets don't auto-block because the human picker may have explicitly accepted them via `decision.yaml: annotations.change[]` — but the auditor names them so a reviewer can verify.
+
+Missing both files: FAIL with the exact next step:
+
+```
+ERROR: UI commit on use case <uc> but no Playwright validation evidence.
+
+Expected one of:
+  archives/design-tests/<run-id>/option-<chosen>/playwright-report.json
+  archives/design-tests/<run-id>/_meta/playwright-skipped.yaml
+
+Next:
+  - If options are deployed: node scripts/validate_with_playwright.mjs <uc> <run-id>
+  - If skipping is intentional: create _meta/playwright-skipped.yaml with reason + approver + ticket
+  - To find <run-id>: cat usecases/<uc>/ui/decision.yaml | grep archive_path
+```
+
+`playwright-skipped.yaml` without an approver for a non-dry-run reason: FAIL.
+
+`playwright-report.json` whose `canvas_sha256` ≠ `decision.yaml: canvas_checksum`: FAIL — re-run validation against current canvas.
+
 ### Required artifacts
 
 Every use case must have:

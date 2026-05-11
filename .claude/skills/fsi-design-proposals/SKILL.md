@@ -275,6 +275,84 @@ Violation budget: **5 per option**. Options exceeding the budget get a ⚠ badge
 
 If pa11y fails for every option (binary missing, network down): fall back to `--static` and note in the hand-off panel that the live a11y scan didn't run. The user can run the live scan later via `/fsi-design-review --a11y-rescan`.
 
+## Stage 3.6 — Playwright real-browser validation (~50 sec, BLOCKING)
+
+After Stage 3.5 stamps a11y heuristics, run the **real-browser validation** against each deployed option. This is the gate the architecture-auditor checks on every commit; skipping it (without an explicit `playwright-skipped.yaml` rationale + arch-review approval) means the resulting `decision.yaml` is auditor-blocked.
+
+What it captures, per option, per route (`/case/sample` + `/approval/sample`), per viewport (1440×900 / 1024×768 / 768×900):
+
+- full-page PNG screenshot
+- console errors + warnings
+- failed network requests (4xx/5xx + transport)
+- axe-core scan (`wcag2a + wcag2aa + wcag21a + wcag21aa + best-practice`)
+- CLS via `PerformanceObserver({type:'layout-shift'})`
+- LCP via `PerformanceObserver({type:'largest-contentful-paint'})`
+
+Run it:
+
+```bash
+node scripts/validate_with_playwright.mjs <use_case> <run-id>
+```
+
+The `<run-id>` is the same timestamp the pre-flight stamped into `.fsi-state/<uc>/proposals/preflight.json` — the script reads it from there if not given explicitly.
+
+The script:
+
+1. Reads `.fsi-state/<uc>/proposals/<option>.url` per option (set by Stage 3) → if any are missing, the option is skipped with `skip_reason` and the comparator marks it as ⚠.
+2. Launches headless Chromium via the project-scoped `.claude/mcp/node_modules/playwright/`.
+3. Hits each option's two routes at 3 viewports = 6 page loads per option.
+4. Writes per-option report to:
+   - `usecases/<uc>/ui/proposals/option-<x>/playwright-report.json` (live copy, comparator reads from here)
+   - `archives/design-tests/<run-id>/option-<x>/playwright-report.json` (forever archive)
+   - `archives/design-tests/<run-id>/option-<x>/screenshots/*.png` (6 PNGs)
+
+Budgets (each emits a warning in the comparator, NOT a hard fail of the option — the human still picks):
+
+| Budget | Value |
+|---|---|
+| `total_a11y_violations` | ≤ 5 per option |
+| `total_console_errors` | 0 |
+| `cls_worst` | ≤ 0.1 (Google "good") |
+| `lcp_worst_ms` | ≤ 2500 (Google "good") |
+
+### Skip path (rare; auditor-tracked)
+
+If `--dry-run` was set, OR Cloud Build failed for all 4 options, OR Playwright cannot be spawned (CI without Chromium), write an explicit skip rationale to:
+
+```yaml
+# archives/design-tests/<run-id>/_meta/playwright-skipped.yaml
+schema_version: "1.0.0"
+skipped_at: <iso>
+reason: "<why>"   # one of: dry-run | all-builds-failed | chromium-unavailable | sandbox-restriction
+approver: <only required if not dry-run; arch-review-approved>
+ticket: <jira ref if approver set>
+```
+
+The auditor allows the skip ONLY if this file exists and (for non-dry-run skips) names a valid approver + ticket. Otherwise the resulting `decision.yaml` is auditor-blocked at commit time.
+
+### After Playwright completes
+
+1. Read each option's `playwright-report.json` + stamp the option's `manifest.yaml`:
+   ```yaml
+   build:
+     playwright_validated_at: <iso>
+     playwright_a11y_violations: <int>
+     playwright_console_errors: <int>
+     playwright_cls_worst: <float>
+     playwright_lcp_worst_ms: <int>
+     playwright_budgets_passed: <int>
+     playwright_budgets_failed: <int>
+   ```
+2. Surface in the hand-off panel:
+   ```
+   ── Playwright (Stage 3.6) ──
+     A:  ⚠ a11y 7  err 0  CLS 0.04  LCP 1.2s   3/4 budgets
+     B:  ✓ a11y 2  err 0  CLS 0.02  LCP 0.9s   4/4 budgets
+     C:  ⚠ err 3   a11y 4  CLS 0.01  LCP 1.1s   3/4 budgets
+     D:  ✓ a11y 1  err 0  CLS 0.00  LCP 1.0s   4/4 budgets
+   ```
+3. The judge (Stage 2.5) does NOT see the Playwright report — it ran earlier. But the comparator (rendered for Stage 4) DOES read the playwright fields and renders the live-a11y / console / CLS / LCP row per panel.
+
 ## Stage 4 — Hand off to /fsi-design-review
 
 Print the next-steps panel:

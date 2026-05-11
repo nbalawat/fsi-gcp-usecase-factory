@@ -530,6 +530,35 @@ rm -rf "$MC_ROOT/$MC_TS1-$MC_UC-run1" "$MC_ROOT/$MC_TS2-$MC_UC-run2"
 [[ -d "$MC_ROOT/_meta" ]] && rm -rf "$MC_ROOT/_meta"
 echo
 
+echo "13c. Stage 3.6 (auto Playwright validation) wired in skill:"
+assert_grep "Stage 3.6 — Playwright"   ".claude/skills/fsi-design-proposals/SKILL.md" "Stage 3.6 named in skill"
+assert_grep "validate_with_playwright" ".claude/skills/fsi-design-proposals/SKILL.md" "skill invokes validate_with_playwright.mjs"
+assert_grep "playwright-skipped.yaml"  ".claude/skills/fsi-design-proposals/SKILL.md" "skill documents the skip path"
+assert_grep "playwright-skipped.yaml"  ".claude/agents/architecture-auditor.md"      "auditor honors playwright-skipped.yaml"
+assert_grep "Playwright validation"    ".claude/agents/architecture-auditor.md"      "auditor names the validation gate"
+assert_grep "canvas_sha256"            ".claude/agents/architecture-auditor.md"      "auditor cross-checks canvas SHA"
+echo
+
+echo "13d. Validator stamps canvas_sha256 + manifest fields:"
+# Quick smoke: re-run validator against the existing Tier 1 archive (all skipped) and confirm sha255 is echoed
+node "$REPO/scripts/validate_with_playwright.mjs" credit-memo-commercial-test 20260511T005241Z-credit-memo-commercial-test-run1 >/dev/null 2>&1 || true
+if python3 -c "
+import json
+ok = True
+for opt in ['a','b','c','d']:
+    with open('archives/design-tests/20260511T005241Z-credit-memo-commercial-test-run1/option-'+opt+'/playwright-report.json') as f:
+        r = json.load(f)
+    if not r.get('canvas_sha256') or len(r['canvas_sha256']) != 64:
+        ok = False; break
+exit(0 if ok else 1)
+" 2>/dev/null; then
+  green "  ✓ every option's playwright-report.json carries canvas_sha256"
+else
+  red   "  ✗ canvas_sha256 missing from one or more reports"
+  failed=$((failed + 1))
+fi
+echo
+
 echo "14. Playwright wiring (MCP + standalone validator):"
 assert_path ".mcp.json"                                        ".mcp.json present"
 assert_grep "playwright"     ".mcp.json"                        ".mcp.json registers playwright server"

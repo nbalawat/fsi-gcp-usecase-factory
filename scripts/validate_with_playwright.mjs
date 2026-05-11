@@ -87,12 +87,23 @@ function resolveUrlPrefix(opt) {
   return null;
 }
 
+// Read canvas SHA from the test-run's meta.yaml so the auditor can cross-check.
+let canvasSha = null;
+try {
+  const metaPath = join(runDir, "meta.yaml");
+  if (existsSync(metaPath)) {
+    const m = readFileSync(metaPath, "utf-8").match(/^canvas_sha256:\s*"?([a-f0-9]{64})"?/m);
+    if (m) canvasSha = m[1];
+  }
+} catch { /* meta.yaml is optional */ }
+
 async function validateOption(browser, opt) {
   const baseUrl = resolveUrlPrefix(opt);
   const report = {
     option: opt.toUpperCase(),
     use_case: useCase,
     run_id: runId,
+    canvas_sha256: canvasSha,           // echoed for the auditor's drift check
     validated_at: new Date().toISOString(),
     base_url: baseUrl,
     routes: {},
@@ -264,8 +275,47 @@ async function main() {
     const ms = Date.now() - t0;
     reports[opt] = report;
 
-    const outPath = join(runDir, `option-${opt}`, "playwright-report.json");
-    writeFileSync(outPath, JSON.stringify(report, null, 2));
+    // Write report to the archive
+    const archivePath = join(runDir, `option-${opt}`, "playwright-report.json");
+    writeFileSync(archivePath, JSON.stringify(report, null, 2));
+
+    // ALSO copy the report into the live UC proposals dir so the comparator
+    // (which reads from there) picks it up immediately. The forever-archive
+    // copy at archivePath is the auditor's evidence.
+    const liveOptDir = join(REPO, "usecases", useCase, "ui", "proposals", `option-${opt}`);
+    if (existsSync(liveOptDir)) {
+      try {
+        writeFileSync(join(liveOptDir, "playwright-report.json"), JSON.stringify(report, null, 2));
+      } catch { /* live dir may not exist in CI-only mode */ }
+    }
+
+    // Stamp the manifest with summary metrics so the comparator can render
+    // the playwright row without re-reading the JSON.
+    if (!report.skipped && existsSync(join(liveOptDir, "manifest.yaml"))) {
+      try {
+        const mfPath = join(liveOptDir, "manifest.yaml");
+        let src = readFileSync(mfPath, "utf-8");
+        const s = report.summary;
+        const stamps = [
+          `  playwright_validated_at: "${report.validated_at}"`,
+          `  playwright_a11y_violations: ${s.total_a11y_violations}`,
+          `  playwright_console_errors: ${s.total_console_errors}`,
+          `  playwright_cls_worst: ${s.cls_worst.toFixed(3)}`,
+          `  playwright_lcp_worst_ms: ${Math.round(s.lcp_worst_ms)}`,
+          `  playwright_budgets_passed: ${s.passed_budgets}`,
+          `  playwright_budgets_failed: ${s.failed_budgets}`,
+        ];
+        // Strip any prior playwright_* lines under build:, then append
+        src = src.replace(/^( {2}playwright_[^\n]*\n)+/gm, "");
+        if (/^build:\s*$/m.test(src) || /^build:\s*\n/m.test(src)) {
+          src = src.replace(/(^build:\s*\n)/m, `$1${stamps.join("\n")}\n`);
+        } else {
+          if (!src.endsWith("\n")) src += "\n";
+          src += `build:\n${stamps.join("\n")}\n`;
+        }
+        writeFileSync(mfPath, src);
+      } catch { /* manifest write best-effort */ }
+    }
 
     if (report.skipped) {
       console.log(`    ⊘ skipped: ${report.skip_reason}`);

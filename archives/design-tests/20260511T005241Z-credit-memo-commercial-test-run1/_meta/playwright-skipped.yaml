@@ -1,0 +1,18 @@
+schema_version: "1.0.0"
+skipped_at: "2026-05-11T01:35:00Z"
+reason: dry-run
+rationale: |
+  Tier 1 was run without deploying the 4 options to Cloud Run.
+  No deployed URLs means Playwright cannot validate the rendered DOM.
+
+  The COMPARATOR HTML was validated separately and is archived at
+  _meta/comparator-validation/validation-report.json (0 WCAG violations
+  after fixes; CLS=0; LCP=96ms).
+
+  The 4 option directories contain skipped playwright-report.json
+  entries (skip_reason: "no URL") as evidence that the validation
+  step was attempted.
+
+  When the 4 options are eventually deployed (Tier 1 deploy follow-up),
+  the validator will be re-run against the live URLs and this
+  skipped.yaml will be replaced with real reports.
