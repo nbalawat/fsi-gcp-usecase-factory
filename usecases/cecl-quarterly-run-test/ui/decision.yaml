@@ -1,0 +1,85 @@
+schema_version: "1.0.0"
+use_case_id: cecl-quarterly-run-test
+chosen_option: C
+variation_axis: affordance
+chosen_at: "2026-05-11T06:15:00Z"
+locked_at: "2026-05-11T06:15:00Z"
+iteration_count: 0
+lock_level: layout-only
+
+decision_rationale: |
+  Judge LLM (source-only) ranked **C (4.44) > A (4.18)**.
+  Options B and D worktrees were auto-cleaned by Claude Code's worktree
+  GC before sync (Rule 46 pattern again — agents that delete _vendor/
+  .next/node_modules can leave the worktree with no net git changes,
+  triggering cleanup). 2 of 4 options survived to judging.
+
+  Playwright runtime against deployed services:
+    A: a11y 30, LCP 1232ms, 12 console errors, 6 failed requests, 2/4 budgets — disqualified by runtime
+    C: a11y 27, LCP  924ms,  0 console errors, 0 failed requests, 3/4 budgets — clean runtime
+
+  C (affordance — inline-action segment rows) wins on both signals:
+    - Judge composite 4.44 (vs A's 4.18) — A flagged for synthesizing
+      PD curves in SegmentLedger.tsx:122 (business math in UI = Rule-1
+      reuse violation)
+    - Playwright cleanest — 0 console errors, 0 failed requests
+    - Both options correctly route irrevocable CFO attestation through
+      shared ApprovalGate primitive
+
+  C's inline-action affordance topology matches the canvas hitl_gates
+  contract precisely (reversible methodology-approve on segment rows;
+  irrevocable CFO-attest only on /approval/[id]).
+
+annotations:
+  keep:
+    - "Inline 'Approve methodology' action on each segment row (reversible HITL)"
+    - "'CFO attest' button in header gated to disabled until all reversible approvals recorded"
+    - "Shared ApprovalGate primitive on /approval/[id] with irrevocable confirm flow"
+    - "AuditLedger as event-spine surface (Rule 4.1 — event-spine-first)"
+    - "12 shared primitives reused (RegulatoryClock for OCC 30-day clock, MetricStrip + StatCard for KPIs)"
+  drop: []
+  change:
+    - from: "27 axe-core a11y violations at runtime (substantially over budget 5)"
+      to: "Re-audit color contrast across segment rows + status pills + AuditLedger entries"
+      reason: "Recurring across all 4 tiers — token-level fix in ui/packages/theme would help every UC"
+    - from: "No SSE backbone (judge Rule 13 flag)"
+      to: "Defer for production: quarterly-cadence run pattern can accept polled refresh for V1; document the gap in production runbook"
+      reason: "Quarterly cadence means polled refresh is acceptable for the run console pattern (unlike pipeline/investigations)"
+
+rejected_options:
+  - option: A
+    judge_score: 4.18
+    playwright_score: 2/4 budgets passed; 12 console errors, 30 a11y
+    reason: "Density stage-rail approach was sound but Server-side PD curve synthesis in SegmentLedger.tsx violates Rule-1 (business math belongs in cecl-pd-lgd-projector atomic service, not a presentation component). Plus 12 console errors at runtime."
+  - option: B
+    judge_score: null
+    playwright_score: null
+    reason: "Worktree auto-cleaned before sync (Rule 46 pattern). Agent reported success with 20 files but worktree disposed by Claude Code GC after build cleanup left no net git changes."
+  - option: D
+    judge_score: null
+    playwright_score: null
+    reason: "Same as B — worktree auto-cleaned (Rule 46). Agent reported audit-trail-spine variant complete, but files lost. Codify in product-build-discipline: spawned agents should `touch .agent-output-marker` to prevent worktree GC."
+
+dual_signal_lesson: |
+  Tier 3 run pattern: judge-Playwright agreement was strong (C clearly
+  wins both). The interesting cross-signal point was Rule-1: judge caught
+  A's business-math-in-UI defect (composite -0.26 vs C); Playwright
+  caught A's 12 console errors (likely caused by the same bad math
+  throwing at render). Two signals catching the same root cause from
+  different angles.
+
+  Rule 46 (designer agent worktree GC) bit again — 2 of 4 worktrees
+  vanished. Need a structural fix: designer agents must commit a
+  no-op marker file (.agent-output-verified) before reporting success,
+  so the worktree always has tracked git state.
+
+canvas_sha256: 91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27
+run_id: 20260511T060000Z-cecl-quarterly-run-test-run1
+
+abandoned_options:
+  - option: B
+    reason: "Worktree auto-disposed (Rule 46 — same pattern as cre-surveillance C)"
+    follow_up: "Update designer agent prompt to require .agent-output-verified marker commit"
+  - option: D
+    reason: "Same as B"
+    follow_up: "Same as B"

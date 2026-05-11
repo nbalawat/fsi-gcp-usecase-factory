@@ -1,0 +1,367 @@
+{
+  "option": "A",
+  "use_case": "cecl-quarterly-run-test",
+  "run_id": "20260511T060000Z-cecl-quarterly-run-test-run1",
+  "canvas_sha256": "91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27",
+  "validated_at": "2026-05-11T06:11:47.385Z",
+  "base_url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app",
+  "routes": {
+    "case-sample": {
+      "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/case/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-768.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 428
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1024.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 504
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1440.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/case/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 1232
+        }
+      }
+    },
+    "approval-sample": {
+      "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/approval/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-768.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 424
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1024.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 400
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1440.png",
+          "console_errors": 2,
+          "console_error_samples": [
+            "Failed to load resource: the server responded with a status of 500 ()",
+            "Error: Minified React error #31; visit https://react.dev/errors/31?args[]=object%20with%20keys%20%7Bname%2C%20irrevocable%2C%20description%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at n1 (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:33295)\n    at u (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38688)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:38866\n    at lD (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:57329)\n    at iZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:120903)\n    at ia (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:95162)\n    at https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94984\n    at il (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:94991)\n    at oJ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:92347)\n    at oZ (https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/_next/static/chunks/fd9d1056-25b9413a3ae269ca.js:1:91766)"
+          ],
+          "console_warnings": 0,
+          "failed_requests": 1,
+          "failed_request_samples": [
+            {
+              "url": "https://fsi-uc-cecl-quarterly-run-test-design-a-v4uibzu6ga-uc.a.run.app/approval/sample",
+              "status": 500
+            }
+          ],
+          "a11y_violation_count": 5,
+          "a11y_violations_sample": [
+            {
+              "id": "document-title",
+              "impact": "serious",
+              "help": "Documents must have <title> element to aid in navigation",
+              "nodes": 1
+            },
+            {
+              "id": "html-has-lang",
+              "impact": "serious",
+              "help": "<html> element must have a lang attribute",
+              "nodes": 1
+            },
+            {
+              "id": "landmark-one-main",
+              "impact": "moderate",
+              "help": "Document should have one main landmark",
+              "nodes": 1
+            },
+            {
+              "id": "page-has-heading-one",
+              "impact": "moderate",
+              "help": "Page should contain a level-one heading",
+              "nodes": 1
+            },
+            {
+              "id": "region",
+              "impact": "moderate",
+              "help": "All page content should be contained by landmarks",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 416
+        }
+      }
+    }
+  },
+  "summary": {
+    "total_a11y_violations": 30,
+    "total_console_errors": 12,
+    "total_failed_requests": 6,
+    "cls_worst": 0,
+    "lcp_worst_ms": 1232,
+    "passed_budgets": 2,
+    "failed_budgets": 2
+  },
+  "budget_checks": [
+    {
+      "name": "a11y",
+      "budget": 5,
+      "value": 30,
+      "ok": false
+    },
+    {
+      "name": "console_errors",
+      "budget": 0,
+      "value": 12,
+      "ok": false
+    },
+    {
+      "name": "cls",
+      "budget": 0.1,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "lcp_ms",
+      "budget": 2500,
+      "value": 1232,
+      "ok": true
+    }
+  ]
+}

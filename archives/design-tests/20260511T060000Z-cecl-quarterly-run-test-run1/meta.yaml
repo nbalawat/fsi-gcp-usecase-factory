@@ -1,0 +1,9 @@
+use_case_id: cecl-quarterly-run-test
+tier: 3
+canvas_sha256: 91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27
+generated_at: "2026-05-11T06:00:00Z"
+test_run: 1
+console_pattern: run
+notes: |
+  Tier 3 expansion #2: CECL quarterly run.
+  Options B and D worktrees auto-cleaned (files lost) — only 2 of 4 to judge.

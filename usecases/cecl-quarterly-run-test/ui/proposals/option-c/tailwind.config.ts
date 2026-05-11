@@ -1,0 +1,118 @@
+import type { Config } from "tailwindcss";
+
+/**
+ * Self-contained Tailwind config for option-C
+ * (inline-action CECL run console).
+ *
+ * Atrium tokens are inlined here verbatim from ui/packages/theme/src/index.ts
+ * so this option builds standalone without the workspace theme package.
+ * BOTH Atrium-native names AND legacy aliases (surface-*, text-*, status-*,
+ * brand-*) are exposed — shared primitives in @fsi-bank/components still
+ * reference the legacy aliases, so we keep them mapped to the same values.
+ */
+const config: Config = {
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
+    "./_vendor/**/*.{ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // ── Atrium-native (preferred) ───────────────────────────────────
+        paper: { DEFAULT: "#FFFFFF", "2": "#F4F4F2", "3": "#ECECE8", pure: "#FFFFFF" },
+        ink: { "1": "#0F0B0B", "2": "#2C2A2A", "3": "#6B6868", "4": "#A09D9D" },
+        rule: "#E5E3E0",
+        border: { DEFAULT: "#D4D1CC", strong: "#ABA7A1" },
+        accent: {
+          DEFAULT: "#86BC24", hover: "#79A920", pressed: "#6B961C",
+          fg: "#0F0B0B", tint: "#EEF6DC",
+        },
+        brandBlack: { DEFAULT: "#0F0B0B", fg: "#FFFFFF" },
+        semantic: {
+          success: "#4F8A1A", successTint: "#E4F0D2",
+          "success-tint": "#E4F0D2",
+          warning: "#A86A1F", warningTint: "#F2E5CC",
+          "warning-tint": "#F2E5CC",
+          danger: "#A8341F", dangerTint: "#F0D9D2",
+          "danger-tint": "#F0D9D2",
+          info: "#3D5266", infoTint: "#DDE3EA",
+          "info-tint": "#DDE3EA",
+        },
+        riskBand: {
+          "1-pass": "#4F8A1A",
+          "2-special-mention": "#A86A1F",
+          "3-substandard": "#C76A1F",
+          "4-doubtful": "#A8341F",
+          "5-loss": "#5C1E12",
+        },
+        stageType: {
+          agent: "#3D5266",
+          human: "#0F0B0B",
+          mixed: "#6B961C",
+          auto: "#6B6868",
+        },
+
+        // ── Legacy aliases used by @fsi-bank/components primitives ──────
+        brand: {
+          primary: "#0F0B0B",
+          primaryDark: "#0F0B0B",
+          primaryLight: "#2C2A2A",
+          accent: "#86BC24",
+        },
+        surface: {
+          canvas: "#FFFFFF",
+          panel: "#FFFFFF",
+          panelMuted: "#F4F4F2",
+          border: "#D4D1CC",
+          borderStrong: "#ABA7A1",
+        },
+        text: {
+          primary: "#0F0B0B",
+          secondary: "#2C2A2A",
+          muted: "#6B6868",
+          inverse: "#FFFFFF",
+        },
+        status: {
+          ok: "#4F8A1A",
+          okBg: "#E4F0D2",
+          info: "#3D5266",
+          infoBg: "#DDE3EA",
+          warning: "#A86A1F",
+          warningBg: "#F2E5CC",
+          critical: "#A8341F",
+          criticalBg: "#F0D9D2",
+          neutral: "#6B6868",
+          neutralBg: "#ECECE8",
+        },
+      },
+      fontFamily: {
+        sans: ["'Inter Tight'", "system-ui", "sans-serif"],
+        serif: ["'Source Serif 4'", "Georgia", "serif"],
+        mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+      },
+      fontSize: {
+        eyebrow: "0.6875rem",
+        caption: "0.78125rem",
+        ui: "0.875rem",
+        "body-sm": "0.9375rem",
+        body: "1rem",
+        h4: "1rem",
+        h3: "1.1875rem",
+        h2: "1.5rem",
+        h1: "2rem",
+        mono: "0.90625rem",
+        "mono-sm": "0.78125rem",
+      },
+      fontWeight: {
+        regular: "420",
+        medium: "500",
+        semi: "600",
+        strong: "650",
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;

@@ -1,0 +1,91 @@
+schema_version: "1.0.0"
+option: A
+variation_axis: density
+canvas_checksum: 91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27
+use_case_id: cecl-quarterly-run-test
+
+persona:
+  primary: "Executive (CFO/CRO) finalizing a quarterly CECL allowance run with a 30-day OCC clock"
+  context: |
+    Reads runs as one big number with three corroborating numbers. Wants
+    to see, at a single horizontal glance, where the run is in its four
+    stages. Drills into a stage only when needed to read the dense
+    numeric ledger (segments × periods × bps). Owns the irrevocable GL
+    posting — the attestation surface is theirs alone.
+
+density_score: 2          # sparse hero / dense per-stage ledger
+motion_budget: minimal
+affordance_pattern: stage-rail-drill
+primary_metaphor: process-as-rail
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: WorkflowStageRail
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: StepProgress
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: RunStageRail
+    source: use-case
+  - name: RailAnnotations
+    source: use-case
+  - name: SegmentLedger
+    source: use-case
+  - name: StageDrill
+    source: use-case
+  - name: RunHero
+    source: use-case
+  - name: AttestRespondClient
+    source: use-case
+  - name: StageDrillHomeHint
+    source: use-case
+
+routes_implemented:
+  - home
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option A treats the run as a SINGLE NUMBER you sign, supported by a
+  four-stage horizontal rail at the top. The rail IS the page: every
+  pixel below the rail responds to which stage is open. Sparse density
+  for the hero (one allowance, one delta, one exceptions count, one
+  OCC clock) so the executive reads the run's state at a glance.
+  Click a stage and the dense numeric ledger (12 segments × 4 forecast
+  quarters × bps) unfolds inline — that's where the analyst-level
+  detail lives, behind the executive surface.
+
+tradeoffs:
+  optimised_for:
+    - CFO/CRO at-a-glance comprehension — three numbers and a clock
+    - Stage rail makes "where are we in the OCC 30-day window" answerable in one second
+    - Dense per-segment ledger available without leaving the page
+    - Approval flow surfaces the irrevocable GL posting + qual-overlay context inline
+    - Heavy reuse of shared primitives — 9 shared, novelty is the stage rail + ledger composition
+  sacrifices:
+    - Story / transcript view of HOW the allowance was produced is collapsed (option D's territory)
+    - Per-cell drill-into-event (which agent set this PD) is not first-class — the audit trail lives on the run-detail page only
+    - No live SSE stream — the rail status is derived from events at render time (Rule 13 trade-off: this view is intended for executive review, not in-flight monitoring)
+    - Segment-level human override UI is intentionally read-only here; overrides happen earlier in the workflow
+
+hero_screenshot: hero.png
+build:
+  status: pass
+  next_build: pass
+  routes: 4
+  reuse_count_shared: 9
+  reuse_count_net_new: 7
+  reuse_floor_met: true
+  notes: "npx next build succeeded; 4 routes prerendered; standalone bundle written to .next/standalone before cleanup."

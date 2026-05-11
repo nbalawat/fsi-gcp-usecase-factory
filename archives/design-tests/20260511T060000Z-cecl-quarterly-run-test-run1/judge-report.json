@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "cecl-quarterly-run-test",
+  "run_id": "20260511T060000Z-cecl-quarterly-run-test-run1",
+  "canvas_sha256": "91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27",
+  "judged_at": "2026-05-11T06:05:00Z",
+
+  "missing_options": ["b", "d"],
+
+  "scores": {
+    "A": {
+      "ui_standards": 4.2,
+      "agentic_principles": 4.0,
+      "reuse_count": 16,
+      "reuse_floor_met": true,
+      "net_new_count": 7,
+      "hitl_gates_wired": true,
+      "violations": [
+        "components/SegmentLedger.tsx:122 — business logic in component: `Math.round(r.pd_bps * (1 + i * 0.05))` synthesizes forecast quarter PDs from a base via a linear ramp. The forecast curve is a quantitative-model decision and should be produced by the cecl-pd-lgd-projector net-new atomic service and passed to the component as data (ui-standards Rule 2 + product-build-discipline Rule 8).",
+        "Rule 13 (live > polled > static) — no SSE / live event stream surfaced; the rail and ledger are render-time snapshots. The option declares this as a deliberate trade-off in tradeoffs.md (executive review view) but it still scores below an option that surfaces the event spine somewhere.",
+        "app/page.tsx:37 — `getRun(\"\")` is called with an empty string to fetch a 'live' run; if the fixture lookup behavior changes the home page can break. Mildly fragile defensive UI (Rule 14)."
+      ],
+      "strengths": [
+        "Process-as-rail metaphor is the strongest in the run: a 4-stage WorkflowStageRail is visible on home and run-detail with annotations for owner / caption / status.",
+        "CFO irrevocable attestation correctly routes through the shared ApprovalGate primitive (no DIY confirm dialog).",
+        "Heavy reuse — 9 shared primitives anchor the chrome (AppShell, BreadcrumbNav, WorkflowStageRail, RegulatoryClock, MetricStrip, StatCard, StatusBadge, StepProgress, ApprovalGate).",
+        "Server/Client boundary is clean: Server pages hand the Client `RunStageRail` and `StageDrill` only serializable data; no inline functions cross the boundary (UI Rule 4).",
+        "Sparse executive density discipline is intentional and persona-justified — three numbers and an OCC RegulatoryClock above the fold."
+      ]
+    },
+    "C": {
+      "ui_standards": 4.3,
+      "agentic_principles": 4.3,
+      "reuse_count": 12,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "components/SegmentRow.tsx:74 — Tailwind arbitrary value `w-[3px]` for the risk-band ring gutter. Minor — should resolve to a token (e.g. `border-l-2` or a defined width scale). ui-standards Rule 4.",
+        "Rule 13 (live > polled > static) — no SSE on the segment-row surface; the AuditLedger renders a static event stream from the run record at request time. The event spine is present but not live."
+      ],
+      "strengths": [
+        "Affordance discipline matches the canvas hitl_gates contract exactly: reversible `approve_segment_methodology` lives inline on the row that surfaces its evidence; irrevocable `cfo_attest_run` is the single screen that escapes inline, routed through the shared ApprovalGate.",
+        "AuditLedger is the canonical event-spine surface (Pub/Sub events rendered chronologically with actor type + headline + decision badge) — strongest 'audit-as-SOP' artifact across both options.",
+        "Inline reasoning expander on each SegmentRow surfaces the three agent hops (financial-spreader → industry-risk-scorer → segment-reserve-agent) without leaving the row — 'agent activity visible live' principle is concrete.",
+        "MethodologyOwnerRail makes the human-in-the-loop axis explicit: each owner with their pending count, in banker vocabulary.",
+        "No business logic in components — PD/LGD/EAD/ECL come from the data adapter; SegmentRow only renders.",
+        "Defensive UI: the /approval page short-circuits with a 'Gate not in scope' fallback if the canvas drift removes either gate (Rule 14 explicitly satisfied)."
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["C", "A"],
+
+  "recommended_winner": "C",
+  "recommendation_rationale": "Option C scores higher on both axes. On ui_standards: zero business logic in components, defensive UI is explicit (gate-not-in-scope guard), and the only deviation is a single Tailwind arbitrary value (w-[3px]). On agentic_principles: it provides the strongest event-spine surface (AuditLedger renders the Pub/Sub log with actor + decision), the strongest agent-activity-visible-live pattern (per-row reasoning expander naming the three agent hops), and most importantly its affordance topology matches the canvas hitl_gates contract precisely — reversible methodology approvals live inline on the segment row, the single irrevocable CFO attestation escapes to /approval through the shared ApprovalGate. Option A's process-as-rail metaphor is stronger and its executive density discipline is admirable, but its SegmentLedger contains a quantitative-model arithmetic decision (PD forecast curve via `Math.round(r.pd_bps * (1 + i * 0.05))`) — exactly the kind of business logic that must live in the cecl-pd-lgd-projector atomic service, not in a presentation component. Composite: C = 4.3*0.4 + 4.3*0.4 + 1.0 + 0.2 - 0.2 = 4.44; A = 4.2*0.4 + 4.0*0.4 + 1.0 + 0.2 - 0.3 = 4.18.",
+
+  "notes_for_human": [
+    "ONLY TWO OPTIONS scored. Options B and D were lost when their worktrees were auto-cleaned before the judge pass; the comparator should display a banner explaining the 2-of-4 scoring. The user is invited to re-run the full 4-designer pass if diversity signal is needed.",
+    "Both surviving options correctly route CFO irrevocable attestation through the shared ApprovalGate primitive — Rule 1 of product-build-discipline satisfied for both.",
+    "Diversity signal is good — Jaccard similarity of components_used is 0.33 (7 shared primitives / 21 union components); the two options express the canvas differently (process-rail vs row-as-disposition).",
+    "Option A's PD forecast arithmetic in SegmentLedger.tsx is the single most actionable defect. Even if A is chosen, that computation must move to the cecl-pd-lgd-projector atomic service before promotion.",
+    "Neither option surfaces a live SSE event stream — Rule 13 (live > polled > static). Both teams justified this as a deliberate trade-off for a quarterly-cadence run, but the comparator should flag it. If the use case ever needs in-flight monitoring (e.g. CFO watching the rerun during exception review), an SSE backbone will need to be added.",
+    "Option C's w-[3px] Tailwind arbitrary value is a token-discipline drift the auditor should flag; trivial to fix (move to a defined width or use border-l-2).",
+    "The composite gap (4.44 vs 4.18 = 0.26) is just above the 0.2 tie-break threshold; the human should still verify subjective fit-for-CFO-persona before promoting C."
+  ]
+}

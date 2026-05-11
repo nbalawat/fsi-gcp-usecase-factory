@@ -1,0 +1,98 @@
+schema_version: "1.0.0"
+option: C
+variation_axis: affordance
+canvas_checksum: 91f47921f8c50735facca5d50696e98661c7111fba41cbcb0ae0f1ebb7848b27
+use_case_id: cecl-quarterly-run-test
+
+persona:
+  primary: "Risk Analytics Lead approving Q2 segment methodologies"
+  context: |
+    Owns the Q2 CECL close and dispositions one segment at a time. Wants
+    to see, for each segment, the PD/LGD/EAD inputs that drove the
+    reserve number AND the action that segment enables, side by side on
+    the same row. Hates "review-then-act-elsewhere" hops. The CFO is the
+    only stakeholder whose action escapes the segment row — and only
+    because CFO attestation is irrevocable and regulator-visible.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: inline-per-segment-row
+primary_metaphor: row-as-disposition-unit
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: SegmentRow
+    source: use-case
+  - name: RunOverviewClient
+    source: use-case
+  - name: AuditLedger
+    source: use-case
+  - name: CfoAttestClient
+    source: use-case
+  - name: MethodologyOwnerRail
+    source: use-case
+
+routes_implemented:
+  - run-overview
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option C treats each CECL segment as a one-row dispatch unit. The row
+  itself carries the PD/LGD/EAD inputs that produced its reserve, the
+  reserve number, the methodology owner, AND the action that segment
+  enables — "Approve methodology" (reversible) or "Open variance Q&A"
+  inline. No modal, no sticky bottom bar, no separate review screen.
+  The user's eye never leaves the row to dispose of the row.
+
+  CFO attestation is the SINGLE action that escapes inline. It is
+  irrevocable per the canvas hitl_gates contract, regulator-visible, and
+  lives on /approval where the run rolls up into one figure the CFO
+  attests to. The header CTA to that surface only unlocks when all
+  reversible segment approvals are recorded.
+
+tradeoffs:
+  optimised_for:
+    - "Disposition speed — one click on the row, no context switch"
+    - "Audit explainability — every action records on the same row that surfaces the inputs that triggered it"
+    - "Reversibility — segment-methodology approvals are reversible right up until CFO attest"
+    - "Reuse — seven shared primitives carry the foundation (AppShell, BreadcrumbNav, MetricStrip, RegulatoryClock, StatCard, StatusBadge, ApprovalGate); novelty is in the row composition"
+    - "Single irrevocable escape — CFO attest is the only action that leaves the row, matching the canvas's one irrevocable gate"
+  sacrifices:
+    - "Wide rows — the 5-column row layout (ring + identity + inputs + reserve + action) degrades on narrow viewports; below 1024px collapses to a stack which is less efficient for skimming"
+    - "No spatial pipeline-stage rail — process is implicit in the segment-row verdict badges, not a visual left-to-right axis"
+    - "Variance Q&A is a single textarea, not a structured form — banker freedom over field-level validation"
+    - "The audit ledger lives BELOW the rows (full-width section), not in a right rail — banker sees rows first, audit-as-SOP after"
+
+hero_screenshot: hero.png
+build:
+  reuse_count_net_new: 0
+  reuse_count_shared: 12
+  reuse_floor_met: true
+judge:
+  composite_score: null
+  ui_standards: null
+  agentic_principles: null
+  reuse_count: 12
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 5
+  recommended: null
+  ranking_position: null
+  violations: []
+  strengths: []
+
+promoted: false
