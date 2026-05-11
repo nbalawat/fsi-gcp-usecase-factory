@@ -33,12 +33,21 @@
     .panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
     .panel-head .axis { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
     .panel-head .open { font-size: 11px; }
-    .panel-iframe { flex: 1 1 auto; background: white; min-height: 0; }
-    .panel-iframe iframe { width: 100%; height: 100%; border: 0; }
+    /* Panel content area — dark by default; only the iframe + screenshot get a white background. */
+    .panel-iframe { flex: 1 1 auto; background: var(--bg); min-height: 0; }
+    .panel-iframe iframe { width: 100%; height: 100%; border: 0; background: white; }
     .panel-iframe .hero-screenshot { width: 100%; height: auto; max-height: 100%; object-fit: contain; object-position: top; display: block; background: #fff; }
-    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); }
-    .panel-failed .badge { color: var(--error); font-weight: 600; }
-    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; }
+    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); outline-offset: -2px; }
+    /* Higher-contrast error badge so axe-core / WCAG 2.1 contrast rule is satisfied (4.5+:1). */
+    .panel-failed .badge { background: rgba(255, 85, 119, 0.18); color: #ffb3c1; font-weight: 600; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--error); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    /* Static-review empty state — turns the dead iframe area into a useful evaluation surface. */
+    .static-review { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; gap: 12px; min-height: 0; overflow-y: auto; outline-offset: -2px; }
+    .static-review-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.08em; }
+    .static-review-body { color: var(--text); line-height: 1.55; font-size: 13px; white-space: pre-wrap; }
+    .static-review-footer { font-family: var(--mono); font-size: 10px; color: var(--text-dim); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: auto; }
+    .static-review-footer code { background: var(--panel-2); padding: 2px 5px; border-radius: 3px; }
+    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; outline-offset: -2px; }
+    .panel-summary:focus-visible { outline: 2px solid var(--accent); }
     .panel-summary .strip { display: flex; gap: 12px; color: var(--text-dim); margin-bottom: 6px; flex-wrap: wrap; }
     .panel-summary .strip span { white-space: nowrap; }
     .panel-summary p { margin: 4px 0; color: var(--text); }
@@ -60,14 +69,14 @@
     @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 50vh); } }
   </style>
 </head>
-<body><div class="header">
+<body><header class="header">
       <h1>credit-memo-commercial-test · 4 design options · pick one via /fsi-design-review</h1>
       <div class="sha">canvas 383ab8c261e3159b…</div>
       <div class="toolbar">
         <button onclick="document.querySelectorAll('iframe').forEach(f=>f.src=f.src)">↻ reload all</button>
       </div>
-    </div>
-    <div class="grid">
+    </header>
+    <main class="grid" aria-label="Design option comparison">
       
     <section class="panel" data-option="a">
       <div class="panel-head">
@@ -76,8 +85,15 @@
           
         </div>
       </div>
-      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
-      <div class="panel-summary">
+      <div class="panel-iframe">
+      <div class="static-review" tabindex="0">
+        <div class="static-review-label">static review · no deploy yet</div>
+        <div class="static-review-body"># Option A — rationale
+The canvas describes a commercial-credit underwriting case with four HITL gates and five agents in a hybrid-model pipeline. The moment of truth for the Credit Officer is not &quot;what did each of the five agents do?&quot; — it is &quot;what&#39;s the recommendation, and what&#39;s the one fact that would flip it?&quot; Option A is built around that 30-second scan.
+The case-detail page is a single sparse column. The decision word (APPROVE) is rendered at 96px serif inside a tinted</div>
+        <div class="static-review-footer">Source: <code>usecases/&lt;uc&gt;/ui/proposals/option-a/</code></div>
+      </div></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option A">
         <div class="strip">
           <span>density ★☆☆☆☆</span>
           <span>motion · minimal</span>
@@ -85,7 +101,10 @@
           <span>metaphor · document-first</span>
           <span>persona · Credit Officer (final-approval authority)</span>
         </div>
-        <p>|</p>
+        <p>Sparse executive surface. The artifact (the recommendation hero) IS the page.
+Chrome compresses to a 56px top strip + a 240px right-rail of HITL gate
+statuses. Approval flow is a single max-w-2xl column where decided gates
+collapse to one-line strips, leaving only the active gate visible.</p>
         <div class="pillrow">
           <span class="pill ok">reuse 8</span>
           
@@ -119,8 +138,20 @@
           
         </div>
       </div>
-      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
-      <div class="panel-summary">
+      <div class="panel-iframe">
+      <div class="static-review" tabindex="0">
+        <div class="static-review-label">static review · no deploy yet</div>
+        <div class="static-review-body"># Option B — workflow-first rationale
+Credit underwriting is, structurally, a workflow problem. Lincoln Electric&#39;s
+$25M revolver moves through nine stages — intake, extracting, analyzing,
+spreading, rating, drafting, reviewing, approval, done — and four
+human-in-the-loop gates. The analyst&#39;s and credit officer&#39;s
+mental model is the **stage**: &quot;where is this case in the process, and what
+am I being asked to do next?&quot; Every previous credit-memo UI we shipped
+treated the artifac</div>
+        <div class="static-review-footer">Source: <code>usecases/&lt;uc&gt;/ui/proposals/option-b/</code></div>
+      </div></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option B">
         <div class="strip">
           <span>density ★★★☆☆</span>
           <span>motion · standard</span>
@@ -128,7 +159,11 @@
           <span>metaphor · workflow-first</span>
           <span>persona · Credit officer (Tier 2) + relationship-manager analyst</span>
         </div>
-        <p>|</p>
+        <p>Workflow-first: the nine canvas stages drive the layout. The current stage is the hero
+(60% of the viewport), prior stages compress to a left rail with status pills (clickable
+anchors), future stages are dimmed but visible. Pipeline activity is the SPINE of the
+page — a horizontal event strip grouped by stage, not a drawer. The user always knows
+what stage they&#39;re in, what just happened, and what to action next.</p>
         <div class="pillrow">
           <span class="pill ok">reuse 13</span>
           
@@ -162,8 +197,20 @@
           
         </div>
       </div>
-      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
-      <div class="panel-summary">
+      <div class="panel-iframe">
+      <div class="static-review" tabindex="0">
+        <div class="static-review-label">static review · no deploy yet</div>
+        <div class="static-review-body"># Option C — inline-per-section
+## Why inline-per-section beats sticky-bottom
+A credit memo is not one decision; it is nine. The analyst is judging
+extraction faithfulness, the spread, peer context, collateral, related-
+party exposure, the rating, policy rules, the narrative, and finally
+sign-off. A sticky-bottom approval bar conflates all nine into one
+moment of action, which forces the user to either (a) hold every
+question in their head until the bottom of a long memo, or </div>
+        <div class="static-review-footer">Source: <code>usecases/&lt;uc&gt;/ui/proposals/option-c/</code></div>
+      </div></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option C">
         <div class="strip">
           <span>density ★★★☆☆</span>
           <span>motion · minimal</span>
@@ -171,7 +218,13 @@
           <span>metaphor · document-first</span>
           <span>persona · Commercial credit analyst doing line-by-line memo review</span>
         </div>
-        <p>|</p>
+        <p>Inline-per-section beats sticky/modal because the analyst&#39;s eye never has
+to leave the data that informs the decision. Approve / edit / request-
+revision / reject sit AT THE END of every memo section — extraction,
+spread, peer, collateral, network, rating, rules, draft, final.
+The approval route mirrors the philosophy: it&#39;s a fast-track summary of
+inline decisions, not a separate review surface; jump-back links return
+the officer to the exact section that still needs attention.</p>
         <div class="pillrow">
           <span class="pill ok">reuse 13</span>
           
@@ -205,8 +258,20 @@
           
         </div>
       </div>
-      <div class="panel-iframe"><div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div></div>
-      <div class="panel-summary">
+      <div class="panel-iframe">
+      <div class="static-review" tabindex="0">
+        <div class="static-review-label">static review · no deploy yet</div>
+        <div class="static-review-body"># Option D — rationale
+## Wildcard position chosen: **conversation timeline**
+The case IS a transcript. Every event in `PIPELINE_EVENTS` becomes one
+chronological row — agent reasonings (◆), atomic service calls (▢),
+human uploads (◉), HITL gates (▮), system stage transitions (·).
+Reading the case top-to-bottom is reading the case&#39;s story.
+This is the position no other designer is likely to take. The other
+three options on the same canvas almost certainly anchor on:</div>
+        <div class="static-review-footer">Source: <code>usecases/&lt;uc&gt;/ui/proposals/option-d/</code></div>
+      </div></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option D">
         <div class="strip">
           <span>density ★★★☆☆</span>
           <span>motion · minimal</span>
@@ -214,7 +279,11 @@
           <span>metaphor · conversation-first</span>
           <span>persona · Risk officer doing post-decision review (or live audit of an in-flight case)</span>
         </div>
-        <p>|</p>
+        <p>Option D treats the case as a CONVERSATION TRANSCRIPT. Every agent
+reasoning, every atomic service call, every rule verdict, every human
+gate is one chronological row. The approval flow is the same
+transcript, scoped to the slice that led to each gate, with the
+ApprovalGate primitive rendered inline at the bottom of the scope.</p>
         <div class="pillrow">
           <span class="pill ok">reuse 11</span>
           
@@ -240,7 +309,7 @@
       </div>
     </section>
   
-    </div>
+    </main>
   </div>
   <script>
     // Simple shortcuts: 1/2/3/4 to fullscreen each option

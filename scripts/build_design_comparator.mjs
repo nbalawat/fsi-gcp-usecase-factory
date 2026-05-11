@@ -33,7 +33,38 @@ function loadYaml(text) {
   const tokens = raw.map(l => ({ indent: l.match(/^\s*/)[0].length, content: l.trim() }));
   let i = 0;
   function parseBlock(p) { if (i >= tokens.length) return null; const f = tokens[i]; if (f.indent <= p) return null; if (f.content.startsWith("- ") || f.content === "-") return parseList(f.indent); return parseObject(f.indent); }
-  function parseObject(my) { const o = {}; while (i < tokens.length) { const t = tokens[i]; if (t.indent < my) break; if (t.indent > my) { i++; continue; } const m = t.content.match(/^([A-Za-z_$][\w-]*)\s*:\s*(.*)$/); if (!m) break; const k = m[1], v = m[2]; i++; if (!v) o[k] = parseBlock(my) ?? null; else if (v === "[]") o[k] = []; else if (v === "{}") o[k] = {}; else o[k] = parseScalar(v); } return o; }
+  // Collect a YAML block scalar (literal `|` or folded `>`) — the lines deeper than `parentIndent`
+  // form the scalar body. Returns the joined string and advances `i` past them.
+  function parseBlockScalar(parentIndent, style) {
+    const lines = [];
+    while (i < tokens.length && tokens[i].indent > parentIndent) {
+      lines.push(tokens[i].content);
+      i++;
+    }
+    if (style === ">") return lines.join(" ");      // folded
+    return lines.join("\n");                         // literal `|`
+  }
+  function parseObject(my) {
+    const o = {};
+    while (i < tokens.length) {
+      const t = tokens[i];
+      if (t.indent < my) break;
+      if (t.indent > my) { i++; continue; }
+      const m = t.content.match(/^([A-Za-z_$][\w-]*)\s*:\s*(.*)$/);
+      if (!m) break;
+      const k = m[1], v = m[2];
+      i++;
+      if (v === "|" || v === ">") {
+        // YAML block scalar — collect deeper-indented lines as the value
+        o[k] = parseBlockScalar(my, v);
+      } else if (!v) {
+        o[k] = parseBlock(my) ?? null;
+      } else if (v === "[]") o[k] = [];
+      else if (v === "{}") o[k] = {};
+      else o[k] = parseScalar(v);
+    }
+    return o;
+  }
   function parseList(my) { const a = []; while (i < tokens.length) { const t = tokens[i]; if (t.indent < my) break; if (t.indent > my) { i++; continue; } if (!t.content.startsWith("- ") && t.content !== "-") break; const ic = t.content === "-" ? "" : t.content.slice(2).trim(); i++; if (!ic) a.push(parseBlock(my) ?? null); else if (/^[A-Za-z_$][\w-]*\s*:/.test(ic)) { const m = ic.match(/^([A-Za-z_$][\w-]*)\s*:\s*(.*)$/); const o = {}; const k = m[1], v = m[2]; if (!v) o[k] = parseBlock(my + 2) ?? null; else if (v === "[]") o[k] = []; else if (v === "{}") o[k] = {}; else o[k] = parseScalar(v); while (i < tokens.length && tokens[i].indent === my + 2) { const tt = tokens[i]; const mm = tt.content.match(/^([A-Za-z_$][\w-]*)\s*:\s*(.*)$/); if (!mm) break; const k2 = mm[1], v2 = mm[2]; i++; if (!v2) o[k2] = parseBlock(my + 2) ?? null; else if (v2 === "[]") o[k2] = []; else if (v2 === "{}") o[k2] = {}; else o[k2] = parseScalar(v2); } a.push(o); } else a.push(parseScalar(ic)); } return a; }
   if (!tokens.length) return {};
   return tokens[0].content.startsWith("- ") ? parseList(tokens[0].indent) : parseObject(tokens[0].indent);
@@ -131,12 +162,21 @@ const HTML_HEADER = (uc, sha) => `<!doctype html>
     .panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
     .panel-head .axis { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
     .panel-head .open { font-size: 11px; }
-    .panel-iframe { flex: 1 1 auto; background: white; min-height: 0; }
-    .panel-iframe iframe { width: 100%; height: 100%; border: 0; }
+    /* Panel content area — dark by default; only the iframe + screenshot get a white background. */
+    .panel-iframe { flex: 1 1 auto; background: var(--bg); min-height: 0; }
+    .panel-iframe iframe { width: 100%; height: 100%; border: 0; background: white; }
     .panel-iframe .hero-screenshot { width: 100%; height: auto; max-height: 100%; object-fit: contain; object-position: top; display: block; background: #fff; }
-    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); }
-    .panel-failed .badge { color: var(--error); font-weight: 600; }
-    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; }
+    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); outline-offset: -2px; }
+    /* Higher-contrast error badge so axe-core / WCAG 2.1 contrast rule is satisfied (4.5+:1). */
+    .panel-failed .badge { background: rgba(255, 85, 119, 0.18); color: #ffb3c1; font-weight: 600; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--error); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    /* Static-review empty state — turns the dead iframe area into a useful evaluation surface. */
+    .static-review { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; gap: 12px; min-height: 0; overflow-y: auto; outline-offset: -2px; }
+    .static-review-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.08em; }
+    .static-review-body { color: var(--text); line-height: 1.55; font-size: 13px; white-space: pre-wrap; }
+    .static-review-footer { font-family: var(--mono); font-size: 10px; color: var(--text-dim); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: auto; }
+    .static-review-footer code { background: var(--panel-2); padding: 2px 5px; border-radius: 3px; }
+    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; outline-offset: -2px; }
+    .panel-summary:focus-visible { outline: 2px solid var(--accent); }
     .panel-summary .strip { display: flex; gap: 12px; color: var(--text-dim); margin-bottom: 6px; flex-wrap: wrap; }
     .panel-summary .strip span { white-space: nowrap; }
     .panel-summary p { margin: 4px 0; color: var(--text); }
@@ -170,30 +210,39 @@ function renderPanel(opt) {
   const motion = manifest.motion_budget ?? "—";
   const affordance = manifest.affordance_pattern ?? "—";
   const metaphor = manifest.primary_metaphor ?? "—";
-  const buildOk = manifest.build?.build_succeeded;
-  const deployOk = manifest.build?.deploy_succeeded;
+
+  // Build status defaults — treat undefined as "not deployed yet" rather than "build failed".
+  // Only the explicit `false` flips us into a hard-failed panel.
+  const buildExplicitlyFailed = manifest.build?.build_succeeded === false;
   const components = manifest.components_used ?? [];
   const reuseCount = components.filter(c => c?.source === "shared" || c?.source === "use-case").length;
   const netNewCount = components.filter(c => c?.source === "net-new").length;
 
-  // Reuse-floor hard gate (Phase 0.3): if explicitly failed, render as failed,
-  // even if build_succeeded was true upstream.
+  // Reuse-floor hard gate (Phase 0.3): explicit false ⇒ hard fail.
   const reuseFloorFailed = manifest.build?.reuse_floor_met === false;
   const reuseFloorShared = manifest.build?.reuse_count_shared;
 
+  // Excerpt of rationale.md for the "static review" empty state.
+  const rationaleExcerpt = (rationale ?? "").trim().split(/\n+/).slice(0, 8).join("\n").slice(0, 480);
+
   let body;
   if (reuseFloorFailed) {
-    body = `<div class="panel-failed"><div class="badge">⚠ reuse floor failed</div><div>${reuseFloorShared ?? "?"} shared components; floor is 5</div></div>`;
-  } else if (!buildOk && !playwrightScreenshot) {
-    body = `<div class="panel-failed"><div class="badge">⚠ build failed</div><div>tsc / Docker error — see option dir</div></div>`;
-  } else if (!url && !playwrightScreenshot) {
-    body = `<div class="panel-failed"><div class="badge">⚠ not deployed</div><div>no live URL and no Playwright screenshot</div></div>`;
+    body = `<div class="panel-failed" tabindex="0"><div class="badge">reuse floor failed</div><div>${reuseFloorShared ?? "?"} shared components; floor is 5</div></div>`;
+  } else if (buildExplicitlyFailed) {
+    body = `<div class="panel-failed" tabindex="0"><div class="badge">build failed</div><div>tsc / Docker error — see option dir</div></div>`;
   } else if (url) {
-    // Live deploy: iframe wins
-    body = `<iframe src="${htmlEscape(url)}" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
-  } else {
-    // No live URL but we have a Playwright-captured screenshot
+    body = `<iframe src="${htmlEscape(url)}" loading="lazy" referrerpolicy="no-referrer" title="Option ${option.toUpperCase()} — ${htmlEscape(axis)} variant deployed at ${htmlEscape(url)}"></iframe>`;
+  } else if (playwrightScreenshot) {
     body = `<img class="hero-screenshot" src="${htmlEscape(playwrightScreenshot)}" alt="Playwright capture of option ${option.toUpperCase()} case detail at 1440px" />`;
+  } else {
+    // Static-review empty state: show design intent inline rather than a giant "not deployed" blob.
+    // This is what an evaluator sees when picking before any deploy/Playwright run.
+    body = `
+      <div class="static-review" tabindex="0">
+        <div class="static-review-label">static review · no deploy yet</div>
+        <div class="static-review-body">${htmlEscape(rationaleExcerpt) || htmlEscape(manifest.design_summary ?? "")}</div>
+        <div class="static-review-footer">Source: <code>usecases/&lt;uc&gt;/ui/proposals/option-${option}/</code></div>
+      </div>`;
   }
 
   const summary = (manifest.design_summary ?? "").slice(0, 600);
@@ -245,7 +294,7 @@ function renderPanel(opt) {
         </div>
       </div>
       <div class="panel-iframe">${body}</div>
-      <div class="panel-summary">
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option ${option.toUpperCase()}">
         <div class="strip">
           <span>density ${density}</span>
           <span>motion · ${htmlEscape(motion)}</span>
@@ -294,16 +343,16 @@ function buildComparator(uc) {
   const opts = ["a", "b", "c", "d"].map(x => loadOption(uc, x));
 
   const html = HTML_HEADER(uc, canvasSha) +
-    `<div class="header">
+    `<header class="header">
       <h1>${htmlEscape(uc)} · 4 design options · pick one via /fsi-design-review</h1>
       <div class="sha">canvas ${htmlEscape(canvasSha.slice(0, 16))}…</div>
       <div class="toolbar">
         <button onclick="document.querySelectorAll('iframe').forEach(f=>f.src=f.src)">↻ reload all</button>
       </div>
-    </div>
-    <div class="grid">
+    </header>
+    <main class="grid" aria-label="Design option comparison">
       ${opts.map(renderPanel).join("\n")}
-    </div>` + HTML_FOOTER;
+    </main>` + HTML_FOOTER;
 
   const out = join(REPO, "usecases", uc, "ui", "proposals", "_review.html");
   writeFileSync(out, html);

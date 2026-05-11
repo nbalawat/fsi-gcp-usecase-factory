@@ -236,7 +236,9 @@ assert_path "usecases/__test_design_proposals__/ui/proposals/_review.html" "comp
 assert_grep "<!doctype html>"           "usecases/__test_design_proposals__/ui/proposals/_review.html" "valid HTML doctype"
 assert_grep "Option A"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option A"
 assert_grep "Option D"                  "usecases/__test_design_proposals__/ui/proposals/_review.html" "renders option D"
-assert_grep "(deploy failed|not deployed)"   "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows ⚠ banner for failed/missing deploys"
+assert_grep "(build failed|reuse floor failed|static review)" "usecases/__test_design_proposals__/ui/proposals/_review.html" "shows panel empty state when no deploy"
+assert_grep "<main "  "usecases/__test_design_proposals__/ui/proposals/_review.html" "uses <main> landmark"
+assert_grep "<header" "usecases/__test_design_proposals__/ui/proposals/_review.html" "uses <header> landmark"
 echo
 
 echo "12. Judge pass artifacts (Phase 0.1) are wired:"
