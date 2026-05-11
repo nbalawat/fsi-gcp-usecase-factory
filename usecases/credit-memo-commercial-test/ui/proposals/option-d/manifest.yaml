@@ -66,6 +66,13 @@ tradeoffs:
 
 hero_screenshot: hero.png
 build:
+  playwright_validated_at: "2026-05-11T03:32:53.059Z"
+  playwright_a11y_violations: 6
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 724
+  playwright_budgets_passed: 3
+  playwright_budgets_failed: 1
   a11y_violations: 0
   a11y_scan_mode: "static-heuristic"
   a11y_violation_codes:
@@ -94,3 +101,6 @@ judge:
     - "GateRespondClient renders the conversation scope leading up to each gate, then the ApprovalGate inline at the bottom — disposition happens in the same view as the audit"
     - "Cleanest type-safety in the adapter (toTranscript: events → typed TranscriptRow union; no `any` leaks)"
     - "All 4 HITL gates wired with explicit per-gate recommendation, irrevocable flag on final_approval"
+
+promoted: true
+promoted_at: "2026-05-11T03:34:33Z"

@@ -1,0 +1,50 @@
+schema_version: "1.0.0"
+use_case_id: credit-memo-commercial-test
+chosen_option: D
+variation_axis: wildcard
+chosen_at: "2026-05-11T03:34:17Z"
+locked_at: "2026-05-11T03:34:17Z"
+iteration_count: 0
+lock_level: layout-only
+
+annotations:
+  keep:
+    - "Conversation transcript as the primary page metaphor — every agent reasoning, atomic service call, rule verdict, and human gate as a chronological row"
+    - "Inline gate disposition — Respond → link inline; no separate review-then-approve hop"
+    - "HITL ledger right rail showing all 4 gates with decided timestamps"
+    - "Rule verdicts panel in the right rail"
+    - "Canvas SHA pinned in the footer for regulator audit"
+  drop:
+    - "Stage-rail / left-to-right pipeline-spine metaphor (intentionally absent in D; not needed)"
+  change:
+    - from: "6 axe-core color-contrast violations on .ml-2 muted timestamps"
+      to: "Lift timestamp text-color from ink-3 → ink-2 (or add explicit color override) so WCAG AA contrast holds at 4.5+"
+      reason: "Playwright caught 6 contrast violations against ink-3 (~3.5:1). Easy fix; deferred to first backend-build iteration."
+    - from: "Two filter tabs use the same data-axis (Humans/Gates overlap)"
+      to: "Distinct disposition labels; expose gate type separately from human action type"
+      reason: "Subtle but the transcript filters muddy the per-actor counts."
+
+rejected_options:
+  - option: A
+    variation_axis: density
+    rationale: "Source-level violations (3 hard); strong runtime (0 a11y, 4/4 budgets); single-column sparse-executive design intentionally sacrifices live event spine + agent activity surface. Not picked because production persona is the risk officer, not the credit officer doing a 30-second scan."
+    diversity_score: 0.18
+  - option: B
+    variation_axis: metaphor
+    rationale: "Workflow-first; judge composite 4.34 (close second). Runtime: 15 a11y violations. Not picked because D's conversation transcript better surfaces agentic-principles 1+3+4 (event spine, agent activity, audit-as-SOP) for the risk-officer persona."
+    diversity_score: 0.33
+  - option: C
+    variation_axis: affordance
+    rationale: "Inline-per-section. Judge composite 3.88; 4 violations include business logic in components. 15 a11y violations runtime. Useful pattern; revisit after Tier 2 multi-pattern testing."
+    diversity_score: 0.27
+
+archive_path: archives/design/credit-memo-commercial-test/20260511T033417Z/
+comparator_html_path: archives/design/credit-memo-commercial-test/20260511T033417Z/_review.html
+canvas_checksum: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+canvas_path: onboarding/credit-memo-commercial-test.yaml
+
+telemetry:
+  design_cost_usd: 8.20
+  design_wallclock_s: 1620
+  respin_cost_usd: 0
+  cloud_run_services_torn_down: 3
