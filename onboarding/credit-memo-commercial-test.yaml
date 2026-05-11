@@ -1,0 +1,57 @@
+# Test canvas — credit-memo-commercial baseline
+# Used for Tier 1 (live), Tier 3 (variance × 3 runs), Tier 4 (trial).
+
+use_case_id: credit-memo-commercial-test
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: pipeline
+
+use_case_archetype: pipeline-originator@1.0
+
+hitl_gates:
+  - extraction_review
+  - rating_review
+  - draft_review
+  - final_approval
+
+atomic_services_reused:
+  - financial-spreader
+  - loan-serviceability
+  - peer-and-industry-context
+  - borrower-network
+  - collateral-valuator
+  - document-extractor
+
+net_new_atomic_services: []
+
+multi_agent_pattern: extractor-spreader-rater-drafter@1.0
+
+agent_archetypes_reused:
+  - document-processor@1.0
+  - analyst-multisection@1.0
+  - rater-with-covenant@1.0
+  - narrative-drafter@1.0
+  - memo-reviewer-v2@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - dscr_threshold_by_industry
+  - leverage_threshold_by_industry
+  - single_borrower_exposure
+  - reg_o_individual_limit
+
+net_new_rules: []
+
+model_provider: hybrid
+provider_prereqs_confirmed:
+  - "Vertex ADC available on Cloud Run SA"
+  - "us-central1 region pinned"
+  - "roles/aiplatform.user granted"
+  - "response_schema enabled (Rule 2)"
+  - "Anthropic API key in Secret Manager"
+  - "VPC egress to api.anthropic.com allowed"
+provider_prereqs_pending: []
+compliance_scope: full
+eval_framework_wired: true

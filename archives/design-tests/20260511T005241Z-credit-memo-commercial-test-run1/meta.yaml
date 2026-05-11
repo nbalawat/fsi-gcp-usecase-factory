@@ -1,0 +1,7 @@
+use_case_id: credit-memo-commercial-test
+tier: 1
+canvas_sha256: 383ab8c261e3159bff64d0389bccc5c467df057512ee56a1b09229d25fbe8251
+generated_at: "2026-05-11T00:52:41Z"
+test_run: 1
+console_pattern: pipeline
+notes: "First live Tier 1 run on the credit-memo baseline canvas. 4 designer agents spawned in parallel; no deploy this round."
