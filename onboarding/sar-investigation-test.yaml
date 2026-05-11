@@ -1,0 +1,48 @@
+# Test canvas — BSA/AML SAR investigation (investigations console).
+
+use_case_id: sar-investigation-test
+schema_version: "1.0.0"
+created_at: "2026-05-10T11:00:00Z"
+
+console_pattern: investigations
+use_case_archetype: investigation-initiator@1.0
+
+hitl_gates:
+  - final_approval
+
+atomic_services_reused:
+  - borrower-network
+  - exposure-aggregator
+  - peer-and-industry-context
+
+net_new_atomic_services: []
+
+multi_agent_pattern: triage-investigator-narrator@1.0
+
+agent_archetypes_reused:
+  - complaint-categorizer@1.0
+  - insider-screener@1.0
+  - regulatory-narrator@1.0
+  - narrative-drafter@1.0
+
+net_new_agents: []
+
+shared_rules_reused:
+  - single_borrower_exposure
+  - insider_aggregate_limit
+  - reg_o_individual_limit
+
+net_new_rules:
+  - name: structuring_signal_threshold
+    citation: "31 CFR 1010.314 — BSA structuring"
+    inputs_sketch: "transaction_count_30d, aggregate_amount, threshold_proximity → flag | dismiss"
+
+model_provider: anthropic_api
+provider_prereqs_confirmed:
+  - "Anthropic API key in Secret Manager"
+  - "key starts with sk-ant-api"
+  - "--set-secrets ANTHROPIC_API_KEY mount"
+  - "VPC egress to api.anthropic.com allowed"
+provider_prereqs_pending: []
+compliance_scope: full
+eval_framework_wired: true

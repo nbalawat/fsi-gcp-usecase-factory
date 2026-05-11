@@ -1,0 +1,10 @@
+use_case_id: sar-investigation-test
+tier: 2
+canvas_sha256: 650233de013e5badb28ffd9585c5325b38aca582bf64c85469e8e90bf0764031
+generated_at: "2026-05-11T03:50:30Z"
+test_run: 1
+console_pattern: investigations
+notes: |
+  Tier 2 run #1: validates the design-proposal chain on a different
+  console pattern (investigations) and a fundamentally different
+  workflow shape (no per-stage spreading; regulatory clock-driven).
