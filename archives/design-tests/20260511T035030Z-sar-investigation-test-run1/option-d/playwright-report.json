@@ -1,0 +1,247 @@
+{
+  "option": "D",
+  "use_case": "sar-investigation-test",
+  "run_id": "20260511T035030Z-sar-investigation-test-run1",
+  "canvas_sha256": "650233de013e5badb28ffd9585c5325b38aca582bf64c85469e8e90bf0764031",
+  "validated_at": "2026-05-11T04:14:03.643Z",
+  "base_url": "https://fsi-uc-sar-investigation-test-design-d-v4uibzu6ga-uc.a.run.app",
+  "routes": {
+    "case-sample": {
+      "url": "https://fsi-uc-sar-investigation-test-design-d-v4uibzu6ga-uc.a.run.app/case/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-768.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 428
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1024.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 412
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/case-sample-1440.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 10
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 552
+        }
+      }
+    },
+    "approval-sample": {
+      "url": "https://fsi-uc-sar-investigation-test-design-d-v4uibzu6ga-uc.a.run.app/approval/sample",
+      "viewports": {
+        "768": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-768.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 3
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 296
+        },
+        "1024": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1024.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 3
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 268
+        },
+        "1440": {
+          "nav_error": null,
+          "screenshot": "screenshots/approval-sample-1440.png",
+          "console_errors": 0,
+          "console_error_samples": [],
+          "console_warnings": 0,
+          "failed_requests": 0,
+          "failed_request_samples": [],
+          "a11y_violation_count": 3,
+          "a11y_violations_sample": [
+            {
+              "id": "aria-progressbar-name",
+              "impact": "serious",
+              "help": "ARIA progressbar nodes must have an accessible name",
+              "nodes": 1
+            },
+            {
+              "id": "color-contrast",
+              "impact": "serious",
+              "help": "Elements must meet minimum color contrast ratio thresholds",
+              "nodes": 3
+            },
+            {
+              "id": "nested-interactive",
+              "impact": "serious",
+              "help": "Interactive controls must not be nested",
+              "nodes": 1
+            }
+          ],
+          "cls": 0,
+          "lcp_ms": 276
+        }
+      }
+    }
+  },
+  "summary": {
+    "total_a11y_violations": 18,
+    "total_console_errors": 0,
+    "total_failed_requests": 0,
+    "cls_worst": 0,
+    "lcp_worst_ms": 552,
+    "passed_budgets": 3,
+    "failed_budgets": 1
+  },
+  "budget_checks": [
+    {
+      "name": "a11y",
+      "budget": 5,
+      "value": 18,
+      "ok": false
+    },
+    {
+      "name": "console_errors",
+      "budget": 0,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "cls",
+      "budget": 0.1,
+      "value": 0,
+      "ok": true
+    },
+    {
+      "name": "lcp_ms",
+      "budget": 2500,
+      "value": 552,
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+schema_version: "1.0.0"
+use_case_id: sar-investigation-test
+chosen_option: D
+variation_axis: wildcard
+chosen_at: "2026-05-11T04:15:18Z"
+locked_at: "2026-05-11T04:15:18Z"
+iteration_count: 0
+lock_level: layout-only
+
+decision_rationale: |
+  The judge LLM (source-only analysis) ranked B first (composite 4.95).
+  Playwright validation against the live deployed service revealed B
+  returns HTTP 500 on every page (Server Components render error). This
+  is exactly the failure mode the factory's dual-signal validation
+  protects against — source-level rank does not predict runtime quality.
+
+  D (the judge's #2 pick at composite 4.75) is runtime-clean (a11y 18,
+  LCP 552ms, 0 console errors, 0 failed requests) AND the counterparty-
+  graph-first metaphor is genuinely well-suited to BSA SAR investigations
+  (related-parties visualization is central to the SAR analyst's workflow).
+
+annotations:
+  keep:
+    - "Counterparty-graph-first metaphor — the related-parties network IS the page"
+    - "SVG ring layout with clickable nodes + edges, keyboard navigable"
+    - "EdgeInspector right-rail drives the narrative from selected edges"
+    - "Inline ApprovalGate with irrevocable: true for final SAR filing"
+    - "30-day SAR clock in hero via shared <RegulatoryClock>"
+  drop:
+    - "Bias toward visual-only — supplement with a text-fallback alert summary at the top of the page"
+  change:
+    - from: "18 axe-core a11y violations (color-contrast on SVG node labels + muted timestamp text)"
+      to: "Lift SVG label and timestamp text colors to satisfy WCAG AA 4.5:1"
+      reason: "Playwright caught 18 contrast violations. Pattern matches Tier 1 (ink-3 muted text fails AA). Token-level fix in ui/packages/theme would help every future UC."
+    - from: "Hex colors in CounterpartyGraph SVG"
+      to: "Graduate to CSS variables / Tailwind classes per Rule 4.5"
+      reason: "Judge flagged this; static lint will eventually catch it once the SVG-color sub-rule lands."
+
+rejected_options:
+  - option: A
+    variation_axis: density
+    rationale: "Sparse-executive (judge composite 4.40). Runtime fine; D's graph metaphor more SAR-domain-fit."
+    diversity_score: 0.15
+  - option: B
+    variation_axis: metaphor
+    rationale: "Regulatory-clock-first (judge composite 4.95 — would have been the winner). REJECTED at runtime: HTTP 500 on every page. Server Components render error. Dual-signal validation worked as designed."
+    diversity_score: 0.31
+    build_failed: false
+    deploy_failed: false
+    runtime_failed: true
+  - option: C
+    variation_axis: affordance
+    rationale: "Annotated-narrative (judge composite 4.30). Density too high for BSA-Officer scan workflow."
+    diversity_score: 0.24
+
+archive_path: archives/design/sar-investigation-test/20260511T041518Z/
+comparator_html_path: archives/design/sar-investigation-test/20260511T041518Z/_review.html
+canvas_checksum: 650233de013e5badb28ffd9585c5325b38aca582bf64c85469e8e90bf0764031
+canvas_path: onboarding/sar-investigation-test.yaml
+
+telemetry:
+  design_cost_usd: 8.50
+  design_wallclock_s: 2100
+  respin_cost_usd: 0
+  cloud_run_services_torn_down: 3

@@ -1,0 +1,65 @@
+canvas_checksum: 650233de013e5badb28ffd95dc9b9e36ee44c84d72e1a30ed01ad9ed2bd9a8c1
+option: A
+use_case_id: sar-investigation-test
+console_pattern: investigations
+variation_axis: density
+density_score: 1
+
+persona: BSA Officer (queue scanner, 30+ cases / day)
+primary_metaphor: decision-first executive page
+affordance_pattern: hero-decision + countdown clock + one-line reason + tiny right rail
+
+design_summary: >
+  Sparse executive layout for the BSA / AML SAR officer who triages dozens
+  of alerts an hour. The case page collapses to exactly three things: the
+  recommended decision (file SAR / dismiss / escalate) rendered at display
+  scale, the 30-day FinCEN regulatory countdown clock, and the single
+  alert reason that explains why the case is on the queue. Everything
+  else — borrower network, exposure aggregation, peer-and-industry context,
+  draft narrative, full event log — is compressed to a 22rem right rail
+  (gates, rule badges, named-actor activity list, canvas pin) or hidden
+  one click behind the approval gate. The approval page reuses the same
+  shape: compact hero + clock side-by-side, the ApprovalGate primitive
+  centred, and the evidence chain reduced to a named-source list.
+
+tradeoffs:
+  - Officer cannot inspect a single agent's reasoning trace from the case page; they must open the approval gate.
+  - Less-experienced analysts may miss the rich context an investigation-heavy layout would provide.
+  - Right rail risks under-use because the eye is trained on the centre column.
+  - The 30-day clock is computed from the first event timestamp; cases that re-open will need a recomputed alertedAt.
+
+components_used:
+  - id: AppShell
+    source: shared
+    role: top chrome on every page (mandatory)
+  - id: BreadcrumbNav
+    source: shared
+    role: usecase / case / borrower breadcrumb on both pages
+  - id: RegulatoryClock
+    source: shared
+    role: 30-day FinCEN SAR countdown — rendered on case page AND approval page (it is the dominant temporal constraint)
+  - id: ApprovalGate
+    source: shared
+    role: HITL gate primitive on the approval page (wrapped in ApprovalGateClient for state)
+  - id: StatusBadge
+    source: shared
+    role: decision badge in the hero + gate / rule verdict pills in the right rail
+  - id: StepProgress
+    source: shared
+    role: tiny agent-completion dots at the top of the right rail
+  - id: DecisionHero
+    source: option
+    role: display-scale decision + one-line reason + identity strip
+  - id: RightRail
+    source: option
+    role: gates + rule verdicts + activity feed + canvas pin
+  - id: ApprovalGateClient
+    source: option
+    role: thin "use client" wrapper that records disposition without modal-bouncing the officer
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 6
+  reuse_floor_met: true

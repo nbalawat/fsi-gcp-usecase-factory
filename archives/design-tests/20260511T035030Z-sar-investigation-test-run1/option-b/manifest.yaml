@@ -1,0 +1,79 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+canvas_checksum: 650233de013e5badb28ffd95dc9b9e36ee44c84d72e1a30ed01ad9ed2bd9a8c1
+use_case_id: sar-investigation-test
+
+persona:
+  primary: "BSA Officer working a SAR investigation under the 30-day BSA clock"
+  context: |
+    Reads cases on the temporal axis. Needs to know, at a glance,
+    how much time is left on the SAR clock and what events have
+    happened in each band of that clock. Signs off the final SAR
+    filing in the same view that surfaces the deadline.
+
+density_score: 3
+motion_budget: minimal
+affordance_pattern: clock-anchored
+primary_metaphor: regulatory-clock-first
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: WorkflowStageRail
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: ClockSectionList
+    source: use-case
+  - name: ClockEventRow
+    source: use-case
+  - name: ClockApprovalClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option B treats the 30-day BSA SAR clock as the dominant metaphor.
+  A large, live RegulatoryClock sits at the top of every viewport.
+  Below the clock, the investigation reads as a small set of
+  clock-anchored sections (Day 0 detection / Days 1–3 triage / Days
+  4–14 investigation / Days 15–25 drafting / Days 26–30 review),
+  each containing the events that fell inside its day band. Every
+  event row carries a days-remaining anchor on its left rail. The
+  approval flow re-uses the same hero clock and the same anchored
+  event rows — signoff happens in the shadow of the deadline, not
+  in a separate "approval app".
+
+tradeoffs:
+  optimised_for:
+    - Deadline awareness — the clock is unmissable on every page
+    - Temporal comprehension — "what happens by when" is read off the day axis
+    - Regulatory framing — the page mirrors the BSA 30-day regime exactly
+    - Inline signoff against the same clock that runs the case
+  sacrifices:
+    - Per-event density (tokens, latency) is summarised, not foregrounded
+    - The SAR narrative PDF is not the centerpiece — the deadline-anchored events are
+    - Spatial process metaphor (left-to-right pipeline rail) is secondary to the clock
+    - Cases not yet near the deadline get less visual emphasis on the clock band
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true

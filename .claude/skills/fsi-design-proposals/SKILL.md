@@ -120,25 +120,59 @@ do, you have failed.
 
 6. Output budget per agent: $1.50 LLM spend, 30-min wall clock.
 
-== WHAT TO PRODUCE ==
+== WHAT TO PRODUCE — SELF-CONTAINED NEXT.JS APP (RULE 38) ==
 
-Write into usecases/{USE_CASE}/ui/proposals/option-{OPTION}/:
+Each option ships as a FULLY SELF-CONTAINED Next.js 14 app. It does NOT inherit from `ui/apps/pipeline-console`. Piggy-backing on the host shell breaks every option (paid for this in Tier 1: options A/B/C served production credit-memo UI instead of their own designs; option D failed to build because the host pulled in routes the option didn't ship).
 
-  app/case/[id]/page.tsx           — the case-detail screen
-  app/approval/[id]/page.tsx       — the approval-flow screen
-  app/layout.tsx                   — minimal shell wiring
-  components/                      — option-specific components (named
-                                     so they don't collide with shared)
-  lib/data.ts                      — re-exports + adapters from
-                                     ../_shared/mock-data.ts
-  manifest.yaml                    — see option-manifest.schema.yaml
-  rationale.md                     — 1-2 paragraphs: WHY this design fits
-                                     the canvas; what user pain it removes
-  tradeoffs.md                     — what you optimised for / sacrificed,
-                                     in 4-6 bullet points
-  Dockerfile                       — single-stage Next.js image; copy from
-                                     ui/apps/pipeline-console/Dockerfile
-                                     and adapt
+Write into `usecases/{USE_CASE}/ui/proposals/option-{OPTION}/`:
+
+```
+package.json              — Next 14.2.15 + React 18.3 + tailwind 3.4 + typescript 5.6
+                            Name: "option-{OPTION}-{USE_CASE}"
+                            Scripts: { "build": "next build", "start": "next start -p ${PORT:-8080}" }
+next.config.mjs           — { output: "standalone", reactStrictMode: true,
+                              eslint: { ignoreDuringBuilds: true },
+                              typescript: { ignoreBuildErrors: true } }
+tsconfig.json             — paths: @fsi-bank/components → ./_vendor/components/src/index.ts
+                            paths: @fsi-bank/theme → ./_vendor/theme/src/index.ts
+                            include _vendor + app + components + lib + _shared
+postcss.config.mjs        — { plugins: { tailwindcss: {}, autoprefixer: {} } }
+tailwind.config.ts        — content: app + components + lib + _vendor
+                            theme.extend.colors: Atrium palette INLINED (paper / ink /
+                              accent / semantic / riskBand) — do NOT @import the theme
+                              package; copy the values verbatim from
+                              ui/packages/theme/src/index.ts. Self-contained.
+app/globals.css           — @tailwind base/components/utilities + body defaults
+app/layout.tsx            — import "./globals.css" + minimal <html><body>
+app/page.tsx              — homepage card linking to /case/SAMPLE + /approval/SAMPLE
+app/case/[id]/page.tsx    — the case-detail screen (variation-axis-driven)
+app/approval/[id]/page.tsx — the approval-flow screen (all canvas HITL gates wired)
+components/*.tsx          — option-specific components (named so they
+                            don't collide with shared)
+lib/data.ts               — adapters re-exporting from _shared/mock-data.ts
+manifest.yaml             — per .claude/schemas/option-manifest.schema.yaml
+rationale.md              — 1-2 paragraphs: WHY this design fits the canvas
+tradeoffs.md              — optimised-for / sacrifices, 4-6 bullets
+Dockerfile                — 3-stage Next.js standalone build. Copy verbatim from
+                            usecases/credit-memo-commercial-test/ui/proposals/option-d/Dockerfile
+                            and substitute "option-d" → "option-{OPTION}".
+                            Vendors @fsi-bank/components + @fsi-bank/theme + _shared/
+                            at COPY time. Rewrites `../../_shared/mock-data` imports
+                            to `../_shared/mock-data` so the standalone path resolves.
+```
+
+**The Dockerfile vendor pattern (COPY-time inclusion of workspace packages) is what makes the build self-contained.** Pre-build vendor:
+
+```dockerfile
+RUN mkdir -p ./_vendor/components/src ./_vendor/theme/src ./_shared
+COPY ui/packages/components/src/ ./_vendor/components/src/
+COPY ui/packages/theme/src/      ./_vendor/theme/src/
+COPY usecases/{USE_CASE}/ui/proposals/_shared/mock-data.ts ./_shared/mock-data.ts
+RUN find ./app ./components ./lib -type f \( -name '*.ts' -o -name '*.tsx' \) \
+      -exec sed -i 's|\.\./\.\./_shared/mock-data|../_shared/mock-data|g' {} +
+```
+
+**CI gate.** Architecture-auditor refuses any commit on a UC whose chosen option lacks package.json + next.config.mjs + Dockerfile at the option root.
 
 == CANVAS SUMMARY ==
 

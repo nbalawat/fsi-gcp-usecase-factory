@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #FFFFFF;
+  color: #0F0B0B;
+  font-family: 'Inter Tight', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inline citation chip — the heart of option C. Every claim in the SAR
+   narrative carries one of these. Tight, mono, attached to the claim. */
+.cite-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-left: 0.125rem;
+  padding: 0 0.375rem;
+  border-radius: 0.125rem;
+  border: 1px solid #B5AFA6;
+  background: #ECECE8;
+  color: #2C2520;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 100ms ease, border-color 100ms ease;
+}
+.cite-chip:hover,
+.cite-chip[aria-expanded="true"] {
+  background: #E8F3D0;
+  border-color: #86BC24;
+  color: #0F0B0B;
+}

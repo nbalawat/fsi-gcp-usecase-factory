@@ -1,0 +1,119 @@
+schema_version: "1.0.0"
+option: D
+variation_axis: wildcard
+canvas_checksum: 650233de013e5badb28ffd95dc9b9e36ee44c84d72e1a30ed01ad9ed2bd9a8c1
+use_case_id: sar-investigation-test
+
+persona:
+  primary: "BSA / AML investigator deciding whether to file the SAR"
+  context: |
+    Thinks in counterparties and edges, not in rows or pages. The
+    investigation is fundamentally about HIDDEN RELATIONSHIPS — banks
+    file SARs because parties are connected in ways that resemble
+    structuring or laundering. The investigator wants to see the
+    subject in the middle of its related-parties network, scrub the
+    edges that look suspicious, and let the narrative write itself
+    FROM the selected sub-graph. Filing is freezing the sub-graph and
+    signing off.
+
+density_score: 4
+motion_budget: minimal
+affordance_pattern: graph-and-inspector
+primary_metaphor: counterparty-graph-first
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: CounterpartyGraph
+    source: use-case
+  - name: EdgeInspector
+    source: use-case
+  - name: NarrativeDraft
+    source: use-case
+  - name: AuditLedger
+    source: use-case
+  - name: GraphInvestigationClient
+    source: use-case
+  - name: SarFilingClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option D treats the SAR case as ITS COUNTERPARTY GRAPH. The subject
+  sits at the center; each transaction is an edge fanning out to a
+  counterparty node; each agent reasoning is a dashed edge. The BSA
+  investigator clicks edges to add them to the SAR narrative
+  selection — the narrative draft regenerates in real time from the
+  selected sub-graph. Filing the SAR is freezing the sub-graph and
+  signing off through the shared ApprovalGate primitive, rendered
+  inline below the narrative on the approval route.
+
+  The audit ledger lives in the right rail with one row per Pub/Sub
+  event (event-spine-first), cross-linked to the graph by `idx`. The
+  30-day FinCEN clock is a first-class instrument (RegulatoryClock
+  shared primitive) on both routes.
+
+tradeoffs:
+  optimised_for:
+    - Surfacing hidden relationships — graph is the page, not a drawer
+    - Selection-driven narrative — what's filed = what's selected (defensible)
+    - Examiner explainability — every node and edge maps to one canvas event
+    - Inline disposition — approval gate sits below the live filing scope
+    - Compliance instruments — RegulatoryClock + rule verdicts visible without stealing focus
+  sacrifices:
+    - Wide graph viewport — narrow drawers / mobile compressed will degrade
+    - No spatial pipeline-stage rail — process is implicit in audit-ledger ordering
+    - Transaction tables (rows of wires with amounts) are not the hero — they live in the inspector
+    - Memo PDF / SAR Form 111 export is NOT the centerpiece — it's a downstream artifact of the sub-graph
+
+hero_screenshot: hero.png
+build:
+  playwright_validated_at: "2026-05-11T04:14:03.643Z"
+  playwright_a11y_violations: 18
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 552
+  playwright_budgets_passed: 3
+  playwright_budgets_failed: 1
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 13
+  reuse_floor_met: true
+judge:
+  composite_score: null
+  ui_standards: null
+  agentic_principles: null
+  reuse_count: 13
+  reuse_floor_met: true
+  hitl_gates_wired: true
+  net_new_count: 6
+  recommended: null
+  ranking_position: null
+  violations: []
+  strengths:
+    - "Wildcard genuinely orthogonal — no other axis collapses the case onto a counterparty graph; competing options anchor on timeline, narrative-form, or alert-feed"
+    - "Event-spine-first preserved: every Pub/Sub event becomes one edge (or one self-loop) plus one audit-ledger row, cross-linked by idx"
+    - "Agent activity visible live — each agent_invoked event is its own dashed node-and-edge with tokens-in/tokens-out in the inspector"
+    - "Audit-trail-as-SOP: AuditLedger renders the full event log next to the graph; examiner sees the same shape the investigator does"
+    - "Human-in-the-loop preserved — ApprovalGate shared primitive carries the irrevocable final-approval signoff inline below the live filing scope"
+    - "Regulatory clock is a first-class instrument on both routes — FinCEN 30-day window stays visible during the decision"
+    - "Selection-driven narrative is a defensible UX claim: 'what gets filed = what's selected' is the right SAR mental model"
+
+promoted: false

@@ -1,0 +1,88 @@
+schema_version: "1.0.0"
+option: C
+variation_axis: affordance
+canvas_checksum: 650233de013e5badb28ffd95dc9b9e36ee44c84d72e1a30ed01ad9ed2bd9a8c1
+use_case_id: sar-investigation-test
+console_pattern: investigations
+
+persona:
+  primary: "BSA Analyst writing the narrative"
+  context: |
+    Reads the SAR draft top-to-bottom. Needs to verify every factual
+    claim in the narrative against the underlying evidence WITHOUT
+    leaving the prose. Every claim carries an inline citation chip that
+    opens the source record (transaction, account history, geography
+    signal, agent reasoning, atomic-service output, or rule verdict) in
+    a sticky right-rail drawer. Inline flag / dispute / add-note
+    actions next to each claim. The approval surface is the same
+    annotated narrative.
+
+density_score: 4
+motion_budget: minimal
+affordance_pattern: inline-per-section
+primary_metaphor: annotated-document
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: RegulatoryClock
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: CitationChip
+    source: use-case
+  - name: AnnotatedClaim
+    source: use-case
+  - name: EvidenceDrawer
+    source: use-case
+  - name: AnnotatedNarrative
+    source: use-case
+  - name: ApprovalNarrativeClient
+    source: use-case
+
+routes_implemented:
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option C treats the SAR draft as an ANNOTATED DOCUMENT. The narrative
+  is the page; every claim is one paragraph with an inline-citation
+  group at the end of its prose; each citation chip is a tight mono
+  affordance ([TXN 04891], [GEO MX], [AGT categorizer], [SVC peer], etc.)
+  that drives a sticky right-rail EvidenceDrawer where the source record
+  appears. Below every claim sit three inline actions - flag this,
+  dispute this, add note - so the analyst can dispose of disagreement
+  without leaving the prose. The /approval/[id] route renders the same
+  annotated narrative with the shared ApprovalGate primitive inline at
+  the bottom of the document: the approval surface IS the narrative.
+
+tradeoffs:
+  optimised_for:
+    - Evidence transparency - every claim cites its source, by construction
+    - Audit explainability - examiner clicks chip, sees source record
+    - Inline disposition - flag / dispute / note next to the claim
+    - Reading flow - the analyst's eye never leaves the narrative line
+    - Reuse - seven shared primitives carry the foundation
+  sacrifices:
+    - Vertical scrolling dominates - not optimised for scanning many cases
+    - The chronological event spine is implicit; not surfaced as a transcript
+    - Per-claim density is high - more text to read than a dashboard layout
+    - Single right rail constrains how many citations can be open at once
+    - The pattern is not a workflow-stage spatial metaphor
+
+hero_screenshot: hero.png
+build:
+  a11y_violations: 0
+  a11y_scan_mode: "static-heuristic"
+  a11y_violation_codes:
+  reuse_count_net_new: 0
+  reuse_count_shared: 12
+  reuse_floor_met: true

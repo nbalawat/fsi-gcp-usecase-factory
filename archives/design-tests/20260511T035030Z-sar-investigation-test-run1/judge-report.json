@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "sar-investigation-test",
+  "run_id": "20260511T035030Z-sar-investigation-test-run1",
+  "canvas_sha256": "650233de013e5badb28ffd95dc9b9e36ee44c84d72e1a30ed01ad9ed2bd9a8c1",
+  "judged_at": "2026-05-11T03:55:00Z",
+  "scores": {
+    "A": {
+      "ui_standards": 5.0,
+      "agentic_principles": 3.0,
+      "reuse_count": 6,
+      "reuse_floor_met": true,
+      "net_new_count": 3,
+      "hitl_gates_wired": true,
+      "violations": [],
+      "strengths": [
+        "Cleanest primitive-reuse posture of all four options: 6 shared primitives carry every visible region and only thin compositional wrappers (DecisionHero, RightRail, ApprovalGateClient) live in option scope.",
+        "No arbitrary Tailwind values, no math in components, every interactive element has a real handler or href.",
+        "Banker vocabulary discipline is strict — 'FILE SAR / DISMISS / ESCALATE' on the hero, 'BSA Officer signoff' on the gate; never 'approve / final_approval' to the user.",
+        "RegulatoryClock appears on BOTH the case page and the approval page — deadline pressure stays visible during signoff.",
+        "ApprovalGateClient correctly wraps the shared primitive and preserves the irrevocable: true contract; prefill from query param keeps the queue-scanner workflow one-click.",
+        "Pre-selected action via ?action=... query param is a thoughtful queue-scanner affordance."
+      ]
+    },
+    "B": {
+      "ui_standards": 4.5,
+      "agentic_principles": 5.0,
+      "reuse_count": 8,
+      "reuse_floor_met": true,
+      "net_new_count": 3,
+      "hitl_gates_wired": true,
+      "violations": [
+        "ClockEventRow and ClockApprovalClient call .toFixed and Math.round inline on day/time values — formatting math in a leaf component. Not financial, so a soft violation, but the data adapter (lib/data.ts) already rounds to two decimals; the component should consume the pre-formatted value."
+      ],
+      "strengths": [
+        "Strongest hit on all five agentic-UI principles: event-spine-first (every PIPELINE_EVENT becomes one ClockEventRow), process metaphor (WorkflowStageRail + clock-band sections), agent activity (each agent_invoked rendered with tokens in/out), audit-as-SOP (every row carries timestamp + actor + days-remaining-at-occurrence), human-in-the-loop (ClockApprovalClient records days-remaining-when-pending for examiner cushion check).",
+        "Strongest match to the 30-day FinCEN clock constraint: the clock IS the page rather than a sidebar primitive. This is the canvas's dominant constraint.",
+        "ClockApprovalClient is well-designed: scopes events up to the gate's pending row, renders the conversation slice, then drops ApprovalGate inline — signoff happens 'in the shadow of the deadline'.",
+        "Highest shared-primitive reuse count (8): AppShell, BreadcrumbNav, MetricStrip, StatCard, StatusBadge, RegulatoryClock, WorkflowStageRail, ApprovalGate.",
+        "NOW prop is pinned for SSR/Playwright determinism — production-grade testing affordance.",
+        "Defensive lookups via ?? on every map indexed by event field."
+      ]
+    },
+    "C": {
+      "ui_standards": 4.5,
+      "agentic_principles": 3.5,
+      "reuse_count": 7,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "CitationChip uses arbitrary Tailwind values: text-[9px] (line 68) and text-[10px] (line 81). AnnotatedNarrative uses z-[1] (line 116). The rationale explicitly acknowledges the text-[9px] exception, which is a candid call-out but still a token-discipline violation that the auditor's lint will flag."
+      ],
+      "strengths": [
+        "Strongest 'audit-trail-as-SOP' implementation: every claim in the SAR draft carries inline citation chips, each chip's EvidenceDrawer payload includes the backing event index (eventIdx) so an examiner can scrub back to the canvas spine row.",
+        "Citation kind glyphs (TXN, ACC, GEO, AGT, SVC, RUL) are a genuine semantic affordance — the analyst learns to scan for thin citation coverage at a glance.",
+        "Inline analyst actions (flag / dispute / add note) live next to each claim, with the note composer inline rather than modal — preserves reading flow.",
+        "Approval surface IS the annotated narrative: signoff happens at the bottom of the same document the analyst just verified — no review-then-approve hop.",
+        "Honest tradeoffs.md: explicitly acknowledges chronological event spine is implicit and the spatial workflow metaphor is dropped — no architectural cake-and-eat-it.",
+        "irrevocable: true is set per the rationale's claim, preserving the ApprovalGate confirm step."
+      ]
+    },
+    "D": {
+      "ui_standards": 4.5,
+      "agentic_principles": 4.5,
+      "reuse_count": 7,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "CounterpartyGraph hard-codes hex colors inline (#0F0B0B, #E8F3D0, #C13838, etc.) rather than referencing token CSS variables. Pragmatic for an SVG canvas where Tailwind utilities don't reach, but the tokens-not-invention rubric flags this. Pattern would graduate to design-token CSS vars in production."
+      ],
+      "strengths": [
+        "Wildcard axis is genuinely orthogonal: no other option collapses the case onto a counterparty graph. Graph-first is the right mental model for AML — banks file SARs because of relationships.",
+        "Event-spine integrity is preserved by construction: every PIPELINE_EVENT becomes exactly one edge (or one self-loop) AND one AuditLedger row, both cross-linked by GraphEdge.idx. The auditor can scrub freely between graph and ledger.",
+        "Agent activity is most visible of all four options: each agent_invoked event renders as its own dashed-edge node with tokens-in/tokens-out exposed in the inspector. Covers all 4 canvas agents (categorizer, insider-screener, regulatory-narrator, drafter).",
+        "Selection-driven narrative ('what gets filed = what's selected') is a defensible UX claim for SAR — the BSA officer's mental model is exactly this.",
+        "AuditLedger is examiner-ready: full event log next to the graph, every row has actor / timestamp / headline / decision; checkbox lets the officer toggle individual events in/out of the filing scope directly from the audit row.",
+        "ApprovalGate carries irrevocable: true with a SAR-appropriate rationaleSummary; signoff is inline at the bottom of the filing scope (the sub-graph + narrative).",
+        "Three sub-graph helpers (reset to default, clear, select all) are well-thought-out workflow affordances.",
+        "Math in CounterpartyGraph is geometry (sin/cos for ring layout), not business logic — does not violate the 'no .toFixed on financial keys' rule."
+      ]
+    }
+  },
+  "convergence_pairs": [],
+  "ranking": ["B", "D", "A", "C"],
+  "recommended_winner": "B",
+  "recommendation_rationale": "Option B (regulatory-clock-first) is the recommended winner for this canvas because it pins on the SAR investigation's dominant constraint — the 30-day FinCEN clock — and hits all five agentic-UI principles cleanly. It surfaces every pipeline event as a clock-anchored row, renders the workflow stage rail beneath the live RegulatoryClock, exposes per-agent tokens-in/tokens-out, and carries the final_approval HITL gate through ClockApprovalClient with a days-remaining-when-pending value the auditor can verify. Its only ui-standards demerit is formatting math (.toFixed, Math.round) in two leaf components that should consume pre-rounded values from the data adapter — a one-commit fix. Option D (graph-first) is a strong runner-up and is the more imaginative wildcard — its event-spine integrity (one event = one edge + one ledger row) is the cleanest in the set, and selection-driven narrative is the right SAR mental model — but graph-first sacrifices the temporal axis that the 30-day clock makes load-bearing for THIS use case. Option A is the safest but underplays event-spine and process metaphor; Option C has the strongest audit-trail-as-SOP story but explicitly sacrifices both event-spine and process metaphor and carries three arbitrary-Tailwind violations.",
+  "notes_for_human": [
+    "No convergence pair has Jaccard >= 0.6 on shared component sets. Four options span four genuinely distinct axes (density, clock-metaphor, annotated-document, counterparty-graph). The variation discipline held.",
+    "All four options correctly wire the single HITL gate (final_approval). Per the canvas, there is no second gate to score against; do not penalize an option for missing gates that don't exist.",
+    "Option B has soft formatting math (.toFixed / Math.round) in components. The data adapter already pre-rounds; refactor leaf components to consume the pre-formatted string before promotion.",
+    "Option C's text-[9px] / text-[10px] / z-[1] are token-discipline violations that the auditor's CI lint will flag. The rationale candidly acknowledges this. Graduate these to tokens before promotion.",
+    "Option D's hex colors inside CounterpartyGraph are pragmatic for an SVG canvas but should be promoted to CSS vars driven by the design tokens before production. The graph layout is otherwise deterministic and SSR-safe.",
+    "All four options ship a single source of truth via _shared/mock-data.ts — no duplicated state, the read-only contract is honored.",
+    "All four options correctly mark final_approval as irrevocable: true so the ApprovalGate's confirm step engages.",
+    "RegulatoryClock appears on both case and approval routes in all four options — deadline pressure stays visible at signoff, which is the right call for SAR.",
+    "Option A is the most production-ready as-is (zero violations) but B's principle coverage is materially stronger for this UC; the small lint fixes are cheap.",
+    "Designer convergence check: no two options share >= 60% of their component palette. The factory's four-axis seed produced four truly different proposals — exactly the outcome the judge pass is supposed to confirm before lockdown."
+  ]
+}
