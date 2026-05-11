@@ -12,12 +12,24 @@ if ! echo "$STAGED" | grep -qE '\.(py|tf|yaml|yml|json|tsx|ts)$'; then
     exit 0
 fi
 
-# UI smoke gate — runs only when UI files changed AND the dev server is up.
-# Skipped silently if the server isn't running (typical CI fallback). The
-# gate's full version runs in CI on a built `next build` output.
+# UI design-standards lint — runs on every commit that touches UI files
+# (apps/packages/usecases/<uc>/ui). Static grep; ~2 seconds; covers
+# ui-standards.md Section 2/3/4.2/4.5/4.11/4.14/4.17/4.18.
+if echo "$STAGED" | grep -qE '(ui/(apps|packages)|usecases/[^/]+/ui)/.*\.(tsx?|jsx?)$'; then
+    echo "Running UI design-standards lint (ui-standards.md §2/3/4.2/4.5/…)…"
+    if ! node scripts/lint_ui_design_standards.mjs --staged; then
+        echo ""
+        echo "✗ UI design-standards lint FAILED. Commit blocked."
+        echo "  See docs/methodology/ui-standards.md §8 for the rule catalog."
+        exit 1
+    fi
+fi
+
+# UI runtime smoke — only runs when the dev server is up (skipped silently
+# in CI; CI runs the full version against next build).
 if echo "$STAGED" | grep -qE 'ui/(apps|packages)/.*\.(tsx?|css)$'; then
     if curl -sf http://localhost:3000 -o /dev/null 2>&1; then
-        echo "Running UI smoke (docs/methodology/ui-standards.md)…"
+        echo "Running UI runtime smoke…"
         if ! node scripts/test_ui_smoke.mjs --no-server; then
             echo ""
             echo "✗ UI smoke FAILED. Commit blocked."

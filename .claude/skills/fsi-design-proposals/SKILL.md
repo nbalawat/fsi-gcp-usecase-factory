@@ -83,13 +83,35 @@ do, you have failed.
    Skip portfolio, persona-switcher, settings, ingest. We're optimising
    for design signal, not surface coverage.
 
-4. Reuse:
-   - Import shared primitives from ui/packages/components/ wherever possible
-   - Import the existing pipeline-console shell at ui/apps/pipeline-console/
-     (you mount on top of it; you do NOT replace it)
-   - Use the shadcn/ui + Atrium token system; do NOT introduce a new CSS framework
-   - Components imported as `@uc/components/...` are read-only — you write
-     new components only into usecases/{USE_CASE}/ui/proposals/option-{OPTION}/
+4. Reuse — **READ `docs/methodology/ui-standards.md` Section 2 BEFORE WRITING ANY COMPONENT.** It enumerates the 14 shared primitives in `@fsi-bank/components` with width budgets and when-to-use:
+
+   ```
+   <AppShell>              top chrome (header + nav); EVERY page roots in this
+   <BreadcrumbNav>         breadcrumb chain in the toolbar
+   <CaseCard>              one queued case row
+   <MetricStrip>           KPI strip across the top
+   <StatCard>              one KPI tile (220px each in a 4-col grid)
+   <StatusBadge>           status pill with dot — never bare span+bg
+   <StepProgress>          inline pipeline progress dots
+   <ProcessFlow>           wide 5-step paradigm (≥720px)
+   <PipelineMini>          narrow 5-step (280–420px)
+   <AgentChain>            wide multi-agent (≥600px)
+   <AgentMini>             narrow multi-agent (280–420px)
+   <AgentReasoningPanel>   per-agent reasoning surface (320–600px)
+   <WorkflowStageRail>     workflow stage rail full-width
+   <RegulatoryClock>       countdown timer — never DIY setInterval
+   <ApprovalGate>          approval modal — never inline buttons+confirm()
+   ```
+
+   Hard rules (the consolidated lint `scripts/lint_ui_design_standards.mjs` enforces these — your option will be REJECTED at the reuse-floor gate if you violate them):
+
+   - EVERY page MUST be `<AppShell>`-rooted (in this file or a sibling/ancestor `layout.tsx`). Hand-rolling a `<header>` is a hard fail.
+   - NO Tailwind arbitrary values: `text-[96px]`, `bg-[#abc]`, `min-h-[640px]`, etc. Use the Atrium token ramp from `ui/packages/theme/` instead.
+   - NO bare `<button>` without `onClick` / `type="submit"`; NO `<div onClick>`; NO `<a>` without `href`.
+   - NO inline `() =>` passed from a Server file to a JSX child — that's a hydration bug.
+   - Server vs Client: Components with interactive props (`onClick`, `onChange`, `useState`) MUST start with `"use client";`. Display-only components MUST NOT carry the directive.
+
+   - Components imported as `@uc/components/...` are read-only — you write new components only into `usecases/{USE_CASE}/ui/proposals/option-{OPTION}/`.
 
 5. Mock data: import everything from
    usecases/{USE_CASE}/ui/proposals/_shared/mock-data.ts (READ-ONLY).

@@ -644,33 +644,25 @@ configured-UI contract).
 
 ## 8. CI gates — every rule paired with a check
 
-| Section | Rule | Gate script |
-|---|---|---|
-| 1.6 | No raw color / size / inline style | `scripts/lint_ui_tokens.mjs` |
-| 2 | Use shared primitives, not bare elements | `scripts/lint_ui_primitives.mjs` |
-| 3 | AppShell-rooted pages | `scripts/lint_ui_layout.mjs` |
-| 4.1 | Every interactive has handler / href | `scripts/test_ui_smoke.mjs --check=affordances` |
-| 4.2 | Server/Client boundaries | `scripts/lint_ui_boundaries.mjs` |
-| 4.3 | Every route reachable | `scripts/test_ui_smoke.mjs --check=link-walk` |
-| 4.4 | Width budgets honored | visual regression at 1440/1024/768 |
-| 4.5 | Tailwind-only styling | `scripts/lint_ui_tokens.mjs` |
-| 4.6 | One pattern per primitive | architecture-auditor |
-| 4.8 | Four states per screen | `scripts/test_ui_smoke.mjs --check=four-states` |
-| 4.9 | No setInterval on case-state | grep + lint |
-| 4.10 | Defensive null-safety | `scripts/lint_ui_defensive.mjs` |
-| 4.11 | SSE → router invalidation | `scripts/lint_ui_sse_invalidate.mjs` |
-| 4.12 | No `Intl.NumberFormat` in components | grep |
-| 4.13 | No platform jargon in UI strings | `scripts/test_ui_smoke.mjs --check=banned-terms` |
-| 4.14 | Personas scaffolded in PR #1 | `scripts/lint_ui_personas.mjs` |
-| 4.15 | Citation density ≥80% on regulator artifacts | schema validator |
-| 4.16 | Live event spine visible on case-detail pages | `scripts/lint_event_spine_present.mjs` |
-| 4.17 | Agent tiles surface state (no plain spinners) | `scripts/lint_agent_tiles.mjs` |
-| 4.18 | Audit panel uses shared layout + shared exports | `scripts/lint_audit_panel_shape.mjs` |
-| 5 | A11y floor (axe-core) | `scripts/test_ui_smoke.mjs --check=a11y` |
+Two scripts cover all rules. Both run from the pre-commit hook and from `/review-uc`.
 
-A rule without a gate is a recommendation. Recommendations are ignored
-under deadline pressure. Every new rule added to this doc gets a gate
-before the entry can land in `master`.
+| Script | Rules covered | Mode |
+|---|---|---|
+| **`scripts/lint_ui_design_standards.mjs`** | **2, 3, 4.2, 4.5, 4.11, 4.14, 4.17, 4.18** (the consolidated static lint — primitives, layout, server/client boundaries, tokens, SSE invalidation, persona scaffolding, agent tile state, audit panel shape) | Static grep over `*.tsx`/`*.ts`. Hard rules (2, 3, 4.2, 4.5, 4.18) block; warn-only (4.11, 4.14, 4.17). |
+| **`scripts/test_ui_smoke.mjs`** | **4.1, 4.3, 4.4, 4.8, 4.13, 5** (the runtime smoke — affordances, route reachability, width budgets, four-states-per-screen, banned terms, axe-core a11y floor) | Drives a real browser; requires the app running. The CI version runs against `next build` output. |
+| `scripts/lint_event_spine_present.mjs` | 4.16 (event-spine visible on case-detail pages) | Static |
+| `scripts/lint_ui_defensive.mjs` | 4.10 (null-safety on nested mock-data fields) | Static |
+| `scripts/validate_with_playwright.mjs` | 5 (a11y floor, deeper — axe-core wcag2a+aa, wcag21a+aa, best-practice) plus CLS / LCP / console errors | Real browser |
+| architecture-auditor | 4.6 (one pattern per primitive), 4.9 (no setInterval on case-state), 4.12 (no `Intl.NumberFormat` in components), 4.15 (citation density), UX-first contract, archive trail, Playwright validation evidence | Pre-commit + CI |
+
+Run all of them in one go:
+
+```bash
+make test-ui              # all UI gates, fully offline (the lint pass + Playwright headless)
+make test-ui-only-lint    # just the static lint pass (~2s)
+```
+
+**Rule.** A rule without a gate is a recommendation. Recommendations are ignored under deadline pressure. Every new rule added to this doc gets a gate before the entry can land in `master`. The consolidated `lint_ui_design_standards.mjs` makes adding a new rule cheap — one function in one file.
 
 ---
 

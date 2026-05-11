@@ -601,6 +601,27 @@ assert_grep "LCP 1200ms"       "usecases/__test_design_proposals__/ui/proposals/
 assert_grep "playwright"       "usecases/__test_design_proposals__/ui/proposals/_review.html" "comparator labels the row as playwright"
 echo
 
+echo "15. Consolidated ui-standards lint:"
+assert_path "scripts/lint_ui_design_standards.mjs"  "consolidated lint present"
+if node --check "$REPO/scripts/lint_ui_design_standards.mjs" 2>/dev/null; then
+  green "  ✓ consolidated lint parses"
+else
+  red   "  ✗ consolidated lint has syntax error"
+  failed=$((failed + 1))
+fi
+# End-to-end: run it against the known-violating Tier 1 proposals; exit code 1 expected
+lint_exit=0
+node "$REPO/scripts/lint_ui_design_standards.mjs" "$REPO/usecases/credit-memo-commercial-test/ui/proposals" >/dev/null 2>&1 || lint_exit=$?
+if [[ "$lint_exit" == "1" ]]; then
+  green "  ✓ consolidated lint blocks on real Tier 1 violations (AppShell bypass + arbitrary tokens)"
+else
+  red   "  ✗ consolidated lint did not block known-bad fixtures (got exit $lint_exit)"
+  failed=$((failed + 1))
+fi
+assert_grep "lint_ui_design_standards"  ".claude/hooks/pre-commit-arch-audit.sh"      "pre-commit hook calls the lint"
+assert_grep "ui-standards.md.* Section 2" ".claude/skills/fsi-design-proposals/SKILL.md" "designer prompt cites the primitives table"
+echo
+
 if [[ $failed -gt 0 ]]; then
   red "$failed assertion(s) failed."
   exit 1
