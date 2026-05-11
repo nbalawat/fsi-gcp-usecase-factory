@@ -1,0 +1,82 @@
+schema_version: "1.0.0"
+use_case_id: nba-recommendations-test
+chosen_option: C
+variation_axis: affordance
+chosen_at: "2026-05-11T06:40:00Z"
+locked_at: "2026-05-11T06:40:00Z"
+iteration_count: 0
+lock_level: layout-only
+
+decision_rationale: |
+  Judge LLM (source-only) ranked **C (4.0) > B > A**. D worktree lost
+  despite Rule-46 fix attempt (.agent-output-verified marker placed in
+  the option dir wasn't enough — Claude Code's worktree GC still ran).
+
+  Playwright runtime against deployed services:
+    A: a11y  9, LCP 748ms, CLS 0.00, 0 console errors, 0 failed reqs, 3/4 budgets
+    B: a11y 21, LCP 804ms, CLS 0.00, 0 console errors, 0 failed reqs, 3/4 budgets
+    C: a11y 15, LCP 600ms, CLS 0.00, 0 console errors, 0 failed reqs, 3/4 budgets
+
+  All 3 options pass the same number of budgets (3/4 — a11y the universal
+  failure). Judge tie-broken by HITL discipline:
+    - C: cleanest reversible-vs-irrevocable split (4 inline buttons + ApprovalGate)
+    - C: only option capturing required Reject reason
+    - C: dedicated TimelineList reading PIPELINE_EVENTS one-for-one (Rule 4.1 — event-spine-first)
+
+  C (affordance — inline disposition) wins both signals.
+
+annotations:
+  keep:
+    - "Inline 4-button disposition (Accept/Reject/Snooze/Escalate) on every queue card"
+    - "Required Reject reason field captured inline"
+    - "Inline Snooze picker (24h/7d/30d)"
+    - "Shared ApprovalGate on /approval/[id] for irrevocable 'send to customer'"
+    - "TimelineList component reads PIPELINE_EVENTS — only option with true event-spine"
+    - "6 shared primitives + 6 net-new use-case components"
+  drop: []
+  change:
+    - from: "15 axe-core a11y violations at runtime"
+      to: "Re-audit color contrast on disposition buttons + status pills"
+      reason: "Universal failure across all 5 tiers — push the token-level fix in ui/packages/theme"
+    - from: "No SSE backbone (Rule 13 flag — live > polled > static)"
+      to: "Add SSE for queue updates so RMs see new recs land in real time"
+      reason: "Recommendations cadence makes live updates valuable (vs run/surveillance where polled is acceptable)"
+
+rejected_options:
+  - option: A
+    judge_score: 3.6
+    playwright_score: 3/4 budgets passed; 0 console errors, 9 a11y (cleanest)
+    reason: "Density-table approach is correct for throughput-dominant RMs but lost on Rule 4.1 (event-spine surface thinnest), and inline buttons were bare <button> elements without action-feedback states. Save for future 'high-volume mode' variant."
+  - option: B
+    judge_score: 3.8
+    playwright_score: 3/4 budgets passed; 0 console errors, 21 a11y
+    reason: "Narrative-card metaphor is genuinely innovative but disposition is inline at bottom of /case/[id] only; queue doesn't carry disposition surface. Plus 21 a11y violations (worst of 3). Worth iterating in a future cycle as 'narrative mode'."
+  - option: D
+    judge_score: null
+    playwright_score: null
+    reason: "Worktree auto-cleaned by Claude Code GC after build cleanup, despite .agent-output-verified marker + git add -N. The marker alone isn't enough; need a stronger fix: spawn agents must `git commit -m 'designer output checkpoint' --allow-empty` to give worktree a tracked commit before reporting success."
+
+dual_signal_lesson: |
+  Tier 3 NBA pattern: judge-Playwright agreement on C as the winner.
+  All 3 surviving options were architecturally clean (0 console errors,
+  all 3/4 budgets, 0 failed requests) — the differentiator was HITL
+  discipline, not runtime quality. Judge surfaced this; Playwright would
+  not have caught it alone (the inline-vs-modal disposition difference
+  doesn't show up in axe-core or console errors).
+
+  Insight: when all options pass runtime cleanly, judge becomes the
+  primary signal. When runtime varies (Tier 1 SAR, Tier 2 fraud), the
+  signals disagree productively. Both passes remain essential.
+
+  Rule 46 (worktree GC) still has bite. Next attempt: have agents
+  `git commit --allow-empty -m "designer ok"` before reporting. The
+  empty commit is non-destructive and guarantees the worktree has
+  tracked state for GC to skip.
+
+canvas_sha256: 0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e
+run_id: 20260511T062000Z-nba-recommendations-test-run1
+
+abandoned_options:
+  - option: D
+    reason: "Worktree auto-cleaned (Rule 46 — same pattern recurring; .agent-output-verified marker insufficient)"
+    follow_up: "Strengthen Rule 46 to require git commit --allow-empty before agent reports success"

@@ -1,0 +1,142 @@
+schema_version: "1.0.0"
+option: C
+variation_axis: affordance
+canvas_checksum: 0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e
+use_case_id: nba-recommendations-test
+console_pattern: recommendations
+
+# Seeded position — affordance variation.
+seed_position: |
+  Disposition lives where the rationale is. Every recommendation card
+  carries 4 inline buttons: Accept (reversible — queues for 'send'),
+  Reject (with required short reason), Snooze (24h / 7d / 30d), Escalate.
+  NO modals, NO bottom-bar. The 'send to customer' is the ONLY action
+  that walks to /approval (irrevocable). Otherwise the queue IS the
+  action surface.
+
+persona:
+  primary: "Branch banker (RM) processing the daily NBA queue"
+  context: |
+    Reads peer-and-industry rationale, takes a one-click reversible call
+    (accept / reject / snooze / escalate), and only walks to /approval
+    for the one customer-visible step. Optimised for throughput — 40+
+    dispositions per hour — without sacrificing audit clarity.
+
+density_score: 4
+motion_budget: minimal
+affordance_pattern: inline-per-card
+primary_metaphor: queue-as-action-surface
+
+# Shared primitives — all inlined under ./primitives/ (NO _vendor symlinks).
+# 6 distinct primitives used; each marked source: shared in the barrel.
+components_used:
+  - name: AppShell
+    source: shared
+    where:
+      - "app/page.tsx"
+      - "app/case/[id]/page.tsx"
+      - "app/approval/[id]/page.tsx"
+  - name: BreadcrumbNav
+    source: shared
+    where:
+      - "app/page.tsx"
+      - "app/case/[id]/page.tsx"
+      - "app/approval/[id]/page.tsx"
+  - name: MetricStrip
+    source: shared
+    where:
+      - "app/page.tsx"
+      - "app/case/[id]/page.tsx"
+      - "app/approval/[id]/page.tsx"
+  - name: StatCard
+    source: shared
+    where:
+      - "app/page.tsx"
+      - "app/case/[id]/page.tsx"
+  - name: StatusBadge
+    source: shared
+    where:
+      - "app/case/[id]/page.tsx"
+      - "app/approval/[id]/page.tsx"
+      - "components/InlineDispositionRow.tsx"
+      - "components/TimelineList.tsx"
+      - "components/GateRoster.tsx"
+  - name: ApprovalGate
+    source: shared
+    where:
+      - "components/SendToCustomerClient.tsx"
+
+shared_primitive_count: 6
+
+# Use-case-specific affordances. Five net-new components.
+net_new_components:
+  - name: InlineDispositionRow
+    source: use-case
+    role: "Signature affordance — the 4 inline buttons (Accept / Reject / Snooze / Escalate) sit ON the card next to the rationale. Reject opens an inline short-reason input. Snooze opens an inline 24h/7d/30d picker. NO modal, NO bottom-bar."
+  - name: QueueBoard
+    source: use-case
+    role: "Client host that owns filter-tab state and renders one InlineDispositionRow per recommendation. The state stays per-row — no global selection."
+  - name: QueueFilterTabs
+    source: use-case
+    role: "Tab bar above the queue (all / pending / high-uplift / review). Filter is purely visual — every row still carries its inline disposition."
+  - name: TimelineList
+    source: use-case
+    role: "Read-only event-spine timeline on /case/[id]. Every PIPELINE_EVENT becomes one row; nothing is dropped."
+  - name: GateRoster
+    source: use-case
+    role: "Compact roster of HITL gates. Reversible gates show inline; the irrevocable rm_send_to_customer gate links into /approval/[id]."
+  - name: SendToCustomerClient
+    source: use-case
+    role: "Client wrapper around ApprovalGate on /approval/[id]. The ONLY irrevocable surface in option-C — render an explicit 'irrevocable' warning + confirmation dialog before dispatch."
+
+net_new_component_count: 6
+
+routes_implemented:
+  - path: "/"
+    role: "queue with inline disposition (the action surface)"
+    file: "app/page.tsx"
+  - path: "/case/[id]"
+    role: "recommendation detail + inline disposition card + timeline"
+    file: "app/case/[id]/page.tsx"
+  - path: "/approval/[id]"
+    role: "the ONE irrevocable walk — send to customer"
+    file: "app/approval/[id]/page.tsx"
+
+model_provider: vertex_gemini
+compliance_scope: lightweight
+
+# Hard rules acknowledged.
+rules_compliance:
+  rule_4_no_static_demo_data: "every recommendation row derives from BORROWERS in _shared/mock-data.ts; scores are deterministic hashes of borrower id, NOT hand-typed values."
+  rule_8_no_intermediate_state_in_user_fields: "every banker-facing string is either canvas-sourced or fixed copy."
+  rule_38_self_contained: "own package.json, next.config.mjs, Dockerfile, tailwind.config.ts, tsconfig.json, postcss.config.mjs. Primitives are inlined under ./primitives/. NO _vendor symlinks at any stage of the build."
+  tokens_only: "no arbitrary values; all colors use the paper / ink / rule / accent / semantic / riskBand tokens defined in tailwind.config.ts."
+  server_client_boundary: "QueueBoard, InlineDispositionRow, QueueFilterTabs, SendToCustomerClient are 'use client'. Pages and TimelineList / GateRoster are Server."
+  hitl_gates_wired: "rm_disposition (reversible) — inline on every row. rm_send_to_customer (irrevocable) — gated through ApprovalGate on /approval/[id]."
+
+design_summary: |
+  Option C optimises for one thing: branch-banker throughput. The
+  queue IS the action surface. Every recommendation card carries the
+  four reversible buttons (Accept / Reject / Snooze / Escalate)
+  directly beside the rationale that justifies them. Reject and
+  Snooze open INLINE expanders — no modal, no bottom-bar. Accept
+  flips the card to a "queued for send" pill with a single link out
+  to /approval/[id], which is the ONLY irrevocable surface in the
+  app. The /case/[id] route mirrors the same affordance: the same
+  inline disposition row is the centerpiece, the audit timeline
+  sits below.
+
+build:
+  playwright_validated_at: "2026-05-11T06:41:31.038Z"
+  playwright_a11y_violations: 15
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 600
+  playwright_budgets_passed: 3
+  playwright_budgets_failed: 1
+  reuse_count_net_new: 0
+  reuse_count_shared: 6
+  reuse_floor_met: true
+  expected_route_count: 3
+  expected_shared_primitive_count: 6
+  expected_net_new_count: 6

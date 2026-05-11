@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Design proposals · nba-recommendations-test</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #15181c;
+      --panel-2: #1c2026;
+      --border: #2a2f37;
+      --text: #e6e9ee;
+      --text-dim: #98a0aa;
+      --accent: #4f8cff;
+      --warn: #ffaa44;
+      --error: #ff5577;
+      --ok: #44dd99;
+      --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin: 0; }
+    a { color: var(--accent); }
+    .header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .header .sha { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+    .toolbar { display: flex; gap: 8px; }
+    .toolbar button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .toolbar button:hover { background: var(--border); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); height: calc(100vh - 65px); }
+    .panel { background: var(--panel); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .panel-head { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+    .panel-head .axis { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .panel-head .open { font-size: 11px; }
+    /* Panel content area — dark by default; only the iframe + screenshot get a white background. */
+    .panel-iframe { flex: 1 1 auto; background: var(--bg); min-height: 0; }
+    .panel-iframe iframe { width: 100%; height: 100%; border: 0; background: white; }
+    .panel-iframe .hero-screenshot { width: 100%; height: auto; max-height: 100%; object-fit: contain; object-position: top; display: block; background: #fff; }
+    .panel-failed { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 24px; color: var(--text-dim); outline-offset: -2px; }
+    /* Higher-contrast error badge so axe-core / WCAG 2.1 contrast rule is satisfied (4.5+:1). */
+    .panel-failed .badge { background: rgba(255, 85, 119, 0.18); color: #ffb3c1; font-weight: 600; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--error); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+    /* Static-review empty state — turns the dead iframe area into a useful evaluation surface. */
+    .static-review { flex: 1; display: flex; flex-direction: column; padding: 24px 28px; gap: 12px; min-height: 0; overflow-y: auto; outline-offset: -2px; }
+    .static-review-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.08em; }
+    .static-review-body { color: var(--text); line-height: 1.55; font-size: 13px; white-space: pre-wrap; }
+    .static-review-footer { font-family: var(--mono); font-size: 10px; color: var(--text-dim); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: auto; }
+    .static-review-footer code { background: var(--panel-2); padding: 2px 5px; border-radius: 3px; }
+    .panel-summary { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.45; max-height: 30%; overflow-y: auto; outline-offset: -2px; }
+    .panel-summary:focus-visible { outline: 2px solid var(--accent); }
+    .panel-summary .strip { display: flex; gap: 12px; color: var(--text-dim); margin-bottom: 6px; flex-wrap: wrap; }
+    .panel-summary .strip span { white-space: nowrap; }
+    .panel-summary p { margin: 4px 0; color: var(--text); }
+    .panel-summary .pillrow { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+    .pill.warn { color: var(--warn); border-color: var(--warn); }
+    .pill.ok { color: var(--ok); border-color: var(--ok); }
+    .judge-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+    .judge-score { font-family: var(--mono); font-size: 11px; }
+    .judge-score.high { color: var(--ok); }
+    .judge-score.mid  { color: var(--warn); }
+    .judge-score.low  { color: var(--error); }
+    .judge-badge { background: var(--ok); color: #001; padding: 1px 6px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+    .judge-violations { color: var(--error); font-size: 10px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: stretch; }
+    .modal.open { display: flex; }
+    .modal iframe { flex: 1; border: 0; }
+    .modal .close { position: absolute; top: 16px; right: 16px; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 50vh); } }
+  </style>
+</head>
+<body><header class="header">
+      <h1>nba-recommendations-test · 4 design options · pick one via /fsi-design-review</h1>
+      <div class="sha">canvas 0922c405b8991a5a…</div>
+      <div class="toolbar">
+        <button onclick="document.querySelectorAll('iframe').forEach(f=>f.src=f.src)">↻ reload all</button>
+      </div>
+    </header>
+    <main class="grid" aria-label="Design option comparison">
+      
+    <section class="panel" data-option="a">
+      <div class="panel-head">
+        <h2>Option A <span class="axis">· density</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-nba-recommendations-test-design-a-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-nba-recommendations-test-design-a-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option A — density variant deployed at https://fsi-uc-nba-recommendations-test-design-a-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option A">
+        <div class="strip">
+          <span>density ★★★★★</span>
+          <span>motion · minimal</span>
+          <span>aff · inline-per-row</span>
+          <span>metaphor · dense-queue-table</span>
+          <span>persona · Relationship manager triaging next-best-action recommendations</span>
+        </div>
+        <p>Option A treats the queue AS the page. RMs see every pending
+recommendation as one dense row containing customer (CaseCard),
+recommended action + one-line rationale, confidence, annualised
+uplift, expiry urgency, and inline disposition buttons. Each row
+is a complete unit — Accept / Snooze / Dismiss are reversible and
+fire without leaving the table. The irrevocable &quot;Send to customer&quot;
+action is the ONLY one that routes the RM through a confirm step;
+it lands on /approval/[id] which wraps the shared ApprovalGate
+primitive. The detail view at /case/[id] is for &quot;I need to drill
+in&quot; — full rational</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 13</span>
+          
+          <span class="pill">+ Throughput — 50-200 recs/day on a single dense surface, no pagination</span><span class="pill">+ Triage efficiency — three reversible buttons sit on every row; one click closes the loop</span><span class="pill">+ Audit clarity — every row carries the canvas-pinned uplift_score, fit_score, regulatory_clear; the agent trail is one drill-in away</span><span class="pill">+ Reuse — seven shared primitives carry the chrome; novelty is in the row composition</span>
+          <span class="pill warn">− Rich per-recommendation visualisation (charts, peer benchmarks) is intentionally absent from the row — that&#39;s detail-page material</span><span class="pill warn">− Workflow-stage spatial metaphor is downscaled to a single status chip — the queue is a flat list, not a pipeline</span><span class="pill warn">− Real-time motion is intentionally minimal — the page is a tool for sustained triage, not a live event monitor</span>
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 9 ⚠</span>
+      <span class="pill ok">console 0</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 748ms</span>
+      <span class="judge-score">playwright · 3/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="b">
+      <div class="panel-head">
+        <h2>Option B <span class="axis">· metaphor</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-nba-recommendations-test-design-b-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-nba-recommendations-test-design-b-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option B — metaphor variant deployed at https://fsi-uc-nba-recommendations-test-design-b-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option B">
+        <div class="strip">
+          <span>density ★★☆☆☆</span>
+          <span>motion · minimal</span>
+          <span>aff · inline-per-card</span>
+          <span>metaphor · customer-relationship-narrative</span>
+          <span>persona · RM disposing of agent-drafted next-best-actions on their book</span>
+        </div>
+        <p>Option B treats the CUSTOMER RELATIONSHIP as the metaphor. Each card
+is one story: the agent narrates the recent activity timeline of the
+customer, what they noticed, why it matters now, and what to propose.
+Evidence + safety chips support the story; the disposition gate acts
+on the story. The RM reads stories, not tables.
+Self-contained build (Rule 38): NO _vendor symlinks. The six shared
+primitives are inlined under components/primitives/ — each file
+carries a header comment recording its provenance against
+ui/packages/components/src/&lt;name&gt;.tsx. Local mock data lives under
+lib/data.ts (no _s</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 11</span>
+          
+          <span class="pill">+ Story comprehension — the RM reads &quot;the customer did X, here&#39;s what to do&quot;</span><span class="pill">+ Trust-building — every story is supported by evidence + safety chips</span><span class="pill">+ Inline disposition — the gate is in the story, not a separate screen</span><span class="pill">+ Reuse — six shared primitives carry the chrome; novelty is the narrative shape</span>
+          <span class="pill warn">− Dense per-metric data (DSO, LTV, IRR) summarised in prose, not tables</span><span class="pill warn">− Vertical reading dominates; less efficient for triaging 50+ items than a grid</span><span class="pill warn">− Less spatial pipeline metaphor — the relationship IS the spatial axis</span>
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 21 ⚠</span>
+      <span class="pill ok">console 0</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 804ms</span>
+      <span class="judge-score">playwright · 3/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+
+    <section class="panel" data-option="c">
+      <div class="panel-head">
+        <h2>Option C <span class="axis">· affordance</span></h2>
+        <div>
+          <a class="open" href="https://fsi-uc-nba-recommendations-test-design-c-v4uibzu6ga-uc.a.run.app" target="_blank" rel="noopener">↗ open standalone</a>
+        </div>
+      </div>
+      <div class="panel-iframe"><iframe src="https://fsi-uc-nba-recommendations-test-design-c-v4uibzu6ga-uc.a.run.app" loading="lazy" referrerpolicy="no-referrer" title="Option C — affordance variant deployed at https://fsi-uc-nba-recommendations-test-design-c-v4uibzu6ga-uc.a.run.app"></iframe></div>
+      <div class="panel-summary" tabindex="0" aria-label="Design summary and scoring for option C">
+        <div class="strip">
+          <span>density ★★★★☆</span>
+          <span>motion · minimal</span>
+          <span>aff · inline-per-card</span>
+          <span>metaphor · queue-as-action-surface</span>
+          <span>persona · Branch banker (RM) processing the daily NBA queue</span>
+        </div>
+        <p>Option C optimises for one thing: branch-banker throughput. The
+queue IS the action surface. Every recommendation card carries the
+four reversible buttons (Accept / Reject / Snooze / Escalate)
+directly beside the rationale that justifies them. Reject and
+Snooze open INLINE expanders — no modal, no bottom-bar. Accept
+flips the card to a &quot;queued for send&quot; pill with a single link out
+to /approval/[id], which is the ONLY irrevocable surface in the
+app. The /case/[id] route mirrors the same affordance: the same
+inline disposition row is the centerpiece, the audit timeline
+sits below.</p>
+        <div class="pillrow">
+          <span class="pill ok">reuse 6</span>
+          
+          
+          
+        </div>
+        
+        
+        
+    <div class="judge-row">
+      <span class="pill warn">live-a11y 15 ⚠</span>
+      <span class="pill ok">console 0</span>
+      <span class="pill ok">CLS 0.00</span>
+      <span class="pill ok">LCP 600ms</span>
+      <span class="judge-score">playwright · 3/4 budgets</span>
+    </div>
+      </div>
+    </section>
+  
+<section class="panel"><div class="panel-failed"><div class="badge">option missing</div></div></section>
+    </main>
+  </div>
+  <script>
+    // Simple shortcuts: 1/2/3/4 to fullscreen each option
+    document.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "IFRAME" || e.target.tagName === "INPUT")) return;
+      const k = e.key;
+      if (["1","2","3","4"].includes(k)) {
+        const idx = parseInt(k, 10) - 1;
+        const panel = document.querySelectorAll(".panel")[idx];
+        const url = panel?.querySelector("iframe")?.src;
+        if (url) window.open(url, "_blank");
+      }
+    });
+  </script>
+</body>
+</html>

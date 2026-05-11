@@ -1,0 +1,85 @@
+schema_version: "1.0.0"
+option: A
+variation_axis: density
+canvas_checksum: 0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e
+use_case_id: nba-recommendations-test
+
+persona:
+  primary: "Relationship manager triaging next-best-action recommendations"
+  context: |
+    The RM works through 50-200 model-produced recommendations per day.
+    Each rec is for a specific customer; the RM accepts / dismisses /
+    snoozes inline. The dense queue keeps the whole day's work on one
+    surface; the detail page only opens when the RM needs the full
+    rationale and agent trail. The irrevocable "send to customer"
+    action routes through the shared ApprovalGate primitive.
+
+density_score: 5
+motion_budget: minimal
+affordance_pattern: inline-per-row
+primary_metaphor: dense-queue-table
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: StatCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: CaseCard
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: QueueTable
+    source: use-case
+  - name: QueueFilterBar
+    source: use-case
+  - name: RecRow
+    source: use-case
+  - name: DispositionButtons
+    source: use-case
+  - name: RecDetail
+    source: use-case
+  - name: SendApprovalClient
+    source: use-case
+
+routes_implemented:
+  - home-queue
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option A treats the queue AS the page. RMs see every pending
+  recommendation as one dense row containing customer (CaseCard),
+  recommended action + one-line rationale, confidence, annualised
+  uplift, expiry urgency, and inline disposition buttons. Each row
+  is a complete unit — Accept / Snooze / Dismiss are reversible and
+  fire without leaving the table. The irrevocable "Send to customer"
+  action is the ONLY one that routes the RM through a confirm step;
+  it lands on /approval/[id] which wraps the shared ApprovalGate
+  primitive. The detail view at /case/[id] is for "I need to drill
+  in" — full rationale, fit/uplift/regulatory triad, and the agent
+  reasoning trail (peer-and-industry-context, exposure-aggregator,
+  next-best-action recommender, regulatory-clearance rule).
+
+tradeoffs:
+  optimised_for:
+    - Throughput — 50-200 recs/day on a single dense surface, no pagination
+    - Triage efficiency — three reversible buttons sit on every row; one click closes the loop
+    - Audit clarity — every row carries the canvas-pinned uplift_score, fit_score, regulatory_clear; the agent trail is one drill-in away
+    - Reuse — seven shared primitives carry the chrome; novelty is in the row composition
+  sacrifices:
+    - Rich per-recommendation visualisation (charts, peer benchmarks) is intentionally absent from the row — that's detail-page material
+    - Workflow-stage spatial metaphor is downscaled to a single status chip — the queue is a flat list, not a pipeline
+    - Real-time motion is intentionally minimal — the page is a tool for sustained triage, not a live event monitor
+
+hero_screenshot: hero.png
+build:
+  reuse_count_net_new: 0
+  reuse_count_shared: 13
+  reuse_floor_met: true
+  playwright_validated_at: null

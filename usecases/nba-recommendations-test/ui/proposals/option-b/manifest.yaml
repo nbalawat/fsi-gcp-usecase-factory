@@ -1,0 +1,96 @@
+schema_version: "1.0.0"
+option: B
+variation_axis: metaphor
+canvas_checksum: 0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e
+use_case_id: nba-recommendations-test
+
+persona:
+  primary: "RM disposing of agent-drafted next-best-actions on their book"
+  context: |
+    Reads each recommendation as a customer's story. The relationship IS
+    the metaphor — the agent narrates what happened, why, and what to
+    propose, in plain English. The RM decides accept / edit / defer /
+    reject from inside the story, never from a data table.
+
+density_score: 2
+motion_budget: minimal
+affordance_pattern: inline-per-card
+primary_metaphor: customer-relationship-narrative
+
+components_used:
+  - name: AppShell
+    source: shared
+  - name: BreadcrumbNav
+    source: shared
+  - name: MetricStrip
+    source: shared
+  - name: CaseCard
+    source: shared
+  - name: StatusBadge
+    source: shared
+  - name: ApprovalGate
+    source: shared
+  - name: NarrativeCard
+    source: use-case
+  - name: CustomerTimeline
+    source: use-case
+  - name: EvidenceChips
+    source: use-case
+  - name: DispositionClient
+    source: use-case
+  - name: RightRail
+    source: use-case
+
+routes_implemented:
+  - home
+  - case-detail
+  - approval-flow
+
+design_summary: |
+  Option B treats the CUSTOMER RELATIONSHIP as the metaphor. Each card
+  is one story: the agent narrates the recent activity timeline of the
+  customer, what they noticed, why it matters now, and what to propose.
+  Evidence + safety chips support the story; the disposition gate acts
+  on the story. The RM reads stories, not tables.
+
+  Self-contained build (Rule 38): NO _vendor symlinks. The six shared
+  primitives are inlined under components/primitives/ — each file
+  carries a header comment recording its provenance against
+  ui/packages/components/src/<name>.tsx. Local mock data lives under
+  lib/data.ts (no _shared/ dependency).
+
+tradeoffs:
+  optimised_for:
+    - Story comprehension — the RM reads "the customer did X, here's what to do"
+    - Trust-building — every story is supported by evidence + safety chips
+    - Inline disposition — the gate is in the story, not a separate screen
+    - Reuse — six shared primitives carry the chrome; novelty is the narrative shape
+    - Self-contained build — no vendor symlinks, no _shared dependency
+  sacrifices:
+    - Dense per-metric data (DSO, LTV, IRR) summarised in prose, not tables
+    - Vertical reading dominates; less efficient for triaging 50+ items than a grid
+    - Less spatial pipeline metaphor — the relationship IS the spatial axis
+
+hero_screenshot: hero.png
+
+build:
+  playwright_validated_at: "2026-05-11T06:41:11.042Z"
+  playwright_a11y_violations: 21
+  playwright_console_errors: 0
+  playwright_cls_worst: 0.000
+  playwright_lcp_worst_ms: 804
+  playwright_budgets_passed: 3
+  playwright_budgets_failed: 1
+  reuse_count_net_new: 0
+  reuse_count_shared: 11
+  reuse_floor_met: true
+  self_contained: true
+  vendor_symlinks: false
+  post_build_cleanup: true
+  primitives_inlined: 6
+  shared_primitives_used: 6
+  uc_components: 5
+
+reuse:
+  shared_count: 6
+  uc_count: 5

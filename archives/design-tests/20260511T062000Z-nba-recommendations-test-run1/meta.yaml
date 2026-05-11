@@ -1,0 +1,10 @@
+use_case_id: nba-recommendations-test
+tier: 3
+canvas_sha256: 0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e
+generated_at: "2026-05-11T06:20:00Z"
+test_run: 1
+console_pattern: recommendations
+notes: |
+  Tier 3 expansion #3 (final): NBA recommendations.
+  Option D worktree lost despite Rule-46 fix attempt (.agent-output-verified
+  marker still wasn't enough). 3 of 4 options to judge.

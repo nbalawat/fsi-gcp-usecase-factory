@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "use_case_id": "nba-recommendations-test",
+  "run_id": "20260511T062000Z-nba-recommendations-test-run1",
+  "canvas_sha256": "0922c405b8991a5ac6b88bb51530b438f3984ca31bb43b16f108f7d463c95e2e",
+  "judged_at": "2026-05-11T06:25:00Z",
+
+  "missing_options": ["d"],
+
+  "scores": {
+    "A": {
+      "ui_standards": 4.2,
+      "agentic_principles": 3.6,
+      "reuse_count": 13,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "DispositionButtons.tsx:108-127 uses bare <button> for inline triage controls (Accept/Snooze/Dismiss) — ui-standards requires Button primitive, partial deduct on Primitive Reuse",
+        "RecRow.tsx — disposition state is local in DispositionButtons but row-level mutation doesn't propagate to QueueTable counts (state-drift risk; not a crash)",
+        "agent-activity 'live' surface is reduced to a static reasoning trail (RecDetail.tsx ActivityRow) — no SSE / live tile per agentic-principles event-spine-first; trade-offs.md openly accepts this",
+        "No live event-spine on home queue (manifest declares motion_budget: minimal and explicitly drops SSE)"
+      ],
+      "strengths": [
+        "rm_send_to_customer wired through the shared ApprovalGate primitive at /approval/[id] (SendApprovalClient.tsx — irrevocable contract honored)",
+        "Inline reversible disposition (Accept/Snooze/Dismiss) on every row — rm_disposition gate is unambiguous and sticky",
+        "Reuses 7 shared primitives by import from @fsi-bank/components (no inlined copies) — highest framework-fidelity of the three options",
+        "Deterministic mock data sourced from canvas-pinned _shared/mock-data.ts (Rule 4 respected)",
+        "Defensive lookups (getRec falls back to first pending; expiry math is null-safe)",
+        "Drill-in agent reasoning trail names atomic services + rule from the canvas (peer-and-industry-context, exposure-aggregator, regulatory-clearance)"
+      ]
+    },
+    "B": {
+      "ui_standards": 3.8,
+      "agentic_principles": 4.2,
+      "reuse_count": 11,
+      "reuse_floor_met": true,
+      "net_new_count": 5,
+      "hitl_gates_wired": true,
+      "violations": [
+        "Inlines six shared primitives under components/primitives/ rather than importing from @fsi-bank/components — manifest declares source: shared and rationale.md acknowledges the trade, but byte-level it is a fork (drift risk; partial deduct on Primitive Reuse)",
+        "RightRail.tsx:62 uses inline style={{ width: `${pct}%` }} — acceptable for dynamic percentage, but no width token; borderline tokens-not-invention",
+        "Inline functions passed Server→Client at app/case/[id]/page.tsx (handlers live in DispositionClient — properly isolated, good — but the disposition prop is React.ReactNode bridged from Server which is OK)",
+        "No live event-spine surface (timeline is static rendering of rec.timeline); motion_budget: minimal acknowledged"
+      ],
+      "strengths": [
+        "Strongest narrative metaphor — process-as-primary-story is visible on every screen (customer story → proposal → impact → routes-to → evidence → ApprovalGate)",
+        "rm_disposition gate is the ApprovalGate primitive embedded INLINE in the NarrativeCard (case-detail) — gate placement is the page",
+        "rm_send_to_customer wired at /approval/[id] with explicit HITL roster + irrevocable flag passed to ApprovalGate",
+        "Evidence chips + agent learning panel + safety rails make audit-trail-as-SOP unusually concrete for a queue surface",
+        "RightRail surfaces the calibration loop (accept-as-drafted/with-edits/deferred/rejected over 30d + 'what the agent learned from your rejections') — strong human-in-the-loop signal",
+        "Self-contained build — Dockerfile builds standalone (Rule 38 honored)"
+      ]
+    },
+    "C": {
+      "ui_standards": 4.4,
+      "agentic_principles": 4.4,
+      "reuse_count": 12,
+      "reuse_floor_met": true,
+      "net_new_count": 6,
+      "hitl_gates_wired": true,
+      "violations": [
+        "Inlines six shared primitives under primitives/ (via @primitives alias) — same fork-risk as B; manifest is explicit and post-build cleanup is wired",
+        "InlineDispositionRow.tsx:120-148 uses bare <button> for Accept/Reject/Snooze/Escalate — partial deduct on Primitive Reuse (should compose Button primitive once available)",
+        "QueueBoard recomputes counts on every render without memo — perf, not correctness",
+        "Per-row disposition state is local; no global queue state propagates filter counts after disposition change (filter-tab counts drift after Accept)"
+      ],
+      "strengths": [
+        "Cleanest reversible/irrevocable split — Accept/Reject/Snooze/Escalate inline (rm_disposition); /approval/[id] is the ONLY irrevocable surface, wraps shared ApprovalGate (rm_send_to_customer)",
+        "/case/[id] surfaces a dedicated TimelineList component reading every PIPELINE_EVENT — event-spine-first promise is concrete (each event → one row, nothing dropped)",
+        "GateRoster on /case/[id] explicitly enumerates both HITL gates with reversible/irrevocable badges — the user always knows where to act",
+        "Reject captures required short reason inline (override-rate analytics loop closed without breaking flow)",
+        "Snooze opens inline 24h/7d/30d picker — no modal, no popover; matches the affordance thesis",
+        "/approval page renders warning-tinted header + explicit 'irrevocable' badge — friction is proportional to the commit's cost",
+        "Server/Client boundary is correctly drawn (QueueBoard/InlineDispositionRow/SendToCustomerClient are 'use client'; pages and TimelineList/GateRoster are Server)"
+      ]
+    }
+  },
+
+  "convergence_pairs": [],
+
+  "ranking": ["C", "B", "A"],
+
+  "recommended_winner": "C",
+  "recommendation_rationale": "Option C scores highest on both rubrics (composite 4.0). It has the cleanest reversible/irrevocable split — the four inline buttons on every queue card honor the rm_disposition gate at the lowest possible friction, and the rm_send_to_customer irrevocable gate routes to /approval/[id] wrapping the shared ApprovalGate with a warning-tinted header. It is the only option that ships a dedicated TimelineList component reading PIPELINE_EVENTS one-for-one (event-spine-first). The trade-off is bare <button> elements for the inline controls (partial Primitive Reuse deduct) and per-row state that drifts from filter-tab counts after disposition. Option B scores nearly as well on principles (4.2) but lower on standards (3.8) because it inlines six shared primitives as copies; the narrative metaphor is the strongest of the three but B is optimised for ~12 stories, not 50-200. Option A has the cleanest reuse (13 imports from @fsi-bank/components, no copies) and the densest triage surface, but explicitly drops live event-spine and the agent-reasoning trail is static. The human should pick C unless the use case in production needs the relationship-narrative reading mode B optimises for.",
+
+  "notes_for_human": [
+    "Option D worktree was lost despite the Rule-46 attempt to recover it; this judge pass scored only A/B/C (missing_options: ['d']).",
+    "C and B are within 0.4 composite — if the production RMs are narrative readers (low queue volume, deep relationships) prefer B; if they are throughput-driven branch bankers (50-200/day) prefer C.",
+    "All three options correctly wire rm_send_to_customer through the shared ApprovalGate primitive at /approval/[id] — the irrevocable gate is honored across the board.",
+    "All three options inline disposition for rm_disposition (reversible) — but only C ships an explicit Reject-with-reason capture, which the canvas notes-block calls out as the model-feedback loop.",
+    "B and C inline shared primitives under components/primitives/ and primitives/ respectively (Rule 38 self-contained); A imports directly from @fsi-bank/components. The judge does not penalize this hard because manifests are explicit and provenance comments exist, but a follow-up audit should confirm byte-equivalence with the @fsi-bank/components versions to prevent fork drift.",
+    "Convergence is zero (largest Jaccard 0.33, A∩B) — designer diversity worked; the three options stake out genuinely different positions on density / metaphor / affordance.",
+    "Live event-spine is the weakest principle across the board — no option ships an SSE/in-flight agent tile. If 'agent activity visible live' matters for this use case, the winner should add a live-activity surface post-selection."
+  ]
+}
