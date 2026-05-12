@@ -1,0 +1,34 @@
+id: wealth-advisor
+display_name: Wealth / Private Banking Advisor
+role_family: relationship
+seniority: individual-contributor
+daily_tools:
+  - "Wealth platform (Salesforce Financial Services Cloud, eMoney, vendor)"
+  - "Portfolio analytics / performance reporting"
+  - "Financial-planning tools"
+  - "Tax / estate-planning research"
+primary_goals:
+  - "Grow AUM (assets under management) per client"
+  - "Hit revenue targets (fees + spread on banking products)"
+  - "Maintain client retention (relationship is the moat)"
+  - "Deliver fiduciary-quality advice"
+frustrations:
+  - "Fragmented client data across banking + brokerage + trust systems"
+  - "Manual investment-policy-statement maintenance"
+  - "Slow proposal-generation cycles"
+  - "Compliance turnaround on customised marketing materials"
+regulatory_exposure:
+  - "Reg BI (best interest standard)"
+  - "Investment Advisers Act fiduciary duties"
+  - "FINRA suitability rules"
+  - "State trust laws"
+decision_authority:
+  - "Recommend investment / banking / lending products within wealth-platform model"
+  - "Approve customised portfolios within IPS"
+  - "Initiate trust / estate planning conversations"
+keyboard_proficiency: medium
+notes: |
+  Wealth advisors are relationship-first, screen-second. They want
+  narrative-rich UI for client-facing conversations and dense analytics
+  for behind-the-scenes preparation. Different surfaces for different
+  modes. Quality of personalisation matters more than volume.

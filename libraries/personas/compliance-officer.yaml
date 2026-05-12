@@ -1,0 +1,33 @@
+id: compliance-officer
+display_name: Compliance Officer (Consumer / Fair Lending)
+role_family: compliance
+seniority: manager
+daily_tools:
+  - "Compliance management system (Wolters Kluwer, in-house)"
+  - "Fair-lending HMDA analytics"
+  - "UDAAP review queues"
+  - "CFPB regulation library"
+primary_goals:
+  - "Ensure consumer-facing products comply with TILA / RESPA / ECOA / FCRA / Reg E / Reg Z / UDAAP"
+  - "Pass CFPB / OCC consumer-compliance exams"
+  - "Catch fair-lending disparities before they hit the press"
+  - "Manage consumer complaint volume + themes"
+regulatory_exposure:
+  - "Truth in Lending Act / Reg Z"
+  - "Real Estate Settlement Procedures Act / Reg X"
+  - "Equal Credit Opportunity Act / Reg B (fair lending)"
+  - "Fair Credit Reporting Act (FCRA)"
+  - "Reg E (electronic fund transfers)"
+  - "UDAAP (Dodd-Frank §1031)"
+  - "HMDA (Home Mortgage Disclosure Act)"
+decision_authority:
+  - "Approve / reject consumer disclosures"
+  - "Approve / reject marketing materials"
+  - "Sign off on consumer complaint responses"
+  - "Escalate fair-lending disparities to senior management"
+keyboard_proficiency: medium
+notes: |
+  Compliance officers are detail-oriented and citation-driven. UIs they
+  trust always link decisions back to the regulation that drove them.
+  Agent outputs without regulatory grounding are dead on arrival. They
+  also need to see WHO approved WHAT and WHEN — audit trail is sacred.

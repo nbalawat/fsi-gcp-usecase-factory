@@ -1,0 +1,33 @@
+id: rm-wholesale
+display_name: Wholesale Relationship Manager
+role_family: relationship
+seniority: individual-contributor
+daily_tools:
+  - "Salesforce Financial Services Cloud"
+  - "Excel models (deal pipeline, customer financials)"
+  - "PowerPoint (pitch decks)"
+  - "Outlook (everything routes through email)"
+primary_goals:
+  - "Close new wholesale deals (book size + fee revenue targets)"
+  - "Maintain existing client relationships (retention)"
+  - "Win incremental wallet share at existing clients"
+  - "Get credit memos through underwriting fast"
+frustrations:
+  - "Underwriting back-and-forth ('one more question') delays deals weeks"
+  - "Excel spreading is mechanical and slow"
+  - "Cannot see real-time pipeline status without calling someone"
+  - "Risk team rejects deals after 3 weeks of work with vague reasoning"
+regulatory_exposure:
+  - "Reg O (insider transactions if client is bank insider)"
+  - "Anti-tying restrictions"
+  - "OCC / state fair-lending oversight"
+decision_authority:
+  - "Initiate credit application"
+  - "Propose loan structure (subject to underwriting approval)"
+  - "Send/approve customer-facing communications under bank policy"
+keyboard_proficiency: low
+notes: |
+  Wholesale RMs spend ~30% of their time in front of a screen and 70% in
+  meetings / on calls. They reward UIs that surface decisions and let them
+  comment / approve / forward without 10 clicks. They do NOT love dense
+  data grids unless the grid is the answer to a specific question they had.

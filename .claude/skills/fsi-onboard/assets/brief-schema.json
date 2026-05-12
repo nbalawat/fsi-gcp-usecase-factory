@@ -1,0 +1,616 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fsi-factory/schemas/brief.schema.json",
+  "title": "FSI Use Case Brief",
+  "description": "Comprehensive 14-section brief that drives every downstream factory skill. Authored by /fsi-onboard, consumed by /fsi-design-proposals, /init-use-case, /new-use-case, handler-builder, agent-builder, etc.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "use_case_id",
+    "created_at",
+    "last_modified",
+    "last_modified_by",
+    "problem",
+    "stakeholders",
+    "process",
+    "data",
+    "atomic_services",
+    "rules",
+    "agent_envelope",
+    "sinks",
+    "hitl_gates",
+    "console",
+    "compliance",
+    "model_selection",
+    "slos_risks_rollback",
+    "phasing",
+    "predecessor",
+    "dependencies",
+    "glossary",
+    "reuse_map",
+    "economics_projection"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "use_case_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$",
+      "description": "kebab-case, no underscores, no caps"
+    },
+    "console_pattern": {
+      "type": "string",
+      "enum": ["pipeline", "investigations", "real-time", "surveillance", "run", "recommendations"],
+      "description": "Echoed from process.console_pattern (denormalized for fast access)"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "last_modified": {"type": "string", "format": "date-time"},
+    "last_modified_by": {"type": "string", "minLength": 1},
+    "ingested_input": {
+      "type": ["object", "null"],
+      "description": "If the sponsor pasted a pre-existing description, captured here for traceability.",
+      "additionalProperties": false,
+      "properties": {
+        "source": {"type": "string"},
+        "richness": {"type": "string", "enum": ["terse", "medium", "rich"]},
+        "ingested_at": {"type": "string", "format": "date-time"},
+        "raw_text": {"type": "string"}
+      },
+      "required": ["source", "richness", "ingested_at", "raw_text"]
+    },
+
+    "problem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "current_state", "future_state", "success_metrics"],
+      "properties": {
+        "statement": {"type": "string", "minLength": 40, "description": "One-paragraph problem statement (≥40 chars)"},
+        "current_state": {"type": "string", "minLength": 30, "description": "What people / systems do today (≥30 chars)"},
+        "future_state": {"type": "string", "minLength": 30, "description": "What changes once this UC is live (≥30 chars)"},
+        "success_metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "baseline", "target", "horizon"],
+            "properties": {
+              "name": {"type": "string", "minLength": 3},
+              "baseline": {"type": "string", "minLength": 1},
+              "target": {"type": "string", "minLength": 1},
+              "horizon": {"type": "string", "minLength": 1, "description": "e.g. '90 days post-launch', 'Q4 2026'"}
+            }
+          }
+        }
+      }
+    },
+
+    "stakeholders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sponsor", "personas"],
+      "properties": {
+        "sponsor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "title", "org"],
+          "properties": {
+            "name": {"type": "string", "minLength": 2},
+            "title": {"type": "string", "minLength": 2},
+            "org": {"type": "string", "minLength": 2}
+          }
+        },
+        "personas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["library_id", "involvement"],
+            "properties": {
+              "library_id": {
+                "type": "string",
+                "description": "References libraries/personas/<library_id>.yaml; must match an existing file"
+              },
+              "involvement": {
+                "type": "string",
+                "enum": ["primary", "secondary", "approver", "examiner"],
+                "description": "Primary = uses the UC daily; secondary = touches occasionally; approver = signs off; examiner = audits"
+              },
+              "overlay": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Per-UC overlay on the library persona",
+                "properties": {
+                  "extra_goals": {"type": "array", "items": {"type": "string"}},
+                  "extra_frustrations": {"type": "array", "items": {"type": "string"}},
+                  "notes": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "console_pattern", "trigger_event", "stages"],
+      "properties": {
+        "area": {
+          "type": "string",
+          "enum": [
+            "credit-origination",
+            "credit-servicing",
+            "credit-surveillance",
+            "treasury-cash-management",
+            "treasury-trading",
+            "payments-processing",
+            "fraud-real-time",
+            "fraud-investigation",
+            "bsa-aml",
+            "regulatory-reporting",
+            "model-risk-management",
+            "wealth-advisory",
+            "operations-back-office",
+            "customer-service"
+          ]
+        },
+        "console_pattern": {
+          "type": "string",
+          "enum": ["pipeline", "investigations", "real-time", "surveillance", "run", "recommendations"]
+        },
+        "trigger_event": {
+          "type": "string",
+          "minLength": 20,
+          "description": "What kicks off one instance of this UC (e.g. 'loan application submitted', 'card transaction received', 'quarterly clock starts')"
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "description": "YAML state machine. Renders as Mermaid in brief.md.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "entry_trigger", "exit_condition"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "name": {"type": "string", "minLength": 3},
+              "entry_trigger": {"type": "string", "minLength": 10},
+              "exit_condition": {"type": "string", "minLength": 10},
+              "agents_active": {"type": "array", "items": {"type": "string"}},
+              "services_called": {"type": "array", "items": {"type": "string"}},
+              "rules_evaluated": {"type": "array", "items": {"type": "string"}},
+              "hitl_gate": {"type": ["string", "null"], "description": "If set, references a hitl_gates[].id"},
+              "next_states": {"type": "array", "items": {"type": "string"}, "description": "stage ids that can follow"}
+            }
+          }
+        }
+      }
+    },
+
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "source_system", "refresh_cadence", "owner_team"],
+            "properties": {
+              "name": {"type": "string", "minLength": 3},
+              "source_system": {"type": "string", "minLength": 3, "description": "e.g. 'FIS Profile', 'NICE Actimize', 'Cloud SQL borrower_master'"},
+              "refresh_cadence": {"type": "string", "enum": ["real-time", "near-real-time", "minutes", "hourly", "daily", "weekly", "monthly", "quarterly", "on-demand"]},
+              "owner_team": {"type": "string", "minLength": 2},
+              "schema_summary": {"type": "string"},
+              "freshness_sla": {"type": "string"},
+              "quality_issues": {"type": "array", "items": {"type": "string"}},
+              "pii_fields": {"type": "array", "items": {"type": "string"}},
+              "access_method": {"type": "string", "enum": ["sql", "rest-api", "file-drop", "kafka", "pubsub", "vendor-sdk"]}
+            }
+          }
+        }
+      }
+    },
+
+    "atomic_services": {
+      "type": "array",
+      "description": "Atomic services this UC needs. Each entry flags reuse-from-factory vs net-new.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "purpose", "reuse_status"],
+        "properties": {
+          "name": {"type": "string", "minLength": 3},
+          "purpose": {"type": "string", "minLength": 20},
+          "reuse_status": {"type": "string", "enum": ["reuse-existing", "extend-existing", "net-new"]},
+          "existing_service_path": {"type": "string", "description": "services/atomic/<name> if reuse-existing or extend-existing"},
+          "inputs_sketch": {"type": "string"},
+          "outputs_sketch": {"type": "string"},
+          "net_new_justification": {"type": "string", "description": "Required if reuse_status == net-new"}
+        }
+      }
+    },
+
+    "rules": {
+      "type": "array",
+      "description": "Deterministic decisions implemented as JDM/GoRules Zen rules.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "purpose", "reuse_status"],
+        "properties": {
+          "name": {"type": "string", "minLength": 3, "pattern": "^[a-z][a-z0-9_]*$"},
+          "purpose": {"type": "string", "minLength": 20},
+          "reuse_status": {"type": "string", "enum": ["reuse-existing", "extend-existing", "net-new"]},
+          "regulatory_citation": {"type": "string"},
+          "inputs_sketch": {"type": "string"},
+          "outputs_sketch": {"type": "string"},
+          "thresholds": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+
+    "agent_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_points", "stage_envelopes", "agent_sketches"],
+      "description": "The heaviest brief section. Defines exactly what agents decide vs. interpret vs. narrate.",
+      "properties": {
+        "decision_points": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Per-decision table: every decision the UC makes, tagged rule/agent/hybrid/human.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decision", "type", "rationale"],
+            "properties": {
+              "decision": {"type": "string", "minLength": 10},
+              "type": {"type": "string", "enum": ["rule", "agent", "hybrid", "human"]},
+              "rationale": {"type": "string", "minLength": 20, "description": "Why this type and not others (≥20 chars)"},
+              "owner_id": {"type": "string", "description": "rule name or agent role that owns this decision"}
+            }
+          }
+        },
+        "stage_envelopes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Per-workflow-stage flags: what agents are active and what they do/don't decide.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stage_id", "agent_role", "does", "does_not"],
+            "properties": {
+              "stage_id": {"type": "string"},
+              "agent_role": {"type": "string"},
+              "does": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "does_not": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            }
+          }
+        },
+        "agent_sketches": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Per-agent response_schema sketches.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "purpose", "response_schema_fields"],
+            "properties": {
+              "role": {"type": "string", "minLength": 3},
+              "purpose": {"type": "string", "minLength": 20},
+              "reuse_status": {"type": "string", "enum": ["reuse-archetype", "extend-archetype", "net-new"]},
+              "archetype_id": {"type": "string", "description": "libraries/agents/<archetype> if reuse"},
+              "model_provider": {"type": "string", "enum": ["vertex-gemini", "anthropic-claude", "hybrid"]},
+              "response_schema_fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "type", "purpose"],
+                  "properties": {
+                    "name": {"type": "string"},
+                    "type": {"type": "string"},
+                    "purpose": {"type": "string"},
+                    "required": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "sinks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["destination", "purpose", "trigger"],
+        "properties": {
+          "destination": {"type": "string", "enum": ["gl-posting", "document-store-gcs", "regulator-filing", "customer-notification", "downstream-uc", "bigquery-analytics", "alert-queue", "vendor-system"]},
+          "purpose": {"type": "string", "minLength": 15},
+          "trigger": {"type": "string", "minLength": 10, "description": "What state transition fires the sink"},
+          "irrevocable": {"type": "boolean"},
+          "retention_period": {"type": "string"}
+        }
+      }
+    },
+
+    "hitl_gates": {
+      "type": "array",
+      "description": "Empty array is valid (real-time / advisory UCs may have none).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "stage_id", "irrevocable", "approver_role"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "name": {"type": "string", "minLength": 5},
+          "stage_id": {"type": "string"},
+          "irrevocable": {"type": "boolean"},
+          "approver_role": {"type": "string"},
+          "quorum": {"type": "string", "description": "e.g. 'single', 'dual', 'committee-3'"},
+          "clock": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string"},
+              "duration": {"type": "string"},
+              "citation": {"type": "string"}
+            }
+          },
+          "override_path": {"type": "string", "description": "Who can override / escalate; empty if no override allowed"}
+        }
+      }
+    },
+
+    "console": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern", "moments_of_truth"],
+      "properties": {
+        "pattern": {"type": "string", "enum": ["pipeline", "investigations", "real-time", "surveillance", "run", "recommendations"]},
+        "moments_of_truth": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["screen", "user_sees", "user_acts"],
+            "properties": {
+              "screen": {"type": "string", "minLength": 5, "description": "e.g. 'case-detail', 'fraud-event-stream'"},
+              "user_sees": {"type": "string", "minLength": 20},
+              "user_acts": {"type": "string", "minLength": 10}
+            }
+          }
+        }
+      }
+    },
+
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "regulations"],
+      "properties": {
+        "scope": {"type": "string", "enum": ["lightweight", "moderate", "high"], "description": "lightweight = no regulator-visible artifact; moderate = bank-internal compliance only; high = OCC/FDIC/Fed-visible artifacts"},
+        "regulations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cite_key"],
+            "properties": {
+              "cite_key": {"type": "string", "minLength": 5, "description": "e.g. 'Reg O §215.4', 'SR 11-7', '12 CFR §1024'"},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "auditor_focus_areas": {"type": "array", "items": {"type": "string"}, "description": "What auditors typically ask about for this UC type"}
+      }
+    },
+
+    "model_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_provider", "structured_output_strategy"],
+      "properties": {
+        "primary_provider": {"type": "string", "enum": ["vertex-gemini", "anthropic-claude", "hybrid-runtime-flag"]},
+        "models": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["gemini-3-1-flash", "gemini-2.5-pro", "claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"]}
+        },
+        "structured_output_strategy": {"type": "string", "enum": ["response_schema", "prompt-only", "tool-use", "n-a"]},
+        "cost_ceiling_per_case_usd": {"type": "number", "minimum": 0},
+        "p99_latency_budget_ms": {"type": "number", "minimum": 0},
+        "prereqs_confirmed": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "slos_risks_rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slos", "top_risks"],
+      "properties": {
+        "slos": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["metric", "target"],
+            "properties": {
+              "metric": {"type": "string", "minLength": 5},
+              "target": {"type": "string", "minLength": 3},
+              "error_budget": {"type": "string"}
+            }
+          }
+        },
+        "top_risks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 7,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["risk", "probability", "impact", "detection", "rollback"],
+            "properties": {
+              "risk": {"type": "string", "minLength": 15},
+              "probability": {"type": "string", "enum": ["low", "medium", "high"]},
+              "impact": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+              "detection": {"type": "string", "minLength": 10, "description": "How we detect this risk has materialised"},
+              "rollback": {"type": "string", "minLength": 10, "description": "Playbook (≥10 chars)"}
+            }
+          }
+        }
+      }
+    },
+
+    "phasing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mvp_scope", "out_of_scope"],
+      "properties": {
+        "mvp_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 10}
+        },
+        "phase_2": {"type": "array", "items": {"type": "string"}},
+        "phase_3": {"type": "array", "items": {"type": "string"}},
+        "out_of_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 10}
+        }
+      }
+    },
+
+    "predecessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replaces", "migration_plan"],
+      "properties": {
+        "replaces": {"type": "string", "minLength": 10, "description": "What existing system / process / Excel file this UC replaces; 'greenfield' if none"},
+        "migration_plan": {"type": "string", "minLength": 20},
+        "retirement_date": {"type": "string", "description": "When the predecessor is retired"},
+        "parity_period_days": {"type": "integer", "minimum": 0}
+      }
+    },
+
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["depends_on", "depended_on_by"],
+      "properties": {
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["uc_id", "relationship"],
+            "properties": {
+              "uc_id": {"type": "string"},
+              "relationship": {"type": "string", "enum": ["consumes-events-from", "shares-data-with", "shares-services-with", "shares-rules-with"]},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "depended_on_by": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["uc_id", "relationship"],
+            "properties": {
+              "uc_id": {"type": "string"},
+              "relationship": {"type": "string", "enum": ["emits-events-to", "shares-data-with", "shares-services-with"]},
+              "notes": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "glossary": {
+      "type": "array",
+      "description": "Bank-specific terms defined inline so future maintainers don't have to chase.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["term", "definition"],
+        "properties": {
+          "term": {"type": "string", "minLength": 2},
+          "definition": {"type": "string", "minLength": 15},
+          "source": {"type": "string", "description": "Where this term came from (regulation, internal policy, vendor)"}
+        }
+      }
+    },
+
+    "reuse_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Auto-generated at intake completion by scan_factory_for_reuse.mjs. Sponsor can review but not author.",
+      "required": ["generated_at"],
+      "properties": {
+        "generated_at": {"type": "string", "format": "date-time"},
+        "atomic_services_reused": {"type": "array", "items": {"type": "string"}},
+        "atomic_services_net_new": {"type": "array", "items": {"type": "string"}},
+        "agent_archetypes_reused": {"type": "array", "items": {"type": "string"}},
+        "agent_archetypes_net_new": {"type": "array", "items": {"type": "string"}},
+        "rules_reused": {"type": "array", "items": {"type": "string"}},
+        "rules_net_new": {"type": "array", "items": {"type": "string"}},
+        "ui_primitives_used": {"type": "array", "items": {"type": "string"}},
+        "reuse_rate_atomic_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "reuse_rate_agents_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "candidates_to_review": {
+          "type": "array",
+          "description": "Reuse opportunities the scanner found that the sponsor didn't already check off",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["candidate", "kind", "matched_brief_field", "match_confidence"],
+            "properties": {
+              "candidate": {"type": "string"},
+              "kind": {"type": "string", "enum": ["atomic-service", "agent-archetype", "rule", "ui-primitive"]},
+              "matched_brief_field": {"type": "string"},
+              "match_confidence": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        }
+      }
+    },
+
+    "economics_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Auto-generated alongside reuse_map. Projected per-case cost + p99 from reused factory parts.",
+      "required": ["generated_at"],
+      "properties": {
+        "generated_at": {"type": "string", "format": "date-time"},
+        "projected_cost_per_case_usd": {"type": "number", "minimum": 0},
+        "projected_p99_ms": {"type": "number", "minimum": 0},
+        "cost_breakdown_by_component": {
+          "type": "object",
+          "additionalProperties": {"type": "number"}
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

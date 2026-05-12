@@ -1,0 +1,37 @@
+id: bsa-officer
+display_name: BSA / AML Officer
+role_family: compliance
+seniority: manager
+daily_tools:
+  - "NICE Actimize / Fiserv / vendor AML platform"
+  - "Case-management workflow"
+  - "FinCEN's BSA E-Filing System"
+  - "Watchlist screening (OFAC, EU, UN)"
+primary_goals:
+  - "Investigate alerts within regulatory clocks (30-day SAR investigation, 30-day SAR filing)"
+  - "File quality SARs that FinCEN / law enforcement can actually act on"
+  - "Maintain zero late-SAR record (board metric)"
+  - "Defend the AML program at OCC / FinCEN exam"
+frustrations:
+  - "Vendor alert quality (90%+ false positives)"
+  - "Tools that don't surface related-party / counterparty graphs"
+  - "Manual transaction history pulls"
+  - "Repetitive case-narrative writing"
+regulatory_exposure:
+  - "BSA (Bank Secrecy Act) — primary regulatory framework"
+  - "FinCEN SAR filing requirements (31 CFR §1020)"
+  - "OFAC sanctions screening"
+  - "FFIEC AML examination manual"
+  - "CDD / Customer Due Diligence final rule"
+decision_authority:
+  - "Decide whether an alert becomes a case"
+  - "Decide whether a case is filed as a SAR"
+  - "Decide whether to exit a customer relationship for BSA reasons"
+  - "Sign off on SAR narratives before submission"
+keyboard_proficiency: high
+notes: |
+  BSA officers spend most of their day in alert / case queues. They want
+  related-party graphs, transaction timelines, prior-case-history, and
+  narrative drafting help. They MUST preserve full audit trails — every
+  decision is auditable by FinCEN. Agents that don't cite evidence are
+  useless to them.

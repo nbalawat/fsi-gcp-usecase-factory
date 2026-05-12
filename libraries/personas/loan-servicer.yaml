@@ -1,0 +1,35 @@
+id: loan-servicer
+display_name: Loan Servicing Specialist
+role_family: ops
+seniority: individual-contributor
+daily_tools:
+  - "Loan servicing platform (FIS Profile, Mortgage Cadence, Black Knight)"
+  - "Customer-contact CRM"
+  - "Collections / workout queue"
+  - "Document imaging"
+primary_goals:
+  - "Process payment exceptions, modifications, payoffs, escrow analysis"
+  - "Handle customer-driven changes (refinance, partial release, assumption)"
+  - "Manage delinquent accounts toward cure or workout"
+  - "Meet customer-service-level SLAs"
+frustrations:
+  - "Manual workflows for routine modifications"
+  - "Customer-facing portals that don't surface what the servicer sees"
+  - "Late notification of delinquency escalation"
+  - "Compliance team adding steps without removing other steps"
+regulatory_exposure:
+  - "Reg X (RESPA servicing rules)"
+  - "Reg Z (TILA servicing disclosures)"
+  - "Fair Debt Collection Practices Act (FDCPA)"
+  - "SCRA (Servicemembers Civil Relief Act)"
+  - "State-specific loss-mitigation rules"
+decision_authority:
+  - "Process standard servicing transactions"
+  - "Approve loss-mitigation options within delegated authority"
+  - "Escalate to default servicing / workout"
+keyboard_proficiency: high
+notes: |
+  Loan servicers are high-volume queue workers, like RM-ops but
+  post-funding. They reward predictable UIs with strong status visibility
+  and batch operations. Loss-mitigation pathways are heavily regulated
+  and the UI must enforce required sequencing.

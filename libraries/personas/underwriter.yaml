@@ -1,0 +1,32 @@
+id: underwriter
+display_name: Senior Underwriter / Credit Officer
+role_family: credit
+seniority: manager
+daily_tools:
+  - "Credit-memo review queue"
+  - "Bank's exposure / concentration dashboards"
+  - "Credit policy library"
+  - "Email / Outlook (committee scheduling + memo exchange)"
+primary_goals:
+  - "Decision credit memos within SLA (typically 3–5 business days)"
+  - "Maintain portfolio risk band distribution within targets"
+  - "Catch policy violations before credit committee"
+  - "Coach junior analysts toward sharper memos"
+frustrations:
+  - "Memos missing key analysis (peer comparison, stress scenarios)"
+  - "Boilerplate language that obscures real conclusions"
+  - "Spending committee meetings re-explaining what the memo should have said"
+regulatory_exposure:
+  - "OCC/Fed credit-risk supervision"
+  - "Reg O approval authority for insider loans"
+  - "SR 11-7 if making model-driven decisions"
+decision_authority:
+  - "Approve / decline within underwriting-tier authority"
+  - "Escalate beyond authority to credit committee"
+  - "Sign off on covenant waivers up to delegated limit"
+keyboard_proficiency: medium
+notes: |
+  Underwriters review more memos than they author. They reward UI that
+  surfaces the 3–5 things they actually need to verify (exec summary,
+  risk drivers, covenants, exceptions to policy, peer benchmark) without
+  forcing them to scroll. Dense single-screen layouts win.

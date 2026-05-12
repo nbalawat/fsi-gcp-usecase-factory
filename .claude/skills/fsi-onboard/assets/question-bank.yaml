@@ -1,0 +1,546 @@
+# Question bank for /fsi-onboard
+#
+# Each entry:
+#   id: stable identifier
+#   section: which brief section this question populates
+#   field_path: dot-notation path into the brief schema
+#   ask_when: condition for asking (branching). 'always' or a JS-like expression
+#             referencing previously-collected answers
+#   prompt: what the skill asks the user (text the user sees)
+#   probe_threshold: minimum word count below which the skill probes for more
+#   probe_followups: list of follow-up questions the skill asks if answer is shallow
+#   example_ref: section-examples key (only set on hard sections)
+#   ask_mode: 'open' | 'pick-one' | 'pick-many' | 'structured' | 'paste'
+#   options: only for pick-one / pick-many
+#   required: true if the brief.yaml save-gate requires this answered
+#
+# The skill walks this list top-to-bottom, skipping any question whose
+# ask_when expression evaluates false against the running answer set.
+
+schema_version: "1.0.0"
+
+# ─── Round 0: capture pre-existing input + identifier ─────────────────
+
+- id: q0_use_case_id
+  section: meta
+  field_path: use_case_id
+  ask_when: always
+  prompt: "What's the kebab-case use case id? (e.g. mortgage-origination, fraud-real-time)"
+  ask_mode: open
+  required: true
+
+- id: q0_existing_input
+  section: meta
+  field_path: ingested_input.raw_text
+  ask_when: always
+  prompt: |
+    Do you already have a written description of this use case — a sentence, a paragraph,
+    a half-baked doc? Paste it here. I'll read it and only ask about the gaps.
+    If you're starting from a blank page, just type "blank".
+  ask_mode: paste
+  required: false
+
+- id: q0_input_richness
+  section: meta
+  field_path: ingested_input.richness
+  ask_when: ingested_input.raw_text != null && ingested_input.raw_text != "blank"
+  prompt: |
+    [auto-detected — confirm or correct]
+    Based on what you pasted, I'm treating this as: {detected_richness}
+    - terse:  <100 words; I'll run the full interview
+    - medium: 100-500 words; I'll skip questions your text already answers
+    - rich:   >500 words; I'll just ask for gaps + clarifications
+  ask_mode: pick-one
+  options: ["terse", "medium", "rich"]
+  required: true
+
+# ─── Round 1: problem framing (always asked) ──────────────────────────
+
+- id: q1_problem_statement
+  section: problem
+  field_path: problem.statement
+  ask_when: always
+  probe_threshold: 40
+  prompt: |
+    In ONE paragraph: what problem is this use case solving for the bank?
+    Avoid jargon. If a board member asked you "why are you building this",
+    what would you say in 2-3 sentences?
+  ask_mode: open
+  probe_followups:
+    - "That's a bit thin — give me one more sentence on WHO this hurts today and HOW much."
+    - "Add a concrete number if you can: $X lost / Y hours wasted / Z customers impacted."
+  required: true
+
+- id: q1_current_state
+  section: problem
+  field_path: problem.current_state
+  ask_when: always
+  probe_threshold: 30
+  prompt: "Walk me through what people / systems do today to address this. Be specific — what tools, what teams, what handoffs?"
+  ask_mode: open
+  probe_followups:
+    - "Which step is the worst — where does time / money / accuracy go to die?"
+    - "Is this happening in Excel? A vendor tool? A custom app?"
+  required: true
+
+- id: q1_future_state
+  section: problem
+  field_path: problem.future_state
+  ask_when: always
+  probe_threshold: 30
+  prompt: |
+    Once this UC ships, what changes? Describe the moment-of-truth in the
+    new world: who is sitting in front of what screen doing what differently?
+  ask_mode: open
+  probe_followups:
+    - "What's the ONE thing they can do that they couldn't before?"
+  required: true
+
+- id: q1_success_metrics
+  section: problem
+  field_path: problem.success_metrics
+  ask_when: always
+  prompt: |
+    How will we know this UC succeeded 90 days post-launch? Give me 2-4 metrics with:
+      - name (e.g. "credit memo turnaround time")
+      - baseline (today's number)
+      - target (target number)
+      - horizon (when we'll know)
+    Type each on its own line: "metric_name | baseline | target | horizon"
+  ask_mode: structured
+  required: true
+
+# ─── Round 2: stakeholders + personas ─────────────────────────────────
+
+- id: q2_sponsor
+  section: stakeholders
+  field_path: stakeholders.sponsor
+  ask_when: always
+  prompt: |
+    Who is the executive sponsor of this UC? Format: "Name | Title | Org"
+    e.g. "Sarah Chen | EVP Wholesale Banking | Wholesale"
+  ask_mode: structured
+  required: true
+
+- id: q2_persona_selection
+  section: stakeholders
+  field_path: stakeholders.personas
+  ask_when: always
+  prompt: |
+    Which banking personas use this UC? I'll show you the library
+    (rm-wholesale, rm-middle-market, rm-ops, credit-analyst, underwriter,
+    cco, bsa-officer, fraud-analyst, model-risk-officer, compliance-officer,
+    occ-examiner, internal-auditor, treasury-manager, loan-servicer,
+    customer-service-rep, branch-manager, wealth-advisor).
+    Pick the ones that matter. For each, mark primary / secondary / approver / examiner.
+    Format per line: "persona-id | involvement"
+  ask_mode: structured
+  probe_followups:
+    - "Any UC-specific overlay on a persona? (e.g. 'this rm-wholesale specialises in healthcare')"
+  required: true
+
+# ─── Round 3: process area + console pattern (branch driver) ──────────
+
+- id: q3_process_area
+  section: process
+  field_path: process.area
+  ask_when: always
+  prompt: |
+    Which process area? Pick one:
+      credit-origination, credit-servicing, credit-surveillance,
+      treasury-cash-management, treasury-trading,
+      payments-processing, fraud-real-time, fraud-investigation,
+      bsa-aml, regulatory-reporting, model-risk-management,
+      wealth-advisory, operations-back-office, customer-service
+  ask_mode: pick-one
+  options:
+    - credit-origination
+    - credit-servicing
+    - credit-surveillance
+    - treasury-cash-management
+    - treasury-trading
+    - payments-processing
+    - fraud-real-time
+    - fraud-investigation
+    - bsa-aml
+    - regulatory-reporting
+    - model-risk-management
+    - wealth-advisory
+    - operations-back-office
+    - customer-service
+  required: true
+
+- id: q3_console_pattern
+  section: process
+  field_path: process.console_pattern
+  ask_when: always
+  prompt: |
+    Which console pattern fits this UC? Pick one (this branches the rest of the interview):
+      - pipeline:       1D progression through stages (e.g. credit memo origination)
+      - investigations: case-centric with regulatory clocks (e.g. SAR investigation)
+      - real-time:      sub-second decisions, throughput-dominant (e.g. payment fraud)
+      - surveillance:   2D state grid, continuous re-evaluation (e.g. CRE portfolio)
+      - run:            periodic deadline-driven exercise (e.g. quarterly CECL)
+      - recommendations: agent suggestions queued for human disposition (e.g. NBA)
+  ask_mode: pick-one
+  options: ["pipeline", "investigations", "real-time", "surveillance", "run", "recommendations"]
+  required: true
+
+- id: q3_trigger_event
+  section: process
+  field_path: process.trigger_event
+  ask_when: always
+  probe_threshold: 20
+  prompt: |
+    What kicks off ONE instance of this UC? Examples:
+      pipeline:        "loan application submitted"
+      investigations:  "AML alert fires from NICE Actimize"
+      real-time:       "card-not-present transaction received"
+      surveillance:    "facility revaluation completes (continuous)"
+      run:             "Q-end clock starts (T-30 days to attestation)"
+      recommendations: "nightly batch produces new NBA candidates for RM queue"
+  ask_mode: open
+  required: true
+
+- id: q3_stages
+  section: process
+  field_path: process.stages
+  ask_when: always
+  prompt: |
+    Walk me through the workflow as a state machine. List each stage:
+      "stage_id | display name | entry trigger | exit condition"
+    e.g. "intake | Document Intake | application submitted | docs uploaded & validated"
+    Aim for 3-8 stages.
+  ask_mode: structured
+  probe_followups:
+    - "Per stage: which agents are active? Which atomic services get called? Any HITL gate?"
+    - "What stages can the workflow ROLLBACK to? (e.g. 'return-for-revision' goes back to intake)"
+  required: true
+
+# ─── Round 4: data sources (always; depth varies by area) ─────────────
+
+- id: q4_data_sources
+  section: data
+  field_path: data.sources
+  ask_when: always
+  example_ref: data-lineage
+  probe_threshold: 50
+  prompt: |
+    What data does this UC consume? For each source:
+      "name | source_system | refresh_cadence | owner_team"
+    Examples:
+      "borrower_master | Cloud SQL | daily | credit-data-team"
+      "10-K filings | GCS bucket loan-docs/ | on-demand | data-engineering"
+      "card transactions | Pub/Sub topic txn-stream | real-time | payments-platform"
+    Aim for 3-8 sources.
+  ask_mode: structured
+  probe_followups:
+    - "For the highest-volume source: refresh cadence + freshness SLA? quality issues we should know about?"
+    - "Any PII in these sources? Which fields?"
+    - "How does each source get accessed — SQL? REST? Pub/Sub? File drop? Vendor SDK?"
+  required: true
+
+# ─── Round 5: atomic services (reuse-first) ───────────────────────────
+
+- id: q5_atomic_services
+  section: atomic_services
+  field_path: atomic_services
+  ask_when: always
+  prompt: |
+    What deterministic compute does this UC need (atomic services)?
+    Before you list net-new, I'll show you what already exists in services/atomic/.
+    [SKILL: pause here, grep services/atomic/, show matching candidates]
+    Then list any net-new services you need: "name | purpose"
+    e.g. "ar-aging-classifier | bucket AR aging into <30/30-60/60-90/>90"
+  ask_mode: structured
+  probe_followups:
+    - "For each net-new service: why doesn't an existing one work?"
+  required: false
+
+# ─── Round 6: rules ───────────────────────────────────────────────────
+
+- id: q6_rules
+  section: rules
+  field_path: rules
+  ask_when: always
+  prompt: |
+    What deterministic decisions / thresholds does this UC apply (rules)?
+    Examples:
+      "single_borrower_limit_check | trips alert when exposure > 25% of bank capital | OCC §32.3"
+      "velocity_threshold_by_mcc | declines tx when >3 transactions / 60s above $500"
+    Format: "rule_name | purpose | regulatory_citation_if_any"
+  ask_mode: structured
+  probe_followups:
+    - "For each rule: what are the inputs and outputs?"
+    - "Which existing rules in rules/ could you reuse?"
+  required: false
+
+# ─── Round 7: agent operating envelope (the heavy section) ────────────
+
+- id: q7_decision_points
+  section: agent_envelope
+  field_path: agent_envelope.decision_points
+  ask_when: always
+  example_ref: agent-envelope
+  prompt: |
+    List every meaningful decision this UC makes, and tag each:
+      "decision | type (rule/agent/hybrid/human) | rationale"
+    rule:   purely deterministic threshold / lookup
+    agent:  requires interpretation / judgment / narrative
+    hybrid: agent proposes + rule validates
+    human:  explicit human decision (HITL gate)
+
+    e.g.
+      "Should we extend credit | hybrid | analyst-rated + committee-approved per Reg O"
+      "Is borrower over single-borrower-limit | rule | OCC threshold check"
+      "Which covenants apply | agent | depends on industry + structure"
+  ask_mode: structured
+  probe_followups:
+    - "For each agent / hybrid decision: what's the response schema you want the agent to produce?"
+    - "Any decisions you considered making a rule but found too judgment-heavy?"
+  required: true
+
+- id: q7_stage_envelopes
+  section: agent_envelope
+  field_path: agent_envelope.stage_envelopes
+  ask_when: always
+  prompt: |
+    For each workflow stage, fill in: "stage_id | agent_role | does[] | does_not[]"
+    e.g. "credit-analysis | analyst | drafts memo sections, ranks risks, narrates peers
+                                   | does NOT decide approval, set covenants, post to GL"
+    Forces clarity about agent boundaries per stage.
+  ask_mode: structured
+  required: true
+
+- id: q7_agent_sketches
+  section: agent_envelope
+  field_path: agent_envelope.agent_sketches
+  ask_when: always
+  prompt: |
+    For each agent in this UC, sketch the response_schema fields:
+      "agent_role | purpose | model_provider | response_schema_fields"
+    e.g.
+      "analyst | produces 7-section memo body | vertex-gemini | {management_quality, customer_concentration, stress_scenarios, regulatory_flags, citations[]}"
+    Forces structured-output thinking upfront.
+  ask_mode: structured
+  probe_followups:
+    - "For each agent: archetype reuse? (libraries/agents/ has X archetypes; we'll match)"
+  required: true
+
+# ─── Round 8: sinks ───────────────────────────────────────────────────
+
+- id: q8_sinks
+  section: sinks
+  field_path: sinks
+  ask_when: always
+  prompt: |
+    Where do decisions / artifacts from this UC go?
+    For each destination:
+      "destination_type | purpose | trigger | irrevocable_yes_no"
+    Allowed destination_type values: gl-posting, document-store-gcs, regulator-filing,
+    customer-notification, downstream-uc, bigquery-analytics, alert-queue, vendor-system
+    e.g.
+      "gl-posting | post approved loan to general ledger | on approval | yes"
+      "document-store-gcs | archive memo + supporting docs | on close | no"
+  ask_mode: structured
+  required: true
+
+# ─── Round 9: HITL gates ──────────────────────────────────────────────
+
+- id: q9_hitl_gates
+  section: hitl_gates
+  field_path: hitl_gates
+  ask_when: process.console_pattern != "real-time"
+  prompt: |
+    What human-in-the-loop gates does this UC have? (Real-time UCs may have none.)
+    For each gate:
+      "id | name | stage_id | irrevocable_yes_no | approver_role | quorum"
+    e.g.
+      "credit-committee-approval | Credit Committee Approval | committee-review | yes | committee | committee-3"
+      "rm-disposition | RM disposition | review | no | rm | single"
+  ask_mode: structured
+  probe_followups:
+    - "Any regulatory clock attached to a gate? (OCC clock, SAR clock, dispute clock)"
+    - "Override paths — who can escalate / override each gate?"
+  required: false
+
+# ─── Round 10: console + UI moments-of-truth ──────────────────────────
+
+- id: q10_moments_of_truth
+  section: console
+  field_path: console.moments_of_truth
+  ask_when: always
+  prompt: |
+    Describe the moments-of-truth screens. For each screen:
+      "screen_name | what user sees | what action user takes"
+    e.g.
+      "case-detail | rated borrower, covenant package, memo body | approve / decline / request-info"
+      "fraud-alert-card | tx context, customer history, model score | approve / decline / step-up"
+    Aim for 2-4 screens (typically: home, case-detail, approval, optional drill-in).
+  ask_mode: structured
+  required: true
+
+# ─── Round 11: compliance ─────────────────────────────────────────────
+
+- id: q11_compliance_scope
+  section: compliance
+  field_path: compliance.scope
+  ask_when: always
+  prompt: |
+    Compliance scope?
+      lightweight: no regulator-visible artifact (e.g. internal-only NBA recommendations)
+      moderate:    bank-internal compliance only (e.g. RM-facing portfolio dashboards)
+      high:        OCC/FDIC/Fed-visible artifacts (e.g. credit memos, SAR filings, CECL allowance)
+  ask_mode: pick-one
+  options: ["lightweight", "moderate", "high"]
+  required: true
+
+- id: q11_regulations
+  section: compliance
+  field_path: compliance.regulations
+  ask_when: always
+  example_ref: compliance-citations
+  prompt: |
+    List the regulatory citations that apply to this UC. Citation keys only —
+    validation is deferred to a downstream compliance pass.
+    Format: "cite_key" (one per line). Add a "| note" suffix if you want to
+    add context.
+    e.g.
+      "Reg O §215.4"
+      "SR 11-7 | applies because we're deploying a quantitative model"
+      "BSA / 31 CFR §1020"
+  ask_mode: structured
+  required: false
+
+# ─── Round 12: model selection + budgets ──────────────────────────────
+
+- id: q12_model_provider
+  section: model_selection
+  field_path: model_selection.primary_provider
+  ask_when: always
+  prompt: |
+    Primary model provider?
+      vertex-gemini: Google Vertex AI Gemini models (real-time / high-volume / structured)
+      anthropic-claude: Anthropic Claude models (long-form reasoning, document IQ)
+      hybrid-runtime-flag: choose at runtime per task; both must be wired
+  ask_mode: pick-one
+  options: ["vertex-gemini", "anthropic-claude", "hybrid-runtime-flag"]
+  required: true
+
+- id: q12_cost_latency
+  section: model_selection
+  field_path: model_selection
+  ask_when: always
+  prompt: |
+    Cost + latency budgets:
+      "cost_ceiling_per_case_usd | p99_latency_budget_ms"
+    e.g. "0.10 | 5000" means: max $0.10 per case decision, p99 wall-time 5s.
+  ask_mode: structured
+  required: true
+
+# ─── Round 13: SLOs + risks + rollback ────────────────────────────────
+
+- id: q13_slos
+  section: slos_risks_rollback
+  field_path: slos_risks_rollback.slos
+  ask_when: always
+  prompt: |
+    SLOs — what we commit to operationally:
+      "metric | target | error_budget_optional"
+    e.g.
+      "availability | 99.5% / month | 3.6h downtime/month"
+      "decision latency p99 | <5s | 1% may exceed"
+      "false-positive rate | <2% | review weekly"
+  ask_mode: structured
+  required: true
+
+- id: q13_top_risks
+  section: slos_risks_rollback
+  field_path: slos_risks_rollback.top_risks
+  ask_when: always
+  prompt: |
+    Top 5 risks. For each:
+      "risk | probability(low/med/high) | impact(low/med/high/critical) | detection | rollback"
+    e.g.
+      "Landing AI rate-limit during volume spike | medium | high | 429 rate spikes in OTel | failover to LiteParse vendor"
+      "Agent response-schema drift | medium | high | eval suite fails | rollback to last-good prompt version"
+  ask_mode: structured
+  required: true
+
+# ─── Round 14: phasing + out-of-scope ─────────────────────────────────
+
+- id: q14_mvp_scope
+  section: phasing
+  field_path: phasing.mvp_scope
+  ask_when: always
+  prompt: "What ships in MVP / week 1? List 3-6 items."
+  ask_mode: structured
+  required: true
+
+- id: q14_out_of_scope
+  section: phasing
+  field_path: phasing.out_of_scope
+  ask_when: always
+  prompt: |
+    What is explicitly OUT OF SCOPE — deferred or rejected — for THIS UC?
+    Forces clarity. Without this, scope creeps. List 3-6 items.
+  ask_mode: structured
+  required: true
+
+# ─── Appendix A1: predecessor / replacement ───────────────────────────
+
+- id: qA1_replaces
+  section: predecessor
+  field_path: predecessor.replaces
+  ask_when: always
+  prompt: |
+    What existing system / process / Excel-file does this UC replace?
+    If greenfield (nothing existed before), say "greenfield".
+  ask_mode: open
+  required: true
+
+- id: qA1_migration_plan
+  section: predecessor
+  field_path: predecessor.migration_plan
+  ask_when: "predecessor.replaces != 'greenfield'"
+  prompt: |
+    Migration plan from predecessor:
+      - parity period (days)
+      - retirement date
+      - who tells affected teams
+      - rollback plan if migration fails
+  ask_mode: open
+  required: true
+
+# ─── Appendix A2: dependencies on other UCs ───────────────────────────
+
+- id: qA2_dependencies
+  section: dependencies
+  field_path: dependencies
+  ask_when: always
+  prompt: |
+    Adjacent use cases — what else in the platform does this UC touch?
+    For each:
+      "uc_id | direction (depends_on / depended_on_by) | relationship | notes"
+    Examples:
+      "credit-memo-commercial | depends_on | shares-services-with | financial-spreader, dscr-calculator"
+      "portfolio-surveillance | depended_on_by | emits-events-to | facility status changes flow downstream"
+    None? Type "none".
+  ask_mode: structured
+  required: false
+
+# ─── Appendix A3: glossary ────────────────────────────────────────────
+
+- id: qA3_glossary
+  section: glossary
+  field_path: glossary
+  ask_when: always
+  prompt: |
+    What bank-specific or UC-specific terms appear in this brief that a
+    new engineer might not know? Define each.
+      "term | definition | source(optional)"
+    e.g.
+      "DSCR | Debt service coverage ratio: EBITDA divided by annual debt service | bank credit policy"
+      "Reg O insider | Bank director, executive officer, principal shareholder, or related interest | 12 CFR §215"
+  ask_mode: structured
+  required: false

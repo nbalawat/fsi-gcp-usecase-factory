@@ -1,0 +1,35 @@
+id: fraud-analyst
+display_name: Fraud Analyst (Real-time)
+role_family: ops
+seniority: individual-contributor
+daily_tools:
+  - "Fraud-management platform (FICO Falcon, Featurespace, in-house)"
+  - "Real-time alert queue"
+  - "Customer-history / device-fingerprint dashboards"
+  - "Phone (calling customers to verify)"
+primary_goals:
+  - "Decision fraud alerts within seconds (the customer is waiting)"
+  - "Minimise false positives (customer experience)"
+  - "Catch genuinely fraudulent transactions before settlement"
+  - "Feed correct dispositions back to the model (training signal)"
+frustrations:
+  - "Alerts without context — same alert ID different customer"
+  - "Customer service taking the heat for declines the analyst made"
+  - "Volume spikes during peak hours with no surge capacity"
+  - "Fraud rings the model doesn't catch the second time"
+regulatory_exposure:
+  - "Reg E (consumer error resolution within 10 business days)"
+  - "Fair-credit-reporting if blocked accounts"
+  - "UDAAP (unfair/deceptive/abusive acts)"
+decision_authority:
+  - "Approve / decline a held transaction"
+  - "Issue a step-up auth challenge"
+  - "Block / unblock a card"
+  - "Open a fraud case for investigation"
+keyboard_proficiency: high
+notes: |
+  Real-time fraud analysts live in a queue. Sub-second is the time scale
+  that matters. They want minimal-click UIs, hotkeys, sharp visual
+  signal for severity. They do NOT want long narratives — they want
+  facts: 'this card, $890, gas station, 2am, 1300mi from home base,
+  device fingerprint mismatch'.

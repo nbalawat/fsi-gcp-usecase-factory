@@ -1,0 +1,31 @@
+id: rm-middle-market
+display_name: Middle-Market Relationship Manager
+role_family: relationship
+seniority: individual-contributor
+daily_tools:
+  - "Salesforce / nCino"
+  - "Excel financial models"
+  - "Bank's CRM + LOS"
+  - "Treasury management portal (for treasury services up-sell)"
+primary_goals:
+  - "Book new loans + treasury services to growing privately-held businesses"
+  - "Cross-sell deposits / treasury / FX to existing borrowers"
+  - "Manage portfolio of 20–60 active relationships"
+frustrations:
+  - "Slow turnaround on credit decisions vs. regional bank competitors"
+  - "Lack of visibility into where a deal is stuck"
+  - "Inconsistent credit policy interpretation across underwriters"
+regulatory_exposure:
+  - "CRA (community reinvestment / lending to LMI areas)"
+  - "Reg O if customer is insider"
+  - "Anti-tying"
+decision_authority:
+  - "Submit credit application up to bank's approval-matrix limits"
+  - "Negotiate pricing within RM-tier guidance"
+  - "Approve standard treasury-services agreements"
+keyboard_proficiency: medium
+notes: |
+  Middle-market RMs are more hands-on with financials than wholesale RMs
+  (smaller deals, less specialist support). They appreciate UI that
+  surfaces spreading + ratio analysis they can quickly verify, not just
+  the final memo.

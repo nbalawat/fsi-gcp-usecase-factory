@@ -1,0 +1,36 @@
+id: occ-examiner
+display_name: OCC / Fed / FDIC Bank Examiner
+role_family: audit
+seniority: manager
+daily_tools:
+  - "Agency examination management platform"
+  - "Read-only access to bank systems during exam"
+  - "Sample-pull worksheets"
+  - "MRA / MRIA tracking"
+primary_goals:
+  - "Assess the bank's risk-management practices vs. supervisory guidance"
+  - "Identify weaknesses requiring MRA (Matter Requiring Attention)"
+  - "Verify the bank's self-identified issues are being remediated"
+  - "Document findings that hold up at agency review"
+frustrations:
+  - "Banks that produce reports for exams that don't match production reports"
+  - "Audit trails missing for material decisions"
+  - "Agentic AI tools the bank can't explain"
+  - "Policy / procedure gaps between what's written and what's done"
+regulatory_exposure:
+  - "All applicable banking regulations — examiner verifies compliance with each"
+  - "Comptroller's Handbook (OCC)"
+  - "SR Letters (Fed)"
+  - "FIL letters (FDIC)"
+decision_authority:
+  - "Issue MRA / MRIA"
+  - "Lower CAMELS rating components"
+  - "Recommend enforcement action"
+  - "Require remediation plans"
+keyboard_proficiency: medium
+notes: |
+  Examiners are NOT primary daily users of bank UIs, but they audit
+  decisions retrospectively. UI must be able to produce, on demand:
+  who made a decision, when, what inputs, what regulatory citations
+  applied, what overrides were used. Audit-trail completeness is the
+  difference between MRA and no MRA.

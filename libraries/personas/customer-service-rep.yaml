@@ -1,0 +1,35 @@
+id: customer-service-rep
+display_name: Customer Service Representative
+role_family: customer
+seniority: individual-contributor
+daily_tools:
+  - "Bank's omni-channel CRM (Salesforce Service Cloud, Pega, in-house)"
+  - "Telephony platform"
+  - "Knowledge-base portal"
+  - "Co-browse / screen-share tools"
+primary_goals:
+  - "Resolve customer issues on first contact (FCR)"
+  - "Meet AHT (average handle time) targets without sacrificing satisfaction"
+  - "Avoid escalating issues that could be handled at the rep level"
+  - "Identify cross-sell / save opportunities mid-call"
+frustrations:
+  - "Toggling between 4-7 systems to answer one question"
+  - "Customer history scattered across systems"
+  - "Outdated knowledge-base articles"
+  - "Backend latency during live calls"
+regulatory_exposure:
+  - "Reg E (consumer error resolution)"
+  - "UDAAP (any customer-facing communication is potentially scrutinised)"
+  - "Reg DD (truth in savings)"
+  - "Telephone Consumer Protection Act (TCPA)"
+decision_authority:
+  - "Resolve standard service issues per playbook"
+  - "Apply fee waivers within authority"
+  - "Issue replacement cards / refunds within limits"
+  - "Escalate complex issues to specialist queues"
+keyboard_proficiency: high
+notes: |
+  CSRs operate under time pressure with the customer on the line. UIs
+  that surface the next-best-action with rationale + script support win.
+  They also benefit from real-time sentiment / churn signals so they
+  know when to escalate or attempt a save.

@@ -1,0 +1,32 @@
+id: branch-manager
+display_name: Branch Manager
+role_family: leadership
+seniority: manager
+daily_tools:
+  - "Branch dashboard (deposit / loan / treasury performance)"
+  - "Staff scheduling system"
+  - "CRM (small business + retail relationships)"
+  - "Email + branch network communications"
+primary_goals:
+  - "Hit branch-level deposit, loan, and treasury production targets"
+  - "Develop branch staff (training, coaching, reviews)"
+  - "Maintain branch operational compliance (cash, security, audit)"
+  - "Build local community + small-business relationships"
+frustrations:
+  - "Lack of real-time visibility into branch pipeline"
+  - "Top-down product pushes that don't fit the local market"
+  - "Branch traffic decline without clear digital-shift compensation"
+regulatory_exposure:
+  - "BSA branch operations (cash transaction reporting)"
+  - "CRA branch-level performance"
+  - "Reg O if approving insider relationships locally"
+decision_authority:
+  - "Approve consumer / small-business loans within branch authority"
+  - "Resolve customer escalations from CSRs"
+  - "Make hiring / scheduling decisions"
+keyboard_proficiency: medium
+notes: |
+  Branch managers want summary surfaces with click-through to operational
+  detail. They appreciate UIs that surface 'this customer just walked in,
+  here's their full relationship and 3 conversation starters'. They are
+  NOT in front of a screen for hours at a time.

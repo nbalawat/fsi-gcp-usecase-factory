@@ -1,0 +1,33 @@
+id: rm-ops
+display_name: RM Operations / Loan Processor
+role_family: ops
+seniority: individual-contributor
+daily_tools:
+  - "Bank's LOS (loan origination system)"
+  - "Document imaging + workflow tool"
+  - "Excel for tracking exceptions"
+  - "Email / shared inboxes"
+primary_goals:
+  - "Move loans through the LOS from RM submission to closing"
+  - "Collect and verify documentation (financials, KYC, collateral)"
+  - "Resolve exceptions (missing docs, signature issues, condition fulfillment)"
+  - "Get loans funded on the date the RM committed to the customer"
+frustrations:
+  - "RMs submit incomplete applications repeatedly"
+  - "Documentation collection is manual chasing"
+  - "Conditions of approval get missed and surface at funding"
+  - "Hand-offs between underwriting / RM-ops / closing are opaque"
+regulatory_exposure:
+  - "Reg Z / TILA disclosures"
+  - "Flood insurance compliance"
+  - "BSA / KYC verification"
+decision_authority:
+  - "Validate documentation completeness"
+  - "Resolve operational exceptions within procedural limits"
+  - "Escalate policy-level exceptions to RM or underwriter"
+keyboard_proficiency: high
+notes: |
+  Loan processors run a queue. They want efficient, keyboard-driven UIs
+  with status visibility, batch operations, and exception flagging. Dense
+  tables are their friend. They DO NOT want narrative agent outputs;
+  they want structured decisions they can action.

@@ -1,0 +1,35 @@
+id: model-risk-officer
+display_name: Model Risk Officer
+role_family: risk
+seniority: manager
+daily_tools:
+  - "Model inventory (typically a vendor tool or in-house DB)"
+  - "Model-card / model-documentation library"
+  - "Validation report templates"
+  - "Backtesting datasets + Jupyter notebooks"
+primary_goals:
+  - "Maintain a complete and accurate model inventory"
+  - "Ensure every quantitative model has current validation"
+  - "Defend the bank's MRM program at OCC / Fed exam (SR 11-7)"
+  - "Catch model drift before it causes loss"
+frustrations:
+  - "Models built without telling MRM"
+  - "LLM-based 'agents' that don't fit traditional model-card templates"
+  - "Lack of access to challenger-model results"
+  - "Engineering teams that don't understand validation requirements"
+regulatory_exposure:
+  - "SR 11-7 (supervisory guidance on model risk management) — primary framework"
+  - "OCC 2011-12 (same guidance for nationally chartered banks)"
+  - "CFPB attention to fair-lending model risk"
+decision_authority:
+  - "Approve / reject a model for production use"
+  - "Set validation cadence per model"
+  - "Require re-validation after material changes"
+  - "Escalate uncontrolled model risk to enterprise risk committee"
+keyboard_proficiency: medium
+notes: |
+  MRO needs model-card-style artifacts: purpose, inputs, outputs,
+  training data, limitations, monitoring plan, performance benchmarks.
+  For agentic AI specifically, they need: prompt versions, response-
+  schema versions, eval suite results, adversarial test results. They
+  appreciate UIs that surface this without ad-hoc requests.

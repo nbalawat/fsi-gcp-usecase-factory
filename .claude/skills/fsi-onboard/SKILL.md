@@ -1,351 +1,187 @@
 ---
 name: fsi-onboard
-description: Guided 7-round onboarding journey for a new use case. Uses AskUserQuestion at every decision so the user picks from LIBRARY shapes (use-case archetype, multi-agent pattern, agent archetypes, atomic services, rules, workflow fragments) instead of building net-new code. Emits onboarding.yaml that pre-seeds /init-use-case + /new-use-case. Hard-gates reuse rate (≥80% atomic, ≥70% agents) before scaffolding runs.
+description: Structured intake interview that produces a comprehensive 14-section brief (usecases/<uc>/brief.yaml) describing every aspect of a banking use case — problem framing, stakeholders, process + state machine, data sources, atomic services, rules, agent operating envelope (decision-points table, stage envelopes, response_schema sketches), sinks, HITL gates, console pattern, compliance, model selection, SLOs + risks + rollback, MVP phasing, predecessor migration, adjacent UCs, glossary, and an auto-generated reuse map + economics projection. Replaces the legacy lightweight onboarding canvas. Branches the question set on console pattern + regulatory scope. Suggests reuse from existing factory in real time. Hard-gates save until schema + word-count validation pass. Conversational pacing (~30-45 min, ~25-40 questions via AskUserQuestion).
 disable-model-invocation: true
-allowed-tools: Read, Write, Edit, AskUserQuestion, Glob, Grep, Bash(ls:*, cat:*, mkdir:*, find:*, grep:*, node:*, python3:*)
+allowed-tools: Read, Write, Edit, AskUserQuestion, Glob, Grep, Bash(ls:*, cat:*, mkdir:*, find:*, grep:*, node:*, python3:*, git:*)
 ---
 
-You are running the bank's guided onboarding journey for a NEW use case. Your goal is to **prevent service / agent / rule proliferation** by walking the user through structured library-first decisions. Defaults always favour reuse; net-new code requires an explicit justification string captured into the canvas.
+You are running the bank's **comprehensive intake interview** for a new use case. Goal: prevent the "4-line use case description produces a vague 4-line product" failure mode. By the end of this skill, the user has a `usecases/<uc>/brief.yaml` so detailed and structured that every downstream skill (`/fsi-design-proposals`, `/init-use-case`, `/new-use-case`, builder agents) can be driven by it without further interpretation.
 
-This skill runs BEFORE `/init-use-case`. Output is `onboarding/<use_case>.yaml` which `/init-use-case` and `/new-use-case` consume to pre-seed `reasons.yaml`.
-
----
+This replaces the legacy `/fsi-onboard` that produced a lightweight `onboarding/<uc>.yaml` canvas. The brief now lives at `usecases/<uc>/brief.yaml`; the legacy canvas is auto-derived for backward compatibility.
 
 ## Inputs
 
-- `$ARGUMENTS` — kebab-case use case id (e.g. `mortgage-origination`). If omitted, ask for it as the very first question.
+- `$ARGUMENTS` — kebab-case use case id (e.g. `mortgage-origination`). If omitted, the first question asks for it.
 
-## Pre-flight
+## Pre-flight (~1 min)
 
-1. Confirm `$ARGUMENTS` is a valid kebab-case identifier; reject anything containing `_`, spaces, or capitals.
-2. Refuse to proceed if `usecases/<use_case>/` already exists with `reasons.yaml`. Tell the user: "This UC already has a canvas. Use `/fsi-prompt-update <uc>` for behavior changes or `/fsi-sync <uc>` for refactors." Stop.
-3. Inventory the libraries — read these directories AT RUNTIME (do not assume from training memory; the catalog evolves):
+1. If `$ARGUMENTS` is missing or not kebab-case, ask via AskUserQuestion before doing anything else.
+
+2. **Detect prior state.** Run these checks:
 
    ```bash
-   ls libraries/use-cases/      # 6 archetypes today
-   ls libraries/patterns/       # 5 multi-agent patterns today
-   ls libraries/agents/         # 14 agent archetypes today
-   ls libraries/workflows/      # 8 fragments today
-   ls services/atomic/          # 12 atomic services today
-   find rules -maxdepth 2 -name 'v*.json' -not -path '*/tests/*' | head -40
+   ls usecases/<uc>/brief.yaml 2>/dev/null            # already-completed brief?
+   ls usecases/<uc>/.intake-draft.yaml 2>/dev/null    # in-progress draft?
+   ls onboarding/<uc>.yaml 2>/dev/null                # legacy canvas?
    ```
 
-   The exact lists you observe are what you offer in the AskUserQuestion options below.
+   Then branch:
 
-4. Read `docs/methodology/factory-cookbook.md` and `docs/methodology/product-build-discipline.md` for context. You will reference cookbook patterns and discipline rules in your guidance text inside each round.
+   - **brief.yaml exists** — ask: "I see a completed brief for this UC. (a) re-interview from scratch, (b) edit specific sections, (c) just view it. Default = view."
+   - **.intake-draft.yaml exists** — ask: "I see an in-progress draft. Resume from where you left off, or restart? Default = resume."
+   - **onboarding/<uc>.yaml exists (legacy)** — say: "I see a v1 canvas. I'll upgrade it to the new brief format: I'll pre-fill what I can from the canvas and only ask about the new sections (data lineage, agent envelope, etc.). About 15–20 minutes."
+   - **None exist** — say: "Greenfield UC. Full intake, ~30–45 minutes."
 
-5. Read `docs/methodology/onboard-new-use-case.md` for the existing pitfalls list (you will surface relevant ones inline as guidance).
+3. **Load supporting files** (in memory):
 
----
+   - `.claude/skills/fsi-onboard/assets/brief-schema.json` — to know required fields
+   - `.claude/skills/fsi-onboard/assets/question-bank.yaml` — the question script
+   - `.claude/skills/fsi-onboard/assets/section-examples/` — markdown examples for the 3 hard sections (agent-envelope, data-lineage, compliance-citations)
+   - `libraries/personas/*.yaml` — persona library (for Round 2)
 
-## Round 1 — Console pattern (which UI shape)
+## Round 0 — capture any pre-existing input + identifier
 
-Read `docs/methodology/console_reference.md`. The six patterns are exhaustive; this question has no "build a new console" option.
+If the sponsor pastes a description (Q0), measure word count:
 
-Use `AskUserQuestion` with:
-- `question`: "What is the dominant UX shape for this use case? (This drives `usecases/<uc>/ui/console.yaml` and the route host under `ui/apps/<pattern>-console`.)"
-- `header`: "Console"
-- `options` (4 best-fit; use the cheat-sheet below to pick which 4 surface):
+- `<100` words → terse → run the full question set
+- `100–500` words → medium → skip questions the text already answers (you decide per-question; default to asking if uncertain)
+- `>500` words → rich → gap-fill mode: extract what you can, ask only what's missing
 
-  | Pattern | One-line cue |
-  |---|---|
-  | real-time | sub-second, throughput-dominant, fraud / payment scoring |
-  | investigations | case-level, regulatory clock, BSA / SAR / disputes |
-  | pipeline | multi-day flow through stages, originations, applications |
-  | surveillance | 2D state grid, continuous re-eval (concentration, watchlists) |
-  | run | periodic exercise toward a deadline (CECL, stress test) |
-  | recommendations | agent suggestions queued for human disposition (cross-sell, NBA) |
+Persist what they pasted into `ingested_input.raw_text` with `richness` + `ingested_at`.
 
-  Pre-rank the options based on signals in the use-case name + the user's `$ARGUMENTS`. If you see "originat", "memo", "loan", "application" → put `pipeline` first; "fraud", "score", "real-time" → put `real-time` first; "investigat", "complaint", "BSA" → put `investigations` first; etc.
+## Rounds 1–14 — walk the question bank
 
-Capture the answer as `console_pattern`.
+Walk `question-bank.yaml` top-to-bottom. For each question:
 
----
+1. **Evaluate `ask_when`.** If it references prior answers (e.g. `process.console_pattern != "real-time"`), evaluate against the running answer set. Skip if false.
+2. **Render the `prompt`.** Use AskUserQuestion for single questions; for multi-item structured answers (state machine stages, data sources, etc.) use a single open-ended AskUserQuestion that captures multi-line text, then parse client-side.
+3. **Check the answer.**
+   - If `ask_mode == open` and `wordCount(answer) < probe_threshold`: probe with `probe_followups`. Do up to 2 follow-up rounds before accepting. If the answer is still thin after 2 probes, save it but flag in a `weak_answers[]` list for end-of-interview review.
+   - If `example_ref` is set and the user looks stuck (asks for help, provides "I don't know", etc.), print the section example markdown inline.
+4. **Reuse suggestion (live).** After capturing answers in `q5_atomic_services`, `q6_rules`, `q7_agent_sketches`, `q10_moments_of_truth`:
+   - Call `node scripts/scan_factory_for_reuse.mjs <partial-brief-path>` with the partial draft.
+   - Show user: "Based on what you described, here are existing factory components that match. Adopt any of these?" Present the top 5 candidates with confidence scores via AskUserQuestion (multiSelect).
+   - For each adopted candidate, update the corresponding brief entry's `reuse_status` and `existing_service_path` / `archetype_id`.
+5. **Autosave after every answer.** Write `usecases/<uc>/.intake-draft.yaml` so the sponsor can resume if interrupted.
 
-## Round 2 — Use-case archetype (whole-shape reuse)
+### Branching (per the discipline answers locked in design):
 
-The 6 archetypes in `libraries/use-cases/` map onto the 6 console patterns 1:1 (see each archetype's `archetype.yaml: console_pattern` field). The user almost always wants the matching archetype.
+- After Q3 (`console_pattern` + `process_area`) you know the UC shape. Use it to skip:
+  - `q9_hitl_gates` if `console_pattern == "real-time"` (already gated by `ask_when`).
+  - Treasury / wealth-specific questions if `process_area` isn't in those domains.
+  - Detailed regulatory questions if `compliance.scope == lightweight`.
 
-Use `AskUserQuestion`:
-- `question`: "Start from a use-case archetype, or build the structure yourself? (Archetypes pre-wire the workflow fragments + the multi-agent pattern + the approval gate. Building from scratch costs ~2x more across handler / workflow / sinks and creates drift risk per discipline rule #6.)"
-- `header`: "Archetype"
-- `options` (3):
-  1. `Use archetype: <name>@<version>` (Recommended) — pulled from the matching archetype for the chosen `console_pattern`. Description names the bundled fragments (e.g. "fan-out-join + agent-call-with-retry + approval-gate + sink-fanout").
-  2. `Use a different archetype` — only if the user's domain doesn't fit the console-implied default.
-  3. `Build from scratch (REQUIRES JUSTIFICATION)` — picks no archetype; the user must write a one-line justification when prompted.
+- Always ask the 14 mandatory sections regardless of branching. Branching reduces depth, not breadth.
 
-If the user picks option 3, follow up with `AskUserQuestion`:
-- `question`: "Why does no archetype fit? (Captured into `onboarding.yaml: archetype_skip_justification` and surfaced in `/review-uc`.)"
-- `options`: 4 short reasons (novel decision shape / novel data flow / multi-region requirement / other) — they pick OR write a custom one-liner.
+## Round 15 — reuse map + economics projection (auto)
 
-Capture as `use_case_archetype` (string or `null`) + optional `archetype_skip_justification`.
+After every question is answered:
 
----
+1. Run `node scripts/scan_factory_for_reuse.mjs usecases/<uc>/.intake-draft.yaml` to get the reuse-map + economics. Stamp both into the draft.
+2. Show the user the auto-generated section:
+   ```
+   ── Reuse map ──
+     Atomic service reuse: 4/5 (80%)
+     Agent archetype reuse: 2/3 (67%)
+     Top candidates to review:
+       - peer-and-industry-context (atomic-service) matches your `peer_curator` agent_sketch
+       - covenant-designer (agent-archetype) matches your `covenant_decision` decision_point
+   ── Economics projection ──
+     Projected cost / case: $0.07
+     Projected p99 wall-time: 8500ms
+     Cost ceiling you set: $0.10  ✓ on track
+     p99 budget you set: 10000ms  ✓ on track
+   ```
+3. Ask: "Anything you want to revise based on this projection?" Loop back to specific sections if user wants edits.
 
-## Round 3 — Decision shape + HITL gates
+## Round 16 — validation gate (HARD)
 
-Read the chosen archetype's `archetype.yaml: required_libraries.workflow_fragments` for the default callback/approval shape. Most archetypes ship with `approval-gate@1.0` once. The cookbook (Pattern 1) shows credit-memo's 4 callbacks (extraction_review / rating_review / draft_review / final_approval).
-
-Use `AskUserQuestion`:
-- `question`: "Where do humans need to approve / review / sign? (Each gate adds an `events.await_callback` step + a Cloud SQL `human_actions` row + a HITL action bar in the UI. Each one costs UX surface and operational toil — only add gates the regulator or policy actually requires.)"
-- `header`: "HITL gates"
-- `multiSelect`: true
-- `options` (4):
-  1. `Final approval only (Recommended)` — one gate at the end. The default for run / scoring / recommendation UCs.
-  2. `Review checkpoint + final approval` — two gates. Right when an analyst needs to sanity-check before the rating model runs.
-  3. `Per-stage review (4 gates)` — extraction / rating / draft / final. Right for high-stakes underwriting (credit memo).
-  4. `No HITL (advisory output)` — zero gates. Output is informational; humans never block.
-
-If the user picks 3 (4 gates), surface the `useCheckpointAction + DoneChip + router.refresh()` cookbook pattern (Pattern 1) and Rule 30 ("HITL action bars must `router.refresh()` + 404-as-success") so they don't repeat the bug we paid for.
-
-Capture as `hitl_gates: [list of gate names]`.
-
----
-
-## Round 4 — Atomic-service composition (the hardest gate)
-
-This round prevents Layer-1 proliferation. The 12 services in `services/atomic/` cover most banking compute; building a 13th is rare.
-
-Step 4a — Show the inventory with descriptions. Read each `services/atomic/<name>/manifest.json` for the description.
-
-Step 4b — Use `AskUserQuestion`:
-- `question`: "Which existing atomic services does this use case need? (Tick everything that applies. Choose generously — workflow composition is cheap; building a new service costs ~3 days + a Cloud Run service + a manifest + tests + Terraform module reuse + IAM. Per discipline rule #11, atomic services NEVER call other atomic services — composition belongs in the workflow.)"
-- `header`: "Atomic services"
-- `multiSelect`: true
-- `options` (up to 4 most relevant for the inferred domain — pre-rank based on UC name; surface the rest under "Other → list all"):
-  - For credit-style UCs: `financial-spreader`, `loan-serviceability`, `peer-and-industry-context`, `borrower-network`
-  - For fraud/scoring: `industry-risk-scorer`, `peer-and-industry-context` (and document-extractor only if upstream involves PDFs)
-  - For investigations: `borrower-network`, `peer-and-industry-context`
-  - For surveillance: `exposure-aggregator`, `peer-benchmarker`
-
-Step 4c — Ask whether ANY net-new atomic services are needed.
-
-`AskUserQuestion`:
-- `question`: "Do you need any net-new atomic services beyond the library? (Net-new is rare and gated — say no unless you're certain a fundamentally new compute primitive is required. Rule of thumb: if your service would call another atomic service, it's a workflow, not a service.)"
-- `options`: `[{label: "No, library is sufficient (Recommended)"}, {label: "Yes, one or more net-new"}]`
-
-If yes, follow up with a free-form `AskUserQuestion` per net-new service capturing: name, one-line description, why it can't be a sub-routine inside an existing service. Each gets a `justification` field in `onboarding.yaml: net_new_atomic_services[]`.
-
-Capture as:
-```yaml
-atomic_services_reused: [list of names]
-net_new_atomic_services:
-  - name: <kebab>
-    description: <one-line>
-    justification: <why a library service won't work>
-```
-
-**Reuse-rate computation**:
-`reuse_rate_atomic = len(reused) / (len(reused) + len(net_new))`. If `<0.80`, halt and surface a refusal panel offering `/fsi-promote-to-library` or asking the user to revisit Round 4.
-
----
-
-## Round 5 — Multi-agent pattern + agent archetypes
-
-Read the chosen use-case archetype's `archetype.yaml: required_libraries.multi_agent_patterns` for the default. Read the matching pattern's `pattern.yaml: composes` to see which roles + archetypes it bundles.
-
-Step 5a — `AskUserQuestion`:
-- `question`: "Which multi-agent pattern fits the agent loop? (Patterns from `libraries/patterns/` pre-wire role + supervisor + handoff. Picking a pattern saves ~5 days of orchestration code per UC.)"
-- `header`: "Pattern"
-- `options` (4):
-  1. The archetype's bundled pattern (Recommended) — e.g. `extractor-spreader-rater-drafter@1.0` for `pipeline-originator`. Description names the roles.
-  2. `classifier-extractor-decider@1.0` — when there's no narrative output (just a decision)
-  3. `triage-investigator-narrator@1.0` — investigations / complaints / disputes flow
-  4. `reflection-loop@1.0` — single agent with self-critique loop (cheaper, simpler UCs)
-
-Step 5b — Show the agent archetypes the pattern bundles + ask which extra ones the use case needs.
-
-`AskUserQuestion`:
-- `question`: "The chosen pattern wires N agent roles by default: <list>. Do you need any ADDITIONAL agents beyond what the pattern bundles? (Additional ≠ replacement. The pattern's roles are fixed; you can swap their archetype but you can't remove them. Adding a 5th or 6th agent costs LLM spend and audit-trail surface; check `libraries/agents/` first.)"
-- `header`: "More agents?"
-- `options`: `[{label: "Pattern bundle is sufficient (Recommended)"}, {label: "Yes — add from libraries/agents/"}, {label: "Yes — net-new (REQUIRES JUSTIFICATION)"}]`
-
-If "from library", surface the 14 archetypes with one-line descriptions; multi-select.
-If "net-new", capture `name + role + why no library archetype fits` per agent.
-
-Capture as:
-```yaml
-multi_agent_pattern: <pattern@version>
-agent_archetypes_reused: [list]
-net_new_agents:
-  - name: <kebab>
-    role: <role-name>
-    justification: <why>
-```
-
-**Reuse-rate computation**:
-`reuse_rate_agents = (pattern_bundled + library_extras) / (pattern_bundled + library_extras + net_new)`. If `<0.70`, halt and ask the user to revisit.
-
----
-
-## Round 6 — Rules + thresholds
-
-Walk `rules/` for shared rules and `usecases/*/rules/` for already-promoted UC-specific ones. Each has a description in its `v1.json: description` field (or its `tests/` golden files).
-
-Step 6a — `AskUserQuestion`:
-- `question`: "Which existing JDM rules apply to this use case? (Rules from `rules/` are shared across the bank — using one means you inherit its versioned thresholds, regulatory citations, and golden tests. Per Rule 11, business rules NEVER live in agent prompts or service Python.)"
-- `header`: "Shared rules"
-- `multiSelect`: true
-- `options` (up to 4 most relevant inferred from domain):
-  - Credit / lending: `single_borrower_exposure`, `dscr_threshold_by_industry`, `leverage_threshold_by_industry`, `reg_o_individual_limit`
-  - Concentration: `cre_concentration_limit`, `geographic_concentration_limit`, `sector_concentration_limit`, `insider_aggregate_limit`
-  - Real-time: typically none — net-new
-
-Step 6b — Net-new rules:
-`AskUserQuestion`:
-- `question`: "Are there NEW thresholds / policies / regulations specific to this use case that need their own JDM rule? (Each rule must cite a regulation or board-approved policy in its description per discipline rule #5. If you can't cite one, the threshold belongs in `thresholds` table, not a rule.)"
-- `options`: `[{label: "No"}, {label: "Yes — list each (regulation citation required)"}]`
-
-If yes, free-form per rule: name, regulation citation, inputs/outputs sketch.
-
-Capture as:
-```yaml
-shared_rules_reused: [list]
-net_new_rules:
-  - name: <kebab>
-    citation: <regulation or board-policy ref>
-    inputs_sketch: <free-form>
-```
-
-**Reuse-rate computation**:
-`reuse_rate_rules = len(shared) / (len(shared) + len(net_new))`. Soft target ≥80%; warn if below, but don't hard-halt (some UCs are inherently rule-novel like a new product line).
-
----
-
-## Round 7 — Model + provider prerequisites + compliance scope
-
-Read `docs/methodology/model-prerequisites.md` so you can present the prereq matrix accurately.
-
-Step 7a — Model + provider:
-`AskUserQuestion`:
-- `question`: "Which model provider for the agents? (Each has hard prerequisites — picking the wrong one mid-build forced the credit-memo team to rewrite their orchestrator. See `docs/methodology/model-prerequisites.md`.)"
-- `header`: "Provider"
-- `options` (3):
-  1. `Vertex Gemini (gemini-3-1-flash) — default for low-cost real-time`
-  2. `Anthropic API (claude-opus-4-7) — long-form reasoning, document IQ`
-  3. `Hybrid: Anthropic primary + Vertex fallback (gated by USE_GEMINI flag)`
-
-Step 7b — Surface the prereq checklist for the chosen provider. The user must explicitly tick each prereq:
-
-For Vertex: ADC available / region pinned / `roles/aiplatform.user` granted / `response_schema` enabled (Rule 2).
-For Anthropic: API key in Secret Manager / key starts with `sk-ant-api` / `--set-secrets` mount / VPC egress allowed.
-
-`AskUserQuestion` (multiSelect, no "Other"):
-- `question`: "Confirm each prerequisite is met (or has a tracked Jira ticket)."
-- Each prereq is an option labelled "✓ <prereq>" with a description of what failure looks like.
-
-Step 7c — Compliance scope (SR 11-7):
-`AskUserQuestion`:
-- `question`: "What's the compliance disclosure scope?"
-- `header`: "SR 11-7"
-- `options` (3):
-  1. `Full pack (Recommended for any UC with HITL or regulator-visible artifacts)` — model card + risk assessment + audit trail spec + monitoring plan
-  2. `Lightweight (advisory output only, no regulator visibility)` — model card + audit trail spec
-  3. `Defer to platform team` — captured but not authored in this UC; team will add later
-
-Step 7d — Eval framework:
-`AskUserQuestion`:
-- `question`: "Wire eval framework now? (Per discipline rule #37, eval framework comes BEFORE prompt optimization. Wiring now costs 2 days; wiring later costs reputation when prompt regressions ship undetected.)"
-- `options`: `[{label: "Yes — wire structural + LLM-judge scorers (Recommended)"}, {label: "Defer (must be wired before /promote)"}]`
-
-Capture as:
-```yaml
-model_provider: vertex_gemini | anthropic_api | hybrid
-provider_prereqs_confirmed: [list]
-provider_prereqs_pending: [list with jira refs]
-compliance_scope: full | lightweight | deferred
-eval_framework_wired: true | false
-```
-
----
-
-## Step 8 — Compose the canvas
-
-Write `onboarding/<use_case>.yaml` against `.claude/schemas/onboarding.schema.yaml`. Every field captured in rounds 1-7 lands here. Validate by reading `.claude/schemas/onboarding.schema.yaml` and ticking each required key is present.
-
-## Step 9 — Run the reuse-rate gate
+Before saving the canonical brief, run:
 
 ```bash
-node scripts/check_reuse_rate.mjs onboarding/<use_case>.yaml
+node scripts/validate_brief.mjs usecases/<uc>/.intake-draft.yaml
 ```
 
-This is the BLOCKING gate:
-- Atomic reuse `<80%` → exit 1, surface the offending net-new services with their justifications
-- Agent reuse `<70%` → exit 1, surface the offending net-new agents
-- Rules reuse `<60%` → warn but don't fail (some UCs are rule-novel)
-- HITL gates `>4` → warn (cookbook says 4 gates is the practical maximum)
+Examine the JSON output:
 
-If the gate fails, do NOT proceed to Step 10. Instead, present a refusal panel:
+- **All passes (exit 0):** proceed to save.
+- **Schema errors (exit 1):** list each `structural_errors[]` entry; loop back to the responsible question. Re-validate.
+- **Word-count / stub errors (exit 2):** list each `prose_errors[]` entry; re-prompt with: "This answer was too thin / placeholder-shaped. Give me at least N more words about X." Re-validate.
 
-> The journey halted because reuse rate is below the bank's target.
-> Options:
-> 1. Revisit Round 4 / Round 5 and consolidate net-new shapes.
-> 2. Run `/fsi-promote-to-library` first to grow the library so the same shapes can be reused next time.
-> 3. Get architecture-review approval and re-run with `--override-reuse-gate` (captured in `onboarding.yaml: reuse_gate_override: <approver+date+ticket>`).
+The brief.yaml does NOT save until exit 0.
 
-Stop. Wait for user.
+## Round 17 — save + derive
 
-## Step 10 — Hand off
+When validation passes:
 
-Print the next-steps panel:
+1. Move `usecases/<uc>/.intake-draft.yaml` → `usecases/<uc>/brief.yaml`.
+2. Stamp `last_modified` + `last_modified_by` (use git config user.email if available).
+3. Render markdown: `node scripts/render_brief_md.mjs usecases/<uc>/brief.yaml` → produces `usecases/<uc>/brief.md` with the Mermaid state-machine diagram.
+4. Derive legacy canvas: `node scripts/derive_legacy_canvas.mjs usecases/<uc>/brief.yaml` → produces `onboarding/<uc>.yaml` (backward-compat for `/init-use-case` + `/fsi-design-proposals`).
+5. Create the `.clarifications/` directory: `mkdir -p usecases/<uc>/.clarifications/` — this is where downstream skills drop gap notes (the brief itself stays sponsor-owned).
+
+## Round 18 — close the loop
+
+Print the closing summary:
 
 ```
-═══════════════════════════════════════════════════
-  Onboarding journey complete — <use_case>
-═══════════════════════════════════════════════════
+✓ Brief saved: usecases/<uc>/brief.yaml
+✓ Markdown rendered: usecases/<uc>/brief.md (with state-machine diagram)
+✓ Legacy canvas derived: onboarding/<uc>.yaml
+✓ Validation: 14/14 required sections green; 0 schema errors; 0 stub-content errors
 
-Canvas:           onboarding/<use_case>.yaml
-Console pattern:  <pattern>
-Use-case archetype: <archetype@version>
-Multi-agent pattern: <pattern@version>
-Atomic reuse:     <%>  (<reused>/<reused+new>)
-Agent reuse:      <%>  (<reused>/<reused+new>)
-Rules reuse:      <%>  (<reused>/<reused+new>)
-HITL gates:       <count>
-Provider:         <provider>
-Compliance scope: <scope>
+Reuse summary:
+  - Atomic services: 4/5 reused (80%)
+  - Agent archetypes: 2/3 reused (67%)
+  - Net-new components requiring justification: ar-aging-classifier (atomic-service)
 
-Next (UX-first lockdown — DO NOT skip):
-  1. /fsi-design-proposals <use_case>   — spawns 4 parallel sealed designer agents
-                                         (density / metaphor / affordance / wildcard).
-                                         Each builds a working Next.js prototype on the
-                                         existing pipeline-console shell + deploys to its
-                                         own ephemeral Cloud Run URL. ~$10 + ~30 min.
-  2. /fsi-design-review <use_case>      — comparator HTML + AskUserQuestion pick.
-                                         Emits usecases/<uc>/ui/decision.yaml — the
-                                         design contract. /init-use-case refuses without it.
-  3. /init-use-case <use_case>          — scaffold the directory tree (reads
-                                         onboarding.yaml + decision.yaml)
-  4. /fsi-reasons-canvas                 — author reasons.yaml seeded from both
-  5. /fsi-build-parallel                 — fan-out builders for the 5-step DAG
-  6. /review-uc <use_case>               — full review before commit
-  7. /fsi-deploy <use_case> --env=dev    — deploy to GCP
+Cost projection: $0.07 / case (under $0.10 ceiling ✓)
+Latency projection: p99 8.5s (under 10s budget ✓)
 
-Cookbook patterns to read for this UC:
-  - <pattern_id>: <one-liner>  (e.g., "Pattern 1: HITL via callbacks" if hitl_gates ≥ 2)
-  - <pattern_id>: <one-liner>
-  ...
+Next steps:
+  1. Eyeball usecases/<uc>/brief.md — it's the artifact every downstream skill consumes.
+  2. /fsi-design-proposals <uc> — spawn 4 designer agents to produce 4 UX prototypes.
+  3. Or: review the brief with your team and re-run /fsi-onboard <uc> to revise.
+
+Weak answers flagged for follow-up (optional):
+  - problem.success_metrics[2] — baseline was "vague"; you may want a sharper number
+  - ...
 ```
 
-The user runs `/fsi-design-proposals` next, NOT `/init-use-case`. The UX-first lockdown is mandatory: backend code is wasted if the UX is wrong. Skipping it requires arch-review override captured in `decision.yaml: iteration_override`.
+## Errors & recovery
 
-If the user explicitly wants to skip the design phase (e.g. for a UC where UX is genuinely irrelevant — pure batch job, no humans), tell them:
+| Symptom | Cause | Recovery |
+|---|---|---|
+| Python3 not available | parsing helper missing | install python3 + PyYAML; or shim the YAML parser |
+| `libraries/personas/<id>.yaml` not found | sponsor referenced a persona id that doesn't exist | offer to: (a) pick a different library id, (b) inline-author a new persona that gets added to library after this UC ships |
+| Validation fails on stage state-machine | unparseable structured input | re-ask the question and remind format `stage_id \| name \| trigger \| exit_condition` |
+| Sponsor wants to revise after save | brief is mutable | re-run `/fsi-onboard <uc>`; skill detects existing brief and offers re-interview / per-section-edit / view options |
 
-> The skip path is `/init-use-case <uc> --skip-design --reason="<why>"`. Captured into `usecases/<uc>/.no-design-rationale.txt` and surfaced in `/review-uc`. Use sparingly.
+## Skill output contract (for downstream skills)
 
-## Failure modes you must handle
+After this skill completes successfully:
 
-- **User abandons mid-journey.** Save partial answers to `onboarding/<use_case>.partial.yaml` so they can resume later. On resume, skip rounds already answered.
-- **Inventory walk fails (library dir missing).** Halt; tell the user a library dir is malformed and to run `/fsi-reuse-report` to see what's broken.
-- **`AskUserQuestion` returns "Other" with no useful content.** Re-ask with a tighter prompt; do not silently default.
-- **User picks options that conflict** (e.g. `console_pattern: real-time` + `use_case_archetype: pipeline-originator`). Surface the conflict and re-ask.
+- `usecases/<uc>/brief.yaml` exists, conforms to brief-schema.json, passes validate_brief.mjs.
+- `usecases/<uc>/brief.md` is in sync with brief.yaml (regenerated each save).
+- `onboarding/<uc>.yaml` is the auto-derived legacy-shape canvas (still readable by old skills).
+- `usecases/<uc>/.intake-draft.yaml` is removed after successful save (intentionally — no half-states left behind).
+- `usecases/<uc>/.clarifications/` exists (empty), ready for downstream skills to drop notes.
 
-## Idempotency
+Downstream skills can rely on the brief being fully populated, validated, and stable. They do not need to re-interview the sponsor.
 
-If `onboarding/<use_case>.yaml` already exists, ask: "Existing canvas found. Replace, edit, or abandon?" Never silently overwrite.
+## What this skill DOES NOT do
 
-## What this skill does NOT do
+- It does not author code (handler, atomic services, agents, etc.). That's `/init-use-case`, `/new-use-case`, and the builder agents.
+- It does not produce UX designs. That's `/fsi-design-proposals`.
+- It does not validate regulatory citations. That's the compliance-reviewer subagent (called by `/review-uc`).
+- It does not deploy anything to GCP. That's the deploy scripts.
+- It does not write tests. That's the test-author subagent.
 
-- Does NOT write code (no Python, no Terraform, no React). Those come from `/init-use-case` + `/new-use-case` + `/fsi-build-parallel`.
-- Does NOT modify `libraries/` or `services/atomic/`. Promotions go through `/fsi-promote-to-library`.
-- Does NOT call any LLM. Pure interview + file write.
+The brief is the spec. Everything else is downstream.
+
+## See also
+
+- `docs/methodology/brief-authoring.md` — sponsor-facing guide explaining what each section means and what good looks like.
+- `.claude/skills/fsi-onboard/assets/brief-schema.json` — strict schema; the source of truth for validation.
+- `.claude/skills/fsi-onboard/assets/question-bank.yaml` — every question this skill asks, in order, with branching rules.
+- `libraries/personas/` — persona library, referenced by `stakeholders.personas[].library_id`.

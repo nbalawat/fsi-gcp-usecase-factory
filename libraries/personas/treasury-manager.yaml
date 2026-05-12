@@ -1,0 +1,33 @@
+id: treasury-manager
+display_name: Corporate Treasury Manager
+role_family: ops
+seniority: manager
+daily_tools:
+  - "Treasury workstation (Kyriba, GTreasury, in-house)"
+  - "ALM / liquidity management platform"
+  - "Bloomberg / Refinitiv terminal"
+  - "Funding curves + transfer pricing tools"
+primary_goals:
+  - "Manage bank's liquidity position within regulatory ratios (LCR, NSFR)"
+  - "Optimise funding costs vs. interest-rate risk"
+  - "Execute / oversee FX, derivative, money-market activity"
+  - "Forecast cash positions accurately"
+frustrations:
+  - "Reconciliation breaks between funding ledger + Treasury workstation"
+  - "Late notice of large loan fundings or deposit movements"
+  - "Manual data pulls for daily / intraday positioning"
+regulatory_exposure:
+  - "Liquidity Coverage Ratio (LCR) — Basel III"
+  - "Net Stable Funding Ratio (NSFR)"
+  - "Fed Reg WW (liquidity requirements)"
+  - "Interest-rate-risk supervisory guidance"
+decision_authority:
+  - "Execute money-market transactions within board limits"
+  - "Approve FX and derivative trades within authority"
+  - "Initiate funding actions"
+keyboard_proficiency: high
+notes: |
+  Treasury managers live in time-series data, intraday positions, and
+  scenario analysis. They want UIs that show 'as-of timestamp', let
+  them rewind state, and surface variance vs. forecast. They are not
+  consumers of qualitative agent narratives — they want numbers, fast.

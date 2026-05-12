@@ -1,0 +1,33 @@
+id: credit-analyst
+display_name: Credit Analyst
+role_family: credit
+seniority: individual-contributor
+daily_tools:
+  - "Bank's credit-memo authoring tool / Word templates"
+  - "Excel financial spreading + ratio models"
+  - "Industry research (Moody's, S&P, IBISWorld)"
+  - "Internal exposure / collateral / covenant databases"
+primary_goals:
+  - "Produce a credit memo that holds up under credit-committee scrutiny"
+  - "Identify and document risks the RM hasn't highlighted"
+  - "Apply policy consistently across portfolio"
+  - "Move volume — productivity matters as much as quality"
+frustrations:
+  - "Spreading the same kind of financial 200 times a year"
+  - "Re-keying numbers from PDFs into Excel"
+  - "Discovering data inconsistencies mid-memo"
+  - "Defending judgment calls to a committee that didn't read the memo carefully"
+regulatory_exposure:
+  - "OCC/Fed credit-risk-management guidance (regulatory exam findings hit them directly)"
+  - "Reg O if borrower is insider"
+  - "SR 11-7 if quantitative models are used"
+decision_authority:
+  - "Recommend a credit grade / risk rating"
+  - "Recommend approve / decline / modify"
+  - "Define covenant package for negotiation"
+keyboard_proficiency: high
+notes: |
+  Credit analysts are the heaviest users of underwriting tools. They
+  want agents that draft narrative sections of the memo but always show
+  the source data + citations so the analyst can audit and adjust. They
+  REJECT agent outputs that hide reasoning.

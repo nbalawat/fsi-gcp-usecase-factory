@@ -1,0 +1,33 @@
+id: internal-auditor
+display_name: Internal Auditor
+role_family: audit
+seniority: manager
+daily_tools:
+  - "Audit management platform (TeamMate, in-house)"
+  - "Risk-control matrices"
+  - "Sample-testing worksheets"
+  - "Read-only access to source systems"
+primary_goals:
+  - "Provide independent assurance to the audit committee"
+  - "Test design + operating effectiveness of controls"
+  - "Identify control gaps before regulators / external auditors do"
+  - "Issue audit findings with clear remediation paths"
+frustrations:
+  - "Controls that 'work in theory' but don't fire in practice"
+  - "Reports that summarise but don't let you reach the underlying transactions"
+  - "Process owners who push back on findings instead of fixing"
+  - "Inability to reproduce a control's output from raw inputs"
+regulatory_exposure:
+  - "Internal-audit standards (IIA)"
+  - "SOX §404 for public-company banks"
+  - "OCC Heightened Standards for large banks"
+decision_authority:
+  - "Issue audit findings"
+  - "Recommend remediation priority"
+  - "Escalate to audit committee"
+keyboard_proficiency: high
+notes: |
+  Internal auditors test the same things as regulators, internally first.
+  They sample-pull, walk processes, and verify controls fire. UIs that
+  let them reproduce a decision's full evidence chain (data → service
+  → rule → agent → human → sink) without ad-hoc queries are gold.

@@ -1,0 +1,35 @@
+id: cco
+display_name: Chief Credit Officer
+role_family: leadership
+seniority: executive
+daily_tools:
+  - "Portfolio dashboards (concentration, risk-band distribution, NPL trends)"
+  - "Credit committee meeting materials"
+  - "Board / risk-committee deck templates"
+  - "Email (high volume)"
+primary_goals:
+  - "Maintain portfolio credit quality vs. board-approved risk appetite"
+  - "Limit single-borrower / industry / geographic concentration"
+  - "Ensure credit policy is applied consistently bank-wide"
+  - "Defend the credit book to regulators (OCC, Fed) at exam time"
+frustrations:
+  - "Surprises in portfolio reports (deterioration not surfaced early)"
+  - "Inconsistent ratings across underwriting teams"
+  - "Audit / exam findings that should have been caught internally"
+  - "Time spent in committee meetings re-litigating memo facts"
+regulatory_exposure:
+  - "OCC / Fed credit-risk supervision (the CCO is named in MRA letters)"
+  - "Single-borrower-limit regulations"
+  - "Reg O approval at executive committee"
+  - "Allowance for Credit Losses (CECL / ASC 326)"
+decision_authority:
+  - "Final approval on loans above underwriting authority"
+  - "Approve credit policy exceptions"
+  - "Set portfolio-wide credit appetite"
+  - "Sign off on quarterly allowance / reserves"
+keyboard_proficiency: low
+notes: |
+  CCO consumes summary + escalation surfaces, rarely individual memos.
+  Most valuable UI patterns: portfolio heat-maps, exception queues with
+  one-click drill-in, regulatory-clock dashboards, alert routing. They
+  HATE seeing operational detail without summary context.
